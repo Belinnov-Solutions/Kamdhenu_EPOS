@@ -1,0 +1,33 @@
+.product-card .badge {
+  font-size: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.product-card:hover {
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+}
+
+.compact-counter {
+  max-width: 90px;
+  min-width: 70px;
+  height: 32px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 8px;
+  padding: 0 4px;
+}
+
+.compact-counter input {
+  width: 60px !important;
+  text-align: center;
+  padding: 2px;
+}
+
+.compact-counter button {
+  width: 30px;
+  height: 30px;
+  font-size: 3rem;
+  padding: 0;
+}

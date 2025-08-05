@@ -1,0 +1,54 @@
+/* For TicketManagement when order list is hidden */
+.modal-fullscreen .modal-content {
+  width: 100%;
+  margin: 0;
+  max-width: none;
+}
+
+/* Make the table take full width */
+.custom-datatable-filter {
+  width: 100%;
+}
+
+.custom-datatable-filter table {
+  width: 100% !important;
+  table-layout: auto;
+}
+
+/* For the POS layout */
+.contact-method-container {
+  font-family: Arial, sans-serif;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.label {
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+}
+
+.button-group {
+  display: flex;
+  gap: 6px;
+}
+
+.contact-btn {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.contact-btn:hover {
+  background-color: #e9e9e9;
+}
+
+.contact-btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
