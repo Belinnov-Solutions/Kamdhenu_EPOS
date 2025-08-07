@@ -90,13 +90,27 @@ const PosHeader = () => {
       {/* Header */}
       <div
         className="header pos-header"
-        style={{ backgroundColor: "rgb(62 18 81)" }}
+        // style={{ backgroundColor: "rgb(62 18 81)" }}
+        style={{ backgroundColor: "#b38e432f" }}
       >
         {/* Logo */}
         <div className="header-left active">
           <Link to={all_routes.newdashboard} className="logo logo-normal">
-            <ImageWithBasePath src="assets/img/logo.png" alt="Img" />
-          </Link>
+  <img 
+    src="assets/img/logo.png" 
+    alt="Logo" 
+    style={{ 
+      height: "75px", 
+      width: "85px", 
+      objectFit: "contain" 
+    }}
+  />
+</Link>
+          {/* <Link to={all_routes.newdashboard} className="logo logo-normal">
+            <ImageWithBasePath src="assets/img/kamdhenuLogo.png" alt="Img"
+          style={{ height: "75px", width: "85px", objectFit: "contain" }}
+           />
+          </Link> */}
           <Link to={all_routes.newdashboard} className="logo logo-white">
             <ImageWithBasePath src="assets/img/logo-white.png" alt="Img" />
           </Link>
@@ -192,7 +206,7 @@ const PosHeader = () => {
                     </li> */}
           {/* /Select Store */}
           <li className="nav-item pos-nav">
-            <h5 className="mb-1 text-light">Welcome, {username}</h5>
+            <h5 className="mb-1 text-dark">Welcome, {username}</h5>
           </li>
           <li className="nav-item nav-item-box">
             <Link
@@ -300,7 +314,7 @@ const PosHeader = () => {
                     <span className="status online" />
                   </span>
                   <div className="profilesets">
-                    <h6>Near Nerd</h6>
+                    <h6>KamDhenu</h6>
                     <h5>{username}</h5>
                   </div>
                 </div>

@@ -2,18 +2,18 @@ import React, { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Select from "react-select";
 import { all_routes } from "../../Router/all_routes";
-import { DatePicker } from "antd";
+// import { DatePicker } from "antd";
 import Addunits from "../../core/modals/inventory/addunits";
 import AddCategory from "../../core/modals/inventory/addcategory";
 import AddSubcategory from "../../core/modals/inventory/addsubcategory";
 import AddBrand from "../../core/modals/addbrand";
 import {
   ArrowLeft,
-  Calendar,
+  // Calendar,
   // Image,
   Info,
   LifeBuoy,
-  List,
+  // List,
   Plus,
   PlusCircle,
   // X,
@@ -27,7 +27,7 @@ import AddVarientNew from "../../core/modals/inventory/addVarientNew";
 import CommonTagsInput from "../../core/common/Taginput";
 // import TextEditor from "./texteditor";
 import axios from "axios";
-import moment from 'moment';
+// import moment from 'moment';
 import { useSelector } from "react-redux";
 
 const AddProduct = () => {
@@ -39,8 +39,8 @@ const AddProduct = () => {
   const [message, setMessage] = useState({ text: "", type: "" });
   const [refreshCategories, setRefreshCategories] = useState(false);
   // const storeId = "67aa7f75-0ed9-4378-9b3d-50e1e34903ce";
-  const [storeOptions, setStoreOptions] = useState([]);
-  const [selectedStore, setSelectedStore] = useState(null);
+  // const [storeOptions, setStoreOptions] = useState([]);
+  // const [selectedStore, setSelectedStore] = useState(null);
   // const [images, setImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // new State for reference data
@@ -166,12 +166,12 @@ const AddProduct = () => {
   };
 
   // Handle date changes
-  const handleDateChange = (date, dateString, fieldName) => {
-    setFormData({
-      ...formData,
-      [fieldName]: date ? dateString : " "
-    });
-  };
+  // const handleDateChange = (date, dateString, fieldName) => {
+  //   setFormData({
+  //     ...formData,
+  //     [fieldName]: date ? dateString : " "
+  //   });
+  // };
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -223,7 +223,7 @@ const AddProduct = () => {
         manufacturedDate: "",
         // expiryDate: ""
       });
-     setSelectedStore(null);
+    //  setSelectedStore(null);
     } catch (error) {
       setMessage({
         text: error.response?.data?.message || "Failed to add product",
@@ -277,24 +277,24 @@ const AddProduct = () => {
   // fetch store from api
   const hasFetchedStores = useRef(false);
   // fetch store data from api 
-  const fetchStores = async () => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_BASEURL}api/v1/Admin/GetStore`);
-      const stores = response.data || [];
+  // const fetchStores = async () => {
+  //   try {
+  //     const response = await axios.get(`${process.env.REACT_APP_BASEURL}api/v1/Admin/GetStore`);
+  //     const stores = response.data || [];
 
-      const mappedOptions = stores.map(store => ({
-        value: store.id,
-        label: store.name,
-      }));
-      setStoreOptions(mappedOptions);
-    } catch (error) {
-      console.error("Failed to fetch store options:", error);
-    }
-  };
+  //     const mappedOptions = stores.map(store => ({
+  //       value: store.id,
+  //       label: store.name,
+  //     }));
+  //     setStoreOptions(mappedOptions);
+  //   } catch (error) {
+  //     console.error("Failed to fetch store options:", error);
+  //   }
+  // };
   useEffect(() => {
     fetchReferenceData();
     if (!hasFetchedStores.current) {
-      fetchStores();
+      // fetchStores();
       hasFetchedStores.current = true;
     }
   }, [formData.storeId, refreshCategories]);
@@ -313,12 +313,12 @@ const AddProduct = () => {
   //   { value: "rasmussen", label: "Rasmussen" },
   //   { value: "fredJohn", label: "Fred John" },
   // ];
-  const warehouse = [
-    { value: "choose", label: "Choose" },
-    { value: "legendary", label: "Legendary" },
-    { value: "determined", label: "Determined" },
-    { value: "sincere", label: "Sincere" },
-  ];
+  // const warehouse = [
+  //   { value: "choose", label: "Choose" },
+  //   { value: "legendary", label: "Legendary" },
+  //   { value: "determined", label: "Determined" },
+  //   { value: "sincere", label: "Sincere" },
+  // ];
   // const category = [
   //   { value: "choose", label: "Choose" },
   //   { value: "lenovo", label: "Lenovo" },
@@ -345,12 +345,12 @@ const AddProduct = () => {
     { value: "transactionalSelling", label: "Transactional selling" },
     { value: "solutionSelling", label: "Solution selling" },
   ];
-  const barcodesymbol = [
-    { value: "choose", label: "Choose" },
-    { value: "code34", label: "Code34" },
-    { value: "code35", label: "Code35" },
-    { value: "code36", label: "Code36" },
-  ];
+  // const barcodesymbol = [
+  //   { value: "choose", label: "Choose" },
+  //   { value: "code34", label: "Code34" },
+  //   { value: "code35", label: "Code35" },
+  //   { value: "code36", label: "Code36" },
+  // ];
   const taxtype = [
     { value: "exclusive", label: "Exclusive" },
     { value: "salesTax", label: "Sales Tax" },
@@ -361,12 +361,12 @@ const AddProduct = () => {
     { value: "cash", label: "Cash" },
   ];
 
-  const warrenty = [
-    { value: "choose", label: "Choose" },
-    { value: "Replacement Warranty", label: "Replacement Warranty" },
-    { value: "On-Site Warranty", label: "On-Site Warranty" },
-    { value: "Accidental Protection Plan", label: "Accidental Protection Plan" },
-  ];
+  // const warrenty = [
+  //   { value: "choose", label: "Choose" },
+  //   { value: "Replacement Warranty", label: "Replacement Warranty" },
+  //   { value: "On-Site Warranty", label: "On-Site Warranty" },
+  //   { value: "Accidental Protection Plan", label: "Accidental Protection Plan" },
+  // ];
   // const [isImageVisible, setIsImageVisible] = useState(true);
 
   // const handleRemoveProduct = () => {
@@ -438,7 +438,7 @@ const AddProduct = () => {
                     aria-labelledby="headingSpacingOne"
                   >
                     <div className="accordion-body border-top">
-                      <div className="row">
+                      {/* <div className="row">
                         <div className="col-sm-6 col-12">
                           <div className="mb-3">
                             <label className="form-label">
@@ -466,7 +466,7 @@ const AddProduct = () => {
                             />
                           </div>
                         </div>
-                      </div>
+                      </div> */}
                       <div className="row">
                         <div className="col-sm-6 col-12">
                           <div className="mb-3">
@@ -633,7 +633,7 @@ const AddProduct = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="row">
+                      {/* <div className="row">
                         <div className="col-lg-6 col-sm-6 col-12">
                           <div className="mb-3">
                             <label className="form-label">
@@ -655,12 +655,12 @@ const AddProduct = () => {
                             <input type="text" className="form-control list"
                               value={formData.barcode}
                               onChange={handleInputChange} />
-                            {/* <button type="submit" className="btn btn-primaryadd">
+                            <button type="submit" className="btn btn-primaryadd">
                               Generate
-                            </button> */}
+                            </button>
                           </div>
                         </div>
-                      </div>
+                      </div> */}
                       {/* Editor */}
                       <div className="col-lg-12">
                         <div className="summer-description-box">
@@ -1202,7 +1202,7 @@ const AddProduct = () => {
                   </div>
                 </div> */}
                 {/* Custom fields section */}
-                <div className="accordion-item border mb-4">
+                {/* <div className="accordion-item border mb-4">
                   <h2 className="accordion-header" id="headingSpacingFour">
                     <div
                       className="accordion-button collapsed bg-white"
@@ -1225,7 +1225,7 @@ const AddProduct = () => {
                     aria-labelledby="headingSpacingFour"
                   >
                     <div className="accordion-body border-top">
-                      <div>
+                      <div> */}
                         {/* <div className="p-3 bg-light rounded d-flex align-items-center border mb-3">
                           <div className=" d-flex align-items-center">
                             <div className="form-check form-check-inline">
@@ -1283,7 +1283,7 @@ const AddProduct = () => {
                             </div>
                           </div>
                         </div> */}
-                        <div className="row">
+                        {/* <div className="row">
                           <div className="col-sm-6 col-12">
                             <div className="mb-3">
                               <label className="form-label">
@@ -1295,7 +1295,7 @@ const AddProduct = () => {
                                 placeholder="Choose"
                                 onChange={(selectedOption) => handleSelectChange(selectedOption, "warrantyType")}
                                 value={warrenty.find(option => option.value === formData.warrantyType)}
-                              // isDisabled={!formData.warrantyType}
+                              isDisabled={!formData.warrantyType}
                               />
                             </div>
                           </div>
@@ -1328,7 +1328,7 @@ const AddProduct = () => {
 
                               </div>
                             </div>
-                          </div>
+                          </div> */}
                           {/* <div className="col-sm-6 col-12">
                             <div className="mb-3">
                               <label className="form-label">
@@ -1345,11 +1345,11 @@ const AddProduct = () => {
                               </div>
                             </div>
                           </div> */}
-                        </div>
+                        {/* </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
             <div className="col-lg-12">

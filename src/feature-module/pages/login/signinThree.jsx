@@ -69,10 +69,20 @@ const SigninThree = () => {
       <div className="main-wrapper">
         <div className="account-content">
           <div className="login-wrapper login-new">
-            <div className="row w-100" style={{ backgroundColor: 'rgb(62 18 81)' }}>
-              <div className="col-lg-5 mx-auto" style={{ backgroundColor: 'rgb(62 18 81)' }} >
+            <div className="row w-100"
+             style={{ backgroundColor: 'rgb(62 18 81)' }}
+            // style={{ backgroundColor: "#b38e432f" }}
+             >
+              <div className="col-lg-5 mx-auto"
+               style={{ backgroundColor: 'rgb(62 18 81)' }} 
+              // style={{ backgroundColor: "#b38e432f" }}
+               >
                 <div className="login-content user-login">
-                  <div className="login-logo">
+                  
+                  <form onSubmit={handleSubmit}>
+                    <div className="card">
+                      <div className="card-body p-5">
+                        <div className="login-logo">
                     <ImageWithBasePath src="assets/img/logo.png" alt="img" />
                     <Link
                       to={route.dashboard}
@@ -84,15 +94,12 @@ const SigninThree = () => {
                       />
                     </Link>
                   </div>
-                  <form onSubmit={handleSubmit}>
-                    <div className="card">
-                      <div className="card-body p-5">
                         <div className="login-userheading">
                           <h3>Sign In</h3>
-                          <h4>
+                          {/* <h4>
                             Access the EPOS panel using your email and
                             passcode.
-                          </h4>
+                          </h4> */}
                         </div>
                         <div className="mb-3">
                           {authError && (

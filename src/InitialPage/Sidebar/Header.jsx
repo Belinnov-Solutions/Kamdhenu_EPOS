@@ -25,10 +25,10 @@ const Header = () => {
       lng === "en"
         ? "assets/img/flags/us-flag.svg"
         : lng === "fr"
-        ? "assets/img/flags/fr.png"
-        : lng === "es"
-        ? "assets/img/flags/es.png"
-        : "assets/img/flags/de.png"
+          ? "assets/img/flags/fr.png"
+          : lng === "es"
+            ? "assets/img/flags/es.png"
+            : "assets/img/flags/de.png"
     );
   };
   const isElementVisible = (element) => {
@@ -60,9 +60,9 @@ const Header = () => {
     const handleFullscreenChange = () => {
       setIsFullscreen(
         document.fullscreenElement ||
-          document.mozFullScreenElement ||
-          document.webkitFullscreenElement ||
-          document.msFullscreenElement
+        document.mozFullScreenElement ||
+        document.webkitFullscreenElement ||
+        document.msFullscreenElement
       );
     };
 
@@ -156,30 +156,39 @@ const Header = () => {
   }, [location.pathname]);
   return (
     <>
-      <div className="header">
+      <div className="header"
+        style={{ backgroundColor: "#b38e432f" }}>
         {/* Logo */}
         <div className="main-header">
           <div
             className={`header-left
              ${toggle ? "" : "active"}
-             ${
-               expandMenus || dataLayout === "layout-hovered"
-                 ? "expand-menu"
-                 : ""
-             }
+             ${expandMenus || dataLayout === "layout-hovered"
+                ? "expand-menu"
+                : ""
+              }
              `}
             onMouseLeave={expandMenu}
             onMouseOver={expandMenuOpen}
           >
             <Link to="/dashboard" className="logo logo-normal">
-              <ImageWithBasePath src="assets/img/logo.png" alt="img" />
+              {/* <ImageWithBasePath src="assets/img/kamdhenuLogo.png" alt="img"
+               /> */}
+              <img
+                src="assets/img/logo.png"
+                alt="Logo"
+                style={{
+                  height: "75px",
+                  width: "85px",
+                  objectFit: "contain"
+                }} />
             </Link>
             <Link to="/dashboard" className="logo logo-white">
               <ImageWithBasePath src="assets/img/logo-white.png" alt="img" />
             </Link>
-            <Link to="/dashboard" className="logo-small">
+            {/* <Link to="/dashboard" className="logo-small">
               <ImageWithBasePath src="assets/img/logo-small.png" alt="img" />
-            </Link>
+            </Link> */}
             <Link
               id="toggle_btn"
               to="#"
@@ -188,8 +197,8 @@ const Header = () => {
                   pathname.includes("tasks") || pathname.includes("pos")
                     ? "none"
                     : pathname.includes("compose")
-                    ? "none"
-                    : "",
+                      ? "none"
+                      : "",
               }}
               onClick={handlesidebar}
             >
@@ -683,7 +692,7 @@ const Header = () => {
                     />
                   </span>
                   <div>
-                    <h6 className="fw-medium">{username}</h6>
+                    <h6 className="fw-medium">Kamdhenu</h6>
                     <p>{roleName}</p>
                   </div>
                 </div>

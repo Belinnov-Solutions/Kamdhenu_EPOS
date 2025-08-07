@@ -10,6 +10,7 @@ import { useDispatch } from "react-redux";
 import { customerAdded } from "../../redux/customerSlice"; // Adjust the import path as necessary
 import { useSelector } from "react-redux";
 import { selectCartItems } from "../../redux/accessoriesSlice"; // Add this import
+import { selectSubCategories } from "../../redux/accessoriesSlice";
 import "bootstrap/dist/js/bootstrap.bundle.min";
 import axios from "axios";
 import { selectCartItems as selectPartItems } from "../../redux/partSlice";
@@ -78,7 +79,7 @@ const PosModals = ({ onCustomerCreated }) => {
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
-
+  const subCategories = useSelector(selectSubCategories);
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -285,7 +286,7 @@ const PosModals = ({ onCustomerCreated }) => {
         userId: userId,
         issueDescription:
           firstRepairItem.customerNotes || repairData?.customerNotes,
-        repairStatus: "new",
+        repairStatus: "New",
         paymentMethod: method,
         receivedDate: firstRepairItem.dateCreated
           ? new Date(firstRepairItem.dateCreated).toISOString()
@@ -303,6 +304,7 @@ const PosModals = ({ onCustomerCreated }) => {
           ipAddress: "",
           brand: firstRepairItem.brand,
           model: firstRepairItem.model,
+          deviceColour: firstRepairItem.deviceColour,
           imeiNumber: firstRepairItem.imeiNumber,
           serialNumber: firstRepairItem.serialNumber,
           passcode: firstRepairItem.passcode,
@@ -314,7 +316,7 @@ const PosModals = ({ onCustomerCreated }) => {
           dueDate: firstRepairItem.dueDate
             ? new Date(firstRepairItem.dueDate).toISOString()
             : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-          status: "new",
+          status: "New",
           taskTypeId: firstRepairItem.taskTypeId,
           notes: [
             {
@@ -399,6 +401,552 @@ const PosModals = ({ onCustomerCreated }) => {
       <div className="selected-payment-method">Selected: {selectedPayment}</div>
     );
   }
+
+  // const handlePrintReceipt = () => {
+  //   // Group items by category
+  //   const itemsByCategory = {};
+  //   const allItems = [
+  //     ...(ticketData.ticketItems || []),
+  //     ...selectedServices,
+  //     ...orderItems,
+  //     ...partItems,
+  //   ];
+
+  //   allItems.forEach((item) => {
+  //     const categoryId = item.categoryId || "uncategorized";
+  //     const categoryName = item.category || "Uncategorized";
+
+  //     if (!itemsByCategory[categoryId]) {
+  //       itemsByCategory[categoryId] = {
+  //         categoryName,
+  //         items: [],
+  //       };
+  //     }
+  //     itemsByCategory[categoryId].items.push(item);
+  //   });
+
+  //   // Print main receipt first
+  //   printMainReceipt(itemsByCategory).then(() => {
+  //     // Then print all category summaries sequentially
+  //     printCategorySummaries(itemsByCategory);
+  //   });
+  // };
+
+  // Main receipt printing function
+  const handlePrintReceipt = () => {
+    // Group items by subcategory
+    const itemsBySubcategory = {};
+    const allItems = [
+      ...(ticketData.ticketItems || []),
+      ...selectedServices,
+      ...orderItems,
+      ...partItems,
+    ];
+
+    allItems.forEach((item) => {
+      const subcategoryId = item.subcategoryId || "uncategorized";
+      const subcategoryName = subCategories.find(sub => sub.id === item.subcategoryId)?.name || "Uncategorized";
+
+      if (!itemsBySubcategory[subcategoryId]) {
+        itemsBySubcategory[subcategoryId] = {
+          subcategoryName,
+          items: [],
+        };
+      }
+      itemsBySubcategory[subcategoryId].items.push(item);
+    });
+
+    // Print main receipt first
+    printMainReceipt(itemsBySubcategory).then(() => {
+      // Then print all subcategory summaries sequentially
+      printSubcategorySummaries(itemsBySubcategory);
+    });
+  };
+  const printMainReceipt = (itemsBySubcategory) => {
+    return new Promise((resolve) => {
+      const iframe = createHiddenIframe();
+      const content = `
+        <html>
+            <head>
+                <title>Receipt</title>
+                <style>
+                    @page {
+                        size: 80mm auto;
+                        margin: 0;
+                    }
+                    body {
+                        font-family: Arial, sans-serif;
+                        width: 76mm;
+                        margin: 0 auto;
+                        padding: 2px;
+                        font-size: 12px;
+                        -webkit-print-color-adjust: exact;
+                    }
+                    .store-info {
+                        text-align: center;
+                        margin-bottom: 3px;
+                    }
+                    .store-name {
+                        font-weight: bold;
+                        text-transform: uppercase;
+                        margin-bottom: 1px;
+                        font-size: 13px;
+                    }
+                    .store-details {
+                        margin: 1px 0;
+                        font-size: 10px;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        font-size: 11px;
+                    }
+                    hr {
+                        border: 0;
+                        border-top: 1px dashed #000;
+                        margin: 2px 0;
+                    }
+                    .text-right {
+                        text-align: right;
+                    }
+                    .fw-bold {
+                        font-weight: bold;
+                    }
+                    th, td {
+                      padding: 1px 0;   
+                  }    
+                </style>
+            </head>
+            <body>
+                <div class="store-info">
+                    <div class="store-name">${storeName || "DOMN/DOWN PIZZA STORE"
+        }</div>
+                    <div class="store-details">${userAddress || "PLACE: 978-8-7779-1-0"
+        }</div>
+                    <div class="store-details">Phone: ${userPhone || "80686677-6"
+        }</div>
+                    <div class="store-details">Email: ${userEmail || "admin@pizza@example.com"
+        }</div>
+                </div>
+                <hr>
+                
+                <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
+                    <tbody>
+                        <tr>
+                            <td style="padding: 1px 0;">
+                                <strong>Customer:</strong> ${customerName || "Walk in"
+        }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1px 0;">
+                                <strong>Order #:</strong> ${apiResponse?.orderNumber || "OPD.354905023"
+        }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1px 0;">
+                                <strong>Date:</strong> ${new Date().toLocaleDateString(
+          "en-US",
+          {
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric",
+          }
+        )}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <hr>
+                
+                <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; padding: 2px 0; border-bottom: 1px dashed #000;">ITEM</th>
+                            <th style="text-align: right; padding: 2px 0; border-bottom: 1px dashed #000;">PRICE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.values(itemsBySubcategory)
+          .map((categoryData) =>
+            categoryData.items
+              .map(
+                (item) => `
+                                <tr>
+                                    <td style="padding: 2px 0;">${item.quantity ? `${item.quantity} x ` : ""
+                  }${item.name || item.taskTypeName}</td>
+                                    <td style="text-align: right; padding: 2px 0;">₹${(
+                    item.price * (item.quantity || 1)
+                  ).toFixed(2)}</td>
+                                </tr>
+                            `
+              )
+              .join("")
+          )
+          .join("")}
+                    </tbody>
+                </table>
+                
+                <hr>
+                
+                <table style="width: 100%; font-size: 14px; margin: 4px 0;">
+                    <tbody>
+                        <tr>
+                            <td style="padding: 2px 0;">SUBTOTAL</td>
+                            <td style="text-align: right; padding: 2px 0;">₹${calculateSubtotal()?.toFixed(
+            2
+          )}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px 0;">TAX (3%)</td>
+                            <td style="text-align: right; padding: 2px 0;">₹${calculateTax()?.toFixed(
+            2
+          )}</td>
+                        </tr>
+                        <tr style="font-weight: bold;">
+                            <td style="padding: 2px 0;">TOTAL</td>
+                            <td style="text-align: right; padding: 2px 0;">₹${calculateTotalPayable()?.toFixed(
+            2
+          )}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <hr>
+                
+                <div style="text-align: center; font-size: 14px;">
+                    <div style="font-weight: bold; margin-bottom: 2px;">CUSTOMER COPY</div>
+                    <div>THANK YOU FOR VISITING</div>
+                    <div style="font-weight: bold;">${storeName || "DOMN/DOWN PIZZA STORE"
+        }</div>
+                </div>
+                
+                <script>
+                    setTimeout(() => {
+                        window.print();
+                        setTimeout(() => {
+                            window.parent.postMessage('mainReceiptPrinted', '*');
+                            window.close();
+                        }, 100);
+                    }, 200);
+                </script>
+            </body>
+        </html>
+        `;
+
+      document.body.appendChild(iframe);
+      const iframeDoc = iframe.contentDocument;
+      iframeDoc.open();
+      iframeDoc.write(content);
+      iframeDoc.close();
+
+      const messageHandler = (e) => {
+        if (e.data === "mainReceiptPrinted") {
+          window.removeEventListener("message", messageHandler);
+          document.body.removeChild(iframe);
+          resolve();
+        }
+      };
+      window.addEventListener("message", messageHandler);
+    });
+  };
+
+  // subCategory summaries printing function
+  // const printCategorySummaries = (itemsByCategory) => {
+  //   const categories = Object.values(itemsByCategory);
+  //   let currentIndex = 0;
+
+  //   const printNextCategory = () => {
+  //     if (currentIndex >= categories.length) return;
+
+  //     const categoryData = categories[currentIndex];
+  //     const iframe = createHiddenIframe();
+  //     const content = `
+  //       <html>
+  //           <head>
+  //               <title>${categoryData.categoryName} Summary</title>
+  //               <style>
+  //                   @page {
+  //                       size: 80mm auto;
+  //                       margin: 0;
+  //                   }
+  //                   body {
+  //                       font-family: Arial, sans-serif;
+  //                       width: 80mm;
+  //                       margin: 0 auto;
+  //                       padding: 5px;
+  //                       font-size: 14px;
+  //                       -webkit-print-color-adjust: exact;
+  //                   }
+  //                   .category-header {
+  //                       font-weight: bold;
+  //                       text-transform: uppercase;
+  //                       margin: 10px 0 5px 0;
+  //                       background-color: #f5f5f5;
+  //                       padding: 3px;
+  //                       text-align: center;
+  //                   }
+  //               </style>
+  //           </head>
+  //           <body>
+  //                  <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
+  //                   <tbody>
+  //                       <tr>
+  //                           <td style="padding: 1px 0;">
+  //                               <strong>Customer:</strong> ${
+  //                                 customerName || "Walk in"
+  //                               }
+  //                           </td>
+  //                       </tr>
+  //                       <tr>
+  //                           <td style="padding: 1px 0;">
+  //                               <strong>Order #:</strong> ${
+  //                                 apiResponse?.orderNumber || "OPD.354905023"
+  //                               }
+  //                           </td>
+  //                       </tr>
+  //                       <tr>
+  //                           <td style="padding: 1px 0;">
+  //                               <strong>Date:</strong> ${new Date().toLocaleDateString(
+  //                                 "en-US",
+  //                                 {
+  //                                   month: "2-digit",
+  //                                   day: "2-digit",
+  //                                   year: "numeric",
+  //                                 }
+  //                               )}
+  //                           </td>
+  //                       </tr>
+  //                   </tbody>
+  //               </table>
+
+  //               <hr>
+
+  //               <div class="category-header">${categoryData.categoryName}</div>
+
+  //               <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
+  //                   <thead>
+  //                       <tr>
+  //                           <th style="text-align: left; padding: 2px 0; border-bottom: 1px dashed #000;">ITEM</th>
+  //                           <th style="text-align: right; padding: 2px 0; border-bottom: 1px dashed #000;">QTY</th>
+  //                       </tr>
+  //                   </thead>
+  //                   <tbody>
+  //                       ${categoryData.items
+  //                         .map(
+  //                           (item) => `
+  //                           <tr>
+  //                               <td style="padding: 2px 0;">${
+  //                                 item.name || item.taskTypeName
+  //                               }</td>
+  //                               <td style="text-align: right; padding: 2px 0;">${
+  //                                 item.quantity || "1"
+  //                               }</td>
+  //                           </tr>
+  //                       `
+  //                         )
+  //                         .join("")}
+  //                   </tbody>
+  //               </table>
+
+  //               <hr>
+
+  //               <div style="text-align: center; font-size: 14px; margin-top: 10px;">
+  //                   <div>${categoryData.categoryName} ITEMS: ${
+  //       categoryData.items.length
+  //     }</div>
+  //                                     <div style="font-weight: bold;">${
+  //                                       storeName || "DOMN/DOWN PIZZA STORE"
+  //                                     }</div>
+  //               </div>
+
+  //               <script>
+  //                   setTimeout(() => {
+  //                       window.print();
+  //                       setTimeout(() => {
+  //                           window.parent.postMessage('categoryPrinted', '*');
+  //                           window.close();
+  //                       }, 100);
+  //                   }, 200);
+  //               </script>
+  //           </body>
+  //       </html>
+  //       `;
+
+  //     document.body.appendChild(iframe);
+  //     const iframeDoc = iframe.contentDocument;
+  //     iframeDoc.open();
+  //     iframeDoc.write(content);
+  //     iframeDoc.close();
+
+  //     const messageHandler = (e) => {
+  //       if (e.data === "categoryPrinted") {
+  //         window.removeEventListener("message", messageHandler);
+  //         document.body.removeChild(iframe);
+  //         currentIndex++;
+  //         printNextCategory();
+  //       }
+  //     };
+  //     window.addEventListener("message", messageHandler);
+  //   };
+
+  //   printNextCategory();
+  // };
+  const printSubcategorySummaries = (itemsBySubcategory) => {
+    const subcategories = Object.values(itemsBySubcategory);
+    let currentIndex = 0;
+
+    const printNextSubcategory = () => {
+      if (currentIndex >= subcategories.length) return;
+
+      const subcategoryData = subcategories[currentIndex];
+      const iframe = createHiddenIframe();
+      const content = `
+      <html>
+          <head>
+              <title>${subcategoryData.subcategoryName} Summary</title>
+              <style>
+                  @page {
+                      size: 80mm auto;
+                      margin: 0;
+                  }
+                  body {
+                      font-family: Arial, sans-serif;
+                      width: 76mm;
+                      margin: 0 auto;
+                      padding: 5px;
+                      font-size: 11px;
+                      -webkit-print-color-adjust: exact;
+                  }
+                  .subcategory-header {
+                      font-weight: bold;
+                      text-transform: uppercase;
+                      margin: 8px 0 4px 0;
+                      background-color: #f5f5f5;
+                      padding: 2px;
+                      text-align: center;
+                  }
+                      .store-name {
+              text-align: center;
+              font-weight: bold;
+              margin-bottom: 4px;
+            }
+              </style>
+          </head>
+          <body>
+                 <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
+                  <tbody>
+                      <tr>
+                          <td style="padding: 1px 0;">
+                              <strong>Customer:</strong> ${customerName || "Walk in"
+        }
+                          </td>
+                      </tr>
+                      <tr>
+                          <td style="padding: 1px 0;">
+                              <strong>Order #:</strong> ${apiResponse?.orderNumber || "OPD.354905023"
+        }
+                          </td>
+                      </tr>
+                      <tr>
+                          <td style="padding: 1px 0;">
+                              <strong>Date:</strong> ${new Date().toLocaleDateString(
+          "en-US",
+          {
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric",
+          }
+        )}
+                          </td>
+                      </tr>
+                  </tbody>
+              </table>
+              
+              <hr>
+              
+              <div class="subcategory-header">${subcategoryData.subcategoryName}</div>
+              
+              <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
+                  <thead>
+                      <tr>
+                          <th style="text-align: left; padding: 2px 0; border-bottom: 1px dashed #000;">ITEM</th>
+                          <th style="text-align: right; padding: 2px 0; border-bottom: 1px dashed #000;">QTY</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      ${subcategoryData.items
+          .map(
+            (item) => `
+                          <tr>
+                              <td style="padding: 2px 0;">${item.name || item.taskTypeName
+              }</td>
+                              <td style="text-align: right; padding: 2px 0;">${item.quantity || "1"
+              }</td>
+                          </tr>
+                      `
+          )
+          .join("")}
+                  </tbody>
+              </table>
+              
+              <hr>
+              
+              <div style="text-align: center; font-size: 14px; margin-top: 10px;">
+                  <div>${subcategoryData.subcategoryName} ITEMS: ${subcategoryData.items.length
+        }</div>
+                                    <div style="font-weight: bold;">${storeName || "DOMN/DOWN PIZZA STORE"
+        }</div>
+              </div>
+              
+              <script>
+                  setTimeout(() => {
+                      window.print();
+                      setTimeout(() => {
+                          window.parent.postMessage('subcategoryPrinted', '*');
+                          window.close();
+                      }, 100);
+                  }, 200);
+              </script>
+          </body>
+      </html>
+      `;
+
+      document.body.appendChild(iframe);
+      const iframeDoc = iframe.contentDocument;
+      iframeDoc.open();
+      iframeDoc.write(content);
+      iframeDoc.close();
+
+      const messageHandler = (e) => {
+        if (e.data === "subcategoryPrinted") {
+          window.removeEventListener("message", messageHandler);
+          document.body.removeChild(iframe);
+          currentIndex++;
+          printNextSubcategory();
+        }
+      };
+      window.addEventListener("message", messageHandler);
+    };
+
+    printNextSubcategory();
+  };
+
+  // Helper function to create hidden iframe
+  const createHiddenIframe = () => {
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "absolute";
+    iframe.style.left = "-9999px";
+    iframe.style.top = "0";
+    iframe.style.width = "80mm";
+    iframe.style.height = "100%";
+    iframe.style.border = "none";
+    return iframe;
+  };
+
+  // In your success modal button, update to call handlePrintReceipt directly:
 
   const handleKeyPress = (event) => {
     if (/[0-9+\-*/%.]/.test(event.key)) {
@@ -502,59 +1050,16 @@ const PosModals = ({ onCustomerCreated }) => {
       {/* Payment Completed */}
       <div
         className="modal fade modal-default"
-        id="payment-completed"
-        aria-labelledby="payment-completed"
-      >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-body p-0">
-              <div className="success-wrap text-center">
-                <form>
-                  <div className="icon-success bg-success text-white mb-2">
-                    <i className="ti ti-check" />
-                  </div>
-                  <h3 className="mb-2">Payment Completed</h3>
-                  <p className="mb-3">
-                    Do you want to Print Receipt for the Completed Order
-                  </p>
-                  <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      className="btn btn-md btn-secondary"
-                      data-bs-toggle="modal"
-                      data-bs-target="#print-receipt"
-                    >
-                      Print Receipt
-                      <i className="feather-arrow-right-circle icon-me-5" />
-                    </button>
-                    <button
-                      type="button"
-                      data-bs-dismiss="modal"
-                      className="btn btn-md btn-primary"
-                    >
-                      Next Order
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Payment Completed */}
-      {/* Print Receipt */}
-      <div
-        className="modal fade modal-default"
         id="print-receipt"
         aria-labelledby="print-receipt"
       >
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
             <div className="modal-body p-4">
-             <button
+              <button
                 type="button"
                 className="btn-close position-absolute top-0 end-0 m-3 bg-transparent"
-                style={{ filter: "none", color: "black"}}
+                style={{ filter: "none", color: "black" }}
                 data-bs-dismiss="modal"
                 aria-label="Close"
               ></button>
@@ -651,11 +1156,11 @@ const PosModals = ({ onCustomerCreated }) => {
                         </td>
                         <td className="small">{item.taskTypeName}</td>
                         <td className="small text-end">
-                          ${item.serviceCharge}
+                          ₹{item.serviceCharge}
                         </td>
                         <td className="small text-center">1</td>
                         <td className="small text-end">
-                          ${item.serviceCharge}
+                          ₹{item.serviceCharge}
                         </td>
                       </tr>
                     ))}
@@ -667,9 +1172,9 @@ const PosModals = ({ onCustomerCreated }) => {
                           {(ticketData.ticketItems?.length || 0) + index + 1}.
                         </td>
                         <td className="small">{item.name}</td>
-                        <td className="small text-end">${item.price}</td>
+                        <td className="small text-end">₹{item.price}</td>
                         <td className="small text-center">1</td>
-                        <td className="small text-end">${item.price}</td>
+                        <td className="small text-end">₹{item.price}</td>
                       </tr>
                     ))}
 
@@ -687,10 +1192,10 @@ const PosModals = ({ onCustomerCreated }) => {
                           .
                         </td>
                         <td className="small">{item.name}</td>
-                        <td className="small text-end">${item.price}</td>
+                        <td className="small text-end">₹{item.price}</td>
                         <td className="small text-center">{item.quantity}</td>
                         <td className="small text-end">
-                          ${item.price * item.quantity}
+                          ₹{item.price * item.quantity}
                         </td>
                       </tr>
                     ))}
@@ -710,10 +1215,10 @@ const PosModals = ({ onCustomerCreated }) => {
                           .
                         </td>
                         <td className="small">{item.name}</td>
-                        <td className="small text-end">${item.price}</td>
+                        <td className="small text-end">₹{item.price}</td>
                         <td className="small text-center">{item.quantity}</td>
                         <td className="small text-end">
-                          ${item.price * item.quantity}
+                          ₹{item.price * item.quantity}
                         </td>
                       </tr>
                     ))}
@@ -728,27 +1233,27 @@ const PosModals = ({ onCustomerCreated }) => {
                     <tr>
                       <td className="small text-muted">Sub Total:</td>
                       <td className="small text-end fw-semibold">
-                        ${calculateSubtotal()?.toFixed(2)}
+                        ₹{calculateSubtotal().toFixed(2)}
                       </td>
                     </tr>
                     <tr>
                       <td className="small text-muted">Discount:</td>
-                      <td className="small text-end">-$0.00</td>
+                      <td className="small text-end">-₹0.00</td>
                     </tr>
                     <tr>
                       <td className="small text-muted">Shipping:</td>
-                      <td className="small text-end">$0.00</td>
+                      <td className="small text-end">₹0.00</td>
                     </tr>
                     <tr>
                       <td className="small text-muted">Tax (3%):</td>
                       <td className="small text-end fw-semibold">
-                        ${(calculateSubtotal() * 0.03)?.toFixed(2)}
+                        ₹{(calculateSubtotal() * 0.03).toFixed(2)}
                       </td>
                     </tr>
                     <tr className="border-top">
                       <td className="small fw-bold">Total Payable:</td>
                       <td className="small text-end fw-bold">
-                        ${calculateTotalPayable()?.toFixed(2)}
+                        ₹{calculateTotalPayable().toFixed(2)}
                       </td>
                     </tr>
                   </tbody>
@@ -761,9 +1266,9 @@ const PosModals = ({ onCustomerCreated }) => {
                   Thank you for shopping with us. Please come again!
                 </p>
                 <div className="d-flex justify-content-center gap-2">
-                  <button className="btn btn-sm btn-outline-primary">
+                  {/* <button className="btn btn-sm btn-outline-primary">
                     Print Receipt
-                  </button>
+                  </button> */}
                   <button
                     className="btn btn-sm btn-primary"
                     onClick={() => handlePaymentSelection("Cash")}
@@ -776,9 +1281,12 @@ const PosModals = ({ onCustomerCreated }) => {
           </div>
         </div>
       </div>
+      {/* Print Receipt */}
+
       {/* /Print Receipt */}
 
       {/* order successfull modal  */}
+      {/* Order Success Modal */}
       {/* Order Success Modal */}
       {/* Order Success Modal */}
       {/* Order Success Modal */}
@@ -794,18 +1302,16 @@ const PosModals = ({ onCustomerCreated }) => {
             <div className="modal-body p-0">
               <div className="text-center p-4">
                 <div
-                  className={`icon-circle ${
-                    apiResponse?.error ? "bg-danger" : "bg-success"
-                  } text-white mb-3`}
+                  className={`icon-circle ${apiResponse?.error ? "bg-danger" : "bg-success"
+                    } text-white mb-3`}
                 >
                   <i
                     className={apiResponse?.error ? "ti ti-x" : "ti ti-check"}
                   />
                 </div>
                 <h3
-                  className={`mb-3 ${
-                    apiResponse?.error ? "text-danger" : "text-success"
-                  }`}
+                  className={`mb-3 ${apiResponse?.error ? "text-danger" : "text-success"
+                    }`}
                 >
                   {apiResponse?.error ? "Failed" : "Success"}
                 </h3>
@@ -815,36 +1321,45 @@ const PosModals = ({ onCustomerCreated }) => {
                     Order Number: <strong>{apiResponse.orderNumber}</strong>
                   </div>
                 )}
-                <button
-                  type="button"
-                  className={`btn ${
-                    apiResponse?.error ? "btn-outline-danger" : "btn-primary"
-                  }`}
-                  onClick={() => {
-                    const modalEl = document.getElementById(
-                      "order-success-modal"
-                    );
-                    const modal = window.bootstrap.Modal.getInstance(modalEl);
+                <div className="d-flex justify-content-center gap-3">
+                  {!apiResponse?.error && (
+                    <button
+                      className="btn btn-success"
+                      onClick={handlePrintReceipt}
+                      disabled={isProcessing}
+                    >
+                      <i className="ti ti-printer me-1"></i>
+                      Print Receipt
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={`btn ${apiResponse?.error ? "btn-outline-danger" : "btn-primary"
+                      }`}
+                    onClick={() => {
+                      const modalEl = document.getElementById(
+                        "order-success-modal"
+                      );
+                      const modal = window.bootstrap.Modal.getInstance(modalEl);
 
-                    if (modal) {
-                      modal.hide();
-                    }
+                      if (modal) {
+                        modal.hide();
+                      }
 
-                    // Add a slight delay before reload to ensure modal is fully dismissed
-                    setTimeout(() => {
-                      window.location.reload();
-                    }, 500); // Increased from 300ms to 500ms for more reliable dismissal
-                  }}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? "Processing..." : "OK"}
-                </button>
+                      setTimeout(() => {
+                        window.location.reload();
+                      }, 500);
+                    }}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? "Processing..." : "Close"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      {/* Products */}
       <div
         className="modal fade modal-default pos-modal"
         id="products"

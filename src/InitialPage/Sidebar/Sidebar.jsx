@@ -65,17 +65,25 @@ const Sidebar = () => {
           {/* Logo */}
           <div
             className="sidebar-logo"
-            style={{ backgroundColor: "rgb(62 18 81)" }}
+            style={{ backgroundColor: "#b38e432f" }}
           >
-            <Link to={route.newdashboard} className="logo logo-normal">
+            <img 
+    src="assets/img/logo.png" 
+    alt="Logo" 
+    style={{ 
+      height: "75px", 
+      width: "85px", 
+      objectFit: "contain" 
+    }}/>
+            {/* <Link to={route.newdashboard} className="logo logo-normal">
               <ImageWithBasePath src="assets/img/logo.png" alt="Img" />
-            </Link>
+            </Link> */}
             <Link to={route.newdashboard} className="logo logo-white">
               <ImageWithBasePath src="assets/img/logo-white.svg" alt="Img" />
             </Link>
-            <Link to={route.newdashboard} className="logo-small">
+            {/* <Link to={route.newdashboard} className="logo-small">
               <ImageWithBasePath src="assets/img/logo-small.png" alt="Img" />
-            </Link>
+            </Link> */}
             <Link id="toggle_btn" to="#" onClick={handlesidebar}>
               <i data-feather="chevrons-left" />
               <ChevronsLeft className="feather-16" />

@@ -149,13 +149,13 @@ export const SidebarData = [
       //   showSubRoute: false,
       //   submenu: false,
       // },
-      {
-      label: "Import Product",
-      link: "/import-product",
-      icon: "file-import",
-      showSubRoute: false,
-      submenu: false,
-    },
+    //   {
+    //   label: "Import Product",
+    //   link: "/import-product",
+    //   icon: "file-import",
+    //   showSubRoute: false,
+    //   submenu: false,
+    // },
       // {
       //   label: "Units",
       //   link: "/units",

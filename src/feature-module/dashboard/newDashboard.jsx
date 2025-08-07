@@ -66,16 +66,16 @@ const NewDashboard = () => {
   // Calculate ticket statistics
   // Calculate ticket statistics
   const totalTickets = ticketData.length;
-  const inProgressTickets = ticketData.filter(
-    (ticket) => ticket.status && ticket.status.toLowerCase() === "inprogress"
-  ).length;
-  const pendingTickets = ticketData.filter(
-    (ticket) =>
-      !ticket.status ||
-      ticket.status === "" ||
-      (ticket.status.toLowerCase() !== "inprogress" &&
-        ticket.status.toLowerCase() !== "completed")
-  ).length;
+  // const inProgressTickets = ticketData.filter(
+  //   (ticket) => ticket.status && ticket.status.toLowerCase() === "inprogress"
+  // ).length;
+  // const pendingTickets = ticketData.filter(
+  //   (ticket) =>
+  //     !ticket.status ||
+  //     ticket.status === "" ||
+  //     (ticket.status.toLowerCase() !== "inprogress" &&
+  //       ticket.status.toLowerCase() !== "completed")
+  // ).length;
 
   if (loading) {
     return (
@@ -571,7 +571,7 @@ const NewDashboard = () => {
                   <i className="ti ti-file-text fs-24" />
                 </span>
                 <div className="ms-2">
-                  <p className="text-white mb-1">Total Tickets</p>
+                  <p className="text-white mb-1">Total Orders</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
                     <h4 className="text-white">{totalTickets}</h4>
                   </div>
@@ -579,7 +579,7 @@ const NewDashboard = () => {
               </div>
             </div>
           </div>
-          <div className="col-xl-4 col-sm-6 col-12 d-flex">
+          {/* <div className="col-xl-4 col-sm-6 col-12 d-flex">
             <div className="card bg-teal sale-widget flex-fill">
               <div className="card-body d-flex align-items-center">
                 <span className="sale-icon bg-white text-teal">
@@ -599,8 +599,8 @@ const NewDashboard = () => {
                 </div>
               </div>
             </div>
-          </div>
-          <div className="col-xl-4 col-sm-6 col-12 d-flex">
+          </div> */}
+          {/* <div className="col-xl-4 col-sm-6 col-12 d-flex">
             <div className="card bg-orange sale-widget flex-fill">
               <div className="card-body d-flex align-items-center">
                 <span className="sale-icon bg-white text-orange">
@@ -620,7 +620,7 @@ const NewDashboard = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
         <div className="row">
           {/* Profit */}

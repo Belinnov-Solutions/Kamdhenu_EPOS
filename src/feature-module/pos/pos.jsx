@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import Select from "react-select";
 import PosModals from "../../core/modals/pos-modal/posModals";
 import BrandForm from "./BrandForm";
-// import TicketManagement from "./TicketManagement";
+import TicketManagement from "./TicketManagement";
 import Accessories from "./accessories";
 import { useSelector } from "react-redux"; // Add this import
 import axios from "axios"; // Import axios for API calls
@@ -22,15 +22,16 @@ import "./pos.css";
 import { clearTickets } from "../../core/redux/ticketSlice";
 import { resetCart } from "../../core/redux/partSlice";
 
+
 const Pos = () => {
   const BASE_URL = process.env.REACT_APP_BASEURL;
-  const [contactMethods, setContactMethods] = useState({
-    call: false,
-    sms: false,
-    email: false,
-  });
-  const [isAdded, setIsAdded] = useState(false);
-
+  // const [contactMethods, setContactMethods] = useState({
+  //   call: false,
+  //   sms: false,
+  //   email: false,
+  // });
+  // const [isAdded, setIsAdded] = useState(false);
+ const [hasItems, setHasItems] = useState(false);
   const [accessoriesNav, setAccessoriesNav] = useState({
     currentView: "categories",
     currentCategory: null,
@@ -73,22 +74,31 @@ const Pos = () => {
     ...(customerName ? [{ value: "current", label: customerName }] : []),
   ]);
 
-  const handleCheckboxChange = (method) => {
-    setContactMethods((prev) => ({
-      ...prev,
-      [method]: !prev[method],
-    }));
-    // Reset added status when changing selections
-    setIsAdded(false);
-  };
+  // const handleCheckboxChange = (method) => {
+  //   setContactMethods((prev) => ({
+  //     ...prev,
+  //     [method]: !prev[method],
+  //   }));
+  //   // Reset added status when changing selections
+  //   setIsAdded(false);
+  // };
 
-  const handleAddClick = () => {
-    // Only mark as added if at least one method is selected
-    if (contactMethods.call || contactMethods.sms || contactMethods.email) {
-      setIsAdded(true);
-      // Here you would typically save the preferences to your state/API
-    }
-  };
+  // const handleAddClick = () => {
+  //   // Only mark as added if at least one method is selected
+  //   if (contactMethods.call || contactMethods.sms || contactMethods.email) {
+  //     setIsAdded(true);
+  //     // Here you would typically save the preferences to your state/API
+  //   }
+  // };
+  useEffect(() => {
+    setHasItems(
+      (ticketData.ticketItems?.length > 0) ||
+      (selectedServices.length > 0) ||
+      (orderItems.length > 0) ||
+      (partItems.length > 0)
+    );
+  }, [ticketData.ticketItems, selectedServices, orderItems, partItems]);
+  
   useEffect(() => {
     const handleClick = (event) => {
       if (!event.target.closest(".product-info")) return;
@@ -459,7 +469,7 @@ const Pos = () => {
   const handleDeletePart = (partId) => {
     dispatch(removePartItem(partId));
   };
-
+ 
   return (
     <div className="main-wrapper pos-five">
       <div className="page-wrapper pos-pg-wrapper ms-0">
@@ -529,7 +539,7 @@ const Pos = () => {
                         )}
 
                       {/* Show Ticket Management for all authorized roles */}
-                      {/* {(roleName === "Admin" ||
+                      {(roleName === "Admin" ||
                         roleName === "Super Admin" ||
                         roleName === "Store Manager" ||
                         roleName === "Franchise Admin" ||
@@ -544,23 +554,23 @@ const Pos = () => {
                             activeTab === "ticketmanagement" ? "active" : ""
                           }
                         >
-                          <Link to="#">
+                          {/* <Link to="#">
                               <img
                                 style={{ width: "204px" }}
                                 src="assets/img/products/pos-product-02.svg"
                                 alt="Categories"
                               />
-                            </Link>
+                            </Link> */}
                           <h6>
                             <Link to="#">
                               <b>
-                                Ticket <br />
-                                Management
+                                Order <br />
+                                List
                               </b>
                             </Link>
                           </h6>
                         </li>
-                      )} */}
+                      )}
                     </ul>
                   </div>
                   <div className="tab-content-wrap">
@@ -629,7 +639,7 @@ const Pos = () => {
                         </div>
 
                         {/* Ticket management */}
-                        {/* <div
+                        <div
                           className={`tab_content ${
                             activeTab === "ticketmanagement" ? "active" : ""
                           } `}
@@ -647,7 +657,7 @@ const Pos = () => {
                             showOrderList={showOrderList}
                             activeTab={activeTab} // Add this line
                           />
-                        </div> */}
+                        </div>
 
                         {/* categories */}
                         {/* <div
@@ -852,7 +862,7 @@ const Pos = () => {
                             </Link>
                           </div>
 
-                          <div className="preferred-contact mt-3">
+                          {/* <div className="preferred-contact mt-3">
                             <h6 className="mb-2">Preferred Contact Method:</h6>
                             <div className="d-flex flex-column gap-2">
                               <div className="d-flex align-items-center gap-3">
@@ -923,7 +933,7 @@ const Pos = () => {
                                 </button>
                               </div>
                             </div>
-                          </div>
+                          </div> */}
 
                           {showAlert && (
                             <div className="customer-item  d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
@@ -1457,6 +1467,7 @@ const Pos = () => {
             accessoriesNav.currentView === "products")) && (
           <div className="pos-footer bg-white p-3 border-top">
             <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
+            
               {/* <Link
                     to="#"
                     className="btn btn-orange d-inline-flex align-items-center justify-content-center"
@@ -1489,11 +1500,13 @@ const Pos = () => {
                 <i className="ti ti-shopping-cart me-2" />
                 View Orders
               </Link> */}
+              
               <Link
                 to="#"
-                className="btn btn-danger d-inline-flex align-items-center justify-content-center"
-                data-bs-toggle="modal"
-                data-bs-target="#print-receipt"
+                className={`btn btn-danger d-inline-flex align-items-center justify-content-center ${!hasItems ? 'disabled' : ''}`}
+                 data-bs-toggle={hasItems ? "modal" : undefined}
+              data-bs-target={hasItems ? "#print-receipt" : undefined}
+                disabled={!hasItems}
               >
                 Submit & Print
               </Link>

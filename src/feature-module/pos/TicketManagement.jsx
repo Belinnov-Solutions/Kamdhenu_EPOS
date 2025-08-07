@@ -344,7 +344,7 @@ const TicketManagement = ({
       >
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Ticket Management</h5>
+            <h5 className="modal-title">Order List</h5>
           </div>
           <div className="modal-body">
             {showBrandFormTicket && selectedBrand ? (
