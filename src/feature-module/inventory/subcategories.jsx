@@ -95,7 +95,7 @@ const storeId = useSelector((state) => state.user.storeId);
   }, []);
 
   const handleSubmit = async () => {
-    if (!selectedCategory || !subCategoryName || !categoryCode || !values) {
+    if (!selectedCategory || !subCategoryName || !values) {
       alert("Please fill all required fields");
       return;
     }
@@ -206,9 +206,9 @@ const storeId = useSelector((state) => state.user.storeId);
             >
               <i data-feather="edit" className="feather-edit"></i>
             </Link>
-            <Link data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" to="#">
+            {/* <Link data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" to="#">
               <i data-feather="trash-2" className="feather-trash-2"></i>
-            </Link>
+            </Link> */}
           </div>
         </div>
       ),
@@ -304,7 +304,7 @@ const storeId = useSelector((state) => state.user.storeId);
               </div>
               <div className="modal-body">
                 <form>
-                  <div className="mb-3">
+                  {/* <div className="mb-3">
                     <label className="form-label">Upload Image</label>
                     <input
                       type="file"
@@ -312,7 +312,7 @@ const storeId = useSelector((state) => state.user.storeId);
                       accept="image/*"   
                       onChange={(e) => setImageFile(e.target.files[0])}
                     />
-                  </div>
+                  </div> */}
                   <div className="mb-3">
                     <label className="form-label">Category *</label>
                     <Select
@@ -333,7 +333,7 @@ const storeId = useSelector((state) => state.user.storeId);
                       placeholder="Enter subcategory name"
                     />
                   </div>
-                  <div className="mb-3">
+                  {/* <div className="mb-3">
                     <label className="form-label">Category Code *</label>
                     <input
                       type="text"
@@ -342,7 +342,7 @@ const storeId = useSelector((state) => state.user.storeId);
                       onChange={(e) => setCategoryCode(e.target.value)}
                       placeholder="Enter category code"
                     />
-                  </div>
+                  </div> */}
                   <div className="mb-3">
                     <label className="form-label">Description *</label>
                     {/* <DefaultEditor value={values} onChange={onChange} />  */}
@@ -354,7 +354,7 @@ const storeId = useSelector((state) => state.user.storeId);
                       placeholder="Enter description"
                     />
                   </div>
-                  <div className="mb-3">
+                  {/* <div className="mb-3">
                     <div className="status-toggle modal-status d-flex justify-content-between">
                       <span className="status-label">Status</span>
                       <input
@@ -366,7 +366,7 @@ const storeId = useSelector((state) => state.user.storeId);
                       />
                       <label htmlFor="user2" className="checktoggle" />
                     </div>
-                  </div>
+                  </div> */}
                 </form>
               </div>
               <div className="modal-footer">

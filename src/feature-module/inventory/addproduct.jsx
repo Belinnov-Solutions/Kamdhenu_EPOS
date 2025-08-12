@@ -340,11 +340,11 @@ const AddProduct = () => {
   //   { value: "kg", label: "Kg" },
   //   { value: "pc", label: "Pc" },
   // ];
-  const sellingtype = [
-    { value: "choose", label: "Choose" },
-    { value: "transactionalSelling", label: "Transactional selling" },
-    { value: "solutionSelling", label: "Solution selling" },
-  ];
+  // const sellingtype = [
+  //   { value: "choose", label: "Choose" },
+  //   { value: "transactionalSelling", label: "Transactional selling" },
+  //   { value: "solutionSelling", label: "Solution selling" },
+  // ];
   // const barcodesymbol = [
   //   { value: "choose", label: "Choose" },
   //   { value: "code34", label: "Code34" },
@@ -352,13 +352,13 @@ const AddProduct = () => {
   //   { value: "code36", label: "Code36" },
   // ];
   const taxtype = [
-    { value: "exclusive", label: "Exclusive" },
+    { value: "GST", label: "GST" },
     { value: "salesTax", label: "Sales Tax" },
   ];
   const discounttype = [
     { value: "choose", label: "Choose" },
     { value: "percentage", label: "Percentage" },
-    { value: "cash", label: "Cash" },
+    { value: "Amount", label: "Amount" },
   ];
 
   // const warrenty = [
@@ -491,7 +491,7 @@ const AddProduct = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="row">
+                     {/* <div className="row">
                         <div className="col-sm-6 col-12">
                           <div className="mb-3 list position-relative">
                             <label className="form-label">
@@ -503,12 +503,13 @@ const AddProduct = () => {
                               onChange={handleInputChange}
                               required
                             />
-                            {/* <button type="button" className="btn btn-primaryadd">
+                            <button type="button" className="btn btn-primaryadd">
                               Generate
-                            </button> */}
+                            </button>
                           </div>
                         </div>
-                        <div className="col-sm-6 col-12">
+                        </div> */}
+                         {/* <div className="col-sm-6 col-12">
                           <div className="mb-3">
                             <label className="form-label">
                               Selling Type<span className="text-danger ms-1">*</span>
@@ -521,7 +522,7 @@ const AddProduct = () => {
                             />
                           </div>
                         </div>
-                      </div>
+                      </div> */}
                       <div className="addservice-info">
                         <div className="row">
                           <div className="col-sm-6 col-12">
@@ -595,7 +596,7 @@ const AddProduct = () => {
                       </div>
                       <div className="add-product-new">
                         <div className="row">
-                          <div className="col-sm-6 col-12">
+                          {/* <div className="col-sm-6 col-12">
                             <div className="mb-3">
                               <div className="add-newplus">
                                 <label className="form-label">
@@ -612,7 +613,23 @@ const AddProduct = () => {
                                 onChange={(selectedOption) => handleSelectChange(selectedOption, "brandId")}
                               />
                             </div>
+                          </div> */}
+                          <div className="col-sm-6 col-12">
+                          <div className="mb-3 list position-relative">
+                            <label className="form-label">
+                              SKU<span className="text-danger ms-1">*</span>
+                            </label>
+                            <input type="text" className="form-control list"
+                              name="sku"
+                              value={formData.sku}
+                              onChange={handleInputChange}
+                              required
+                            />
+                            {/* <button type="button" className="btn btn-primaryadd">
+                              Generate
+                            </button> */}
                           </div>
+                        </div>
                           <div className="col-sm-6 col-12">
                             <div className="mb-3">
                               <div className="add-newplus">

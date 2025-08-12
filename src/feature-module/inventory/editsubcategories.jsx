@@ -102,14 +102,14 @@ const EditSubcategories = ({ id, onUpdate }) => {
             </div>
             <div className="modal-body">
               <form>
-                <div className="mb-3">
+                {/* <div className="mb-3">
                   <label className="form-label">Upload Image</label>
                   <input
                     type="file"
                     className="form-control"
                     onChange={(e) => setImageFile(e.target.files[0])}
                   />
-                </div>
+                </div> */}
                 <div className="mb-3">
                   <label className="form-label">Sub Category</label>
                   <input
@@ -120,7 +120,7 @@ const EditSubcategories = ({ id, onUpdate }) => {
                     placeholder={originalData?.subCategoryName || ""}
                   />
                 </div>
-               <div className="mb-3">
+               {/* <div className="mb-3">
                   <label className="form-label">Category Code</label>
                   <input
                     type="text"
@@ -129,8 +129,8 @@ const EditSubcategories = ({ id, onUpdate }) => {
                     onChange={(e) => setCategoryCode(e.target.value)}
                     placeholder={originalData?.code || ""}
                   />
-                </div>
-                 <div className="mb-3">
+                </div> */}
+                 {/* <div className="mb-3">
                   <label className="form-label">Description</label>
                   <textarea
                     className="form-control"
@@ -152,7 +152,7 @@ const EditSubcategories = ({ id, onUpdate }) => {
                     />
                     <label htmlFor="edit-status" className="checktoggle" />
                   </div>
-                </div>
+                </div> */}
               </form>
             </div>
             <div className="modal-footer">

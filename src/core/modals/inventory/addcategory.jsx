@@ -134,7 +134,7 @@ const AddCategory = ({ onCategoryAdded }) => {
                       }
                     />
                   </div>
-                  <div className="mb-3">
+                  {/* <div className="mb-3">
                     <label className="form-label">
                       Upload Image<span className="text-danger">*</span>
                     </label>
@@ -149,7 +149,7 @@ const AddCategory = ({ onCategoryAdded }) => {
                         })
                       }
                     />
-                  </div>
+                  </div> */}
                 </form>
               </div>
               <div className="modal-footer">

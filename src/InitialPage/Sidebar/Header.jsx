@@ -157,7 +157,13 @@ const Header = () => {
   return (
     <>
       <div className="header"
-        style={{ backgroundColor: "#b38e432f" }}>
+        style={{ backgroundColor: "#b38e432f",
+           position: 'fixed',
+  top: 0,
+  width: '100%',
+  zIndex: 1000
+
+         }}>
         {/* Logo */}
         <div className="main-header">
           <div
@@ -180,7 +186,7 @@ const Header = () => {
                 style={{
                   height: "75px",
                   width: "85px",
-                  objectFit: "contain"
+                  objectFit: "contain",                 
                 }} />
             </Link>
             <Link to="/dashboard" className="logo logo-white">
@@ -385,7 +391,7 @@ const Header = () => {
               </div>
             </li> */}
             {/* /Select Store */}
-            {/* 
+{/*             
             <li className="nav-item dropdown link-nav">
               <Link
                 to="#"

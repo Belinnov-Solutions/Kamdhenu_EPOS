@@ -2,10 +2,14 @@ import React, { useEffect, useState } from "react";
 // import { Link } from "react-router-dom";
 import axios from "axios";
 import PropTypes from "prop-types";
+import { useSelector } from "react-redux";
+
 
 // const STORE_ID = process.env.REACT_APP_STORE_ID;
 
 const EditCategoryList = ({ categoryData, onRefresh }) => {
+    const storeId = useSelector((state) => state.user.storeId);
+  
   const [formData, setFormData] = useState({
     categoryId: 1,
     name: "",
@@ -13,17 +17,17 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
     // status: true,
     description: "",
     image: null,
-    storeId: "67aa7f75-0ed9-4378-9b3d-50e1e34903ce",
+    storeId: storeId,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleStatusChange = (e) => {
-    setFormData({
-      ...formData,
-      status: e.target.checked,
-    });
-  };
+  // const handleStatusChange = (e) => {
+  //   setFormData({
+  //     ...formData,
+  //     status: e.target.checked,
+  //   });
+  // };
 
   useEffect(() => {
     if (categoryData) {
@@ -42,9 +46,9 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e) => {
-    setFormData((prev) => ({ ...prev, image: e.target.files[0] }));
-  };
+  // const handleFileChange = (e) => {
+  //   setFormData((prev) => ({ ...prev, image: e.target.files[0] }));
+  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -124,7 +128,7 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
                       onChange={handleInputChange}
                     />
                   </div>
-                  <div className="mb-3">
+                  {/* <div className="mb-3">
                     <label className="form-label">
                       Category Slug<span className="text-danger ms-1">*</span>
                     </label>
@@ -135,8 +139,8 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
                       value={formData.slug}
                       onChange={handleInputChange}
                     />
-                  </div>
-                  <div className="mb-3">
+                  </div> */}
+                  {/* <div className="mb-3">
                     <label className="form-label">Description</label>
                     <textarea
                       className="form-control"
@@ -144,8 +148,8 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
                       value={formData.description}
                       onChange={handleInputChange}
                     />
-                  </div>
-                  <div className="mb-3">
+                  </div> */}
+                  {/* <div className="mb-3">
                     <label className="form-label">Upload Image</label>
                     <input
                       type="file"
@@ -153,8 +157,8 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
                       accept="image/*"
                       onChange={handleFileChange}
                     />
-                  </div>
-                  <div className="mb-0">
+                  </div> */}
+                  {/* <div className="mb-0">
                     <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
                       <span className="status-label">
                         Active<span className="text-danger ms-1">*</span>
@@ -171,7 +175,7 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
                         className="checktoggle"
                       />
                     </div>
-                  </div>
+                  </div> */}
                 </form>
               </div>
               <div className="modal-footer">

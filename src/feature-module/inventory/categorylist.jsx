@@ -163,11 +163,11 @@ const CategoryList = () => {
       dataIndex: "category",
       sorter: (a, b) => a.category.localeCompare(b.category),
     },
-    {
-      title: "Category Slug",
-      dataIndex: "categoryslug",
-      sorter: (a, b) => a.categoryslug.localeCompare(b.categoryslug),
-    },
+    // {
+    //   title: "Category Slug",
+    //   dataIndex: "categoryslug",
+    //   sorter: (a, b) => a.categoryslug.localeCompare(b.categoryslug),
+    // },
     // {
     //   title: "Description",
     //   dataIndex: "description",
@@ -207,14 +207,14 @@ const CategoryList = () => {
             >
               <i data-feather="edit" className="feather-edit"></i>
             </Link>
-            <Link
+            {/* <Link
               data-bs-toggle="modal"
               data-bs-target="#delete-modal"
               className="p-2"
               to="#"
             >
               <i data-feather="trash-2" className="feather-trash-2"></i>
-            </Link>
+            </Link> */}
           </div>
         </div>
       ),
@@ -413,7 +413,7 @@ const CategoryList = () => {
                         }
                       />
                     </div>
-                    <div className="mb-3">
+                    {/* <div className="mb-3">
                       <label className="form-label">
                         Upload Image<span className="text-danger">*</span>
                       </label>
@@ -428,7 +428,7 @@ const CategoryList = () => {
                           })
                         }
                       />
-                    </div>
+                    </div> */}
                   </form>
                 </div>
                 <div className="modal-footer">

@@ -1,63 +1,144 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Eye, Edit } from "react-feather";
+// import { Link } from "react-router-dom";
+// import { Eye, Edit } from "react-feather";
 import axios from "axios";
-import ReassignTicketModal from "./ReassignTicketModal";
-import BrandFormTicket from "./BrandFormTicket";
-import { useDispatch, useSelector } from "react-redux";
-import PropTypes from "prop-types";
-import CancelTicketModal from "./CancelTicketModal";
-import { clearTickets } from "../../core/redux/ticketSlice";
-import { resetCart } from "../../core/redux/partSlice";
+// import ReassignTicketModal from "./ReassignTicketModal";
+// import BrandFormTicket from "./BrandFormTicket";
+import { useSelector } from "react-redux";
+// import PropTypes from "prop-types";
+// import CancelTicketModal from "./CancelTicketModal";
+// import { clearTickets } from "../../core/redux/ticketSlice";
+// import { resetCart } from "../../core/redux/partSlice";
 // import { repairAdded } from "../../core/redux/repairSlice";
-import { addOrUpdateCartItem as addPartCart } from "../../core/redux/partSlice";
-import { ticketAdded } from "../../core/redux/ticketSlice";
+// import { addOrUpdateCartItem as addPartCart } from "../../core/redux/partSlice";
+// import { ticketAdded } from "../../core/redux/ticketSlice";
 import "./TicketManagement.css";
-const TicketManagement = ({
-  onNewTicketClick,
-  onViewTicket,
-  showOrderList,
-  activeTab,
-}) => {
-  const refreshCount = useSelector((state) => state.ticketRefresh.refreshCount);
-  const dispatch = useDispatch();
-  const { roleName, userId, storeId } = useSelector((state) => state.user);
-  const [selectedTicket, setSelectedTicket] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [showBrandFormTicket, setShowBrandFormTicket] = useState(false);
-  const [selectedBrand, setSelectedBrand] = useState(null);
-  const [tickets, setTickets] = useState([]);
-  const [filteredTickets, setFilteredTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [ticketToCancel, setTicketToCancel] = useState(null);
+const TicketManagement = (
+  // onNewTicketClick,
+  // onViewTicket,
+  // showOrderList,
+  // activeTab,
+) => {
+  // const refreshCount = useSelector((state) => state.ticketRefresh.refreshCount);
+  // const dispatch = useDispatch();
+  // const { roleName, userId, storeId } = useSelector((state) => state.user);
+  // const [selectedTicket, setSelectedTicket] = useState(null);
+  // const [showModal, setShowModal] = useState(false);
+  // const [showBrandFormTicket, setShowBrandFormTicket] = useState(false);
+  // const [selectedBrand, setSelectedBrand] = useState(null);
+  // const [tickets, setTickets] = useState([]);
+  // const [filteredTickets, setFilteredTickets] = useState([]);
+  // const [showCancelModal, setShowCancelModal] = useState(false);
+  // const [ticketToCancel, setTicketToCancel] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-
+ const { storeId } = useSelector((state) => state.user);
+  const [orderedProducts, setOrderedProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   // API endpoint
   const BASE_URL = process.env.REACT_APP_BASEURL;
-  const API_URL = `${BASE_URL}api/v1/Order/GetTickets`;
+  // const API_URL = `${BASE_URL}api/v1/Order/GetTickets`;
   // const CUSTOMERS_API_URL = `${BASE_URL}api/v1/User/GetCustomers`;
-  const STORE_ID = storeId;
+  // const STORE_ID = storeId;
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toISOString().split("T")[0];
-  };
+const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  return date.toLocaleDateString(); 
+};
+// fetch ordered products
+const fetchOrderedProducts = async () => {
+  try {
+    setLoading(true);
+    const response = await axios.get(
+      `${BASE_URL}api/v1/Order/GetOrderedProduct`,
+      { params: { storeId } }
+    );
+    
+    if (response.data?.data) {
+      // Transform the data for better display
+      const transformedData = response.data.data.map(order => ({
+        ...order,
+        createdAt: formatDate(order.createdAt),
+        totalAmount: `₹${order.totalAmount.toFixed(2)}`,
+        productsText: order.products
+          .map(p => `${p.productName} (x${p.quantity})`)
+          .join(', ')
+      }));
+      setOrderedProducts(transformedData);
+    }
+  } catch (err) {
+    setError(err.message);
+    console.error("Error fetching ordered products:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const handleRefresh = () => {
-    fetchTickets();
-  };
+useEffect(() => {
+  fetchOrderedProducts();
+}, [storeId]);
+
+const columns = [
+  {
+    title: "Order #",
+    dataIndex: "orderNumber",
+    render: (text) => <strong>{text}</strong>,
+   width: '15%',
+    sorter: (a, b) => a.orderNumber.localeCompare(b.orderNumber),
+  },
+  {
+    title: "Date",
+    dataIndex: "createdAt",
+    sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+    width: '15%',
+  },
+  {
+    title: "Products",
+    dataIndex: "productsText",
+    render: (text) => (
+      <div style={{ maxWidth: '300px',
+        whiteSpace: 'normal',
+        wordBreak: 'break-word'
+       }}>
+        {text.length > 50 ? `${text.substring(0, 50)}...` : text}
+      </div>
+    ),
+    width: '45%',
+  },
+  {
+    title: "Total Amount",
+    dataIndex: "totalAmount",
+    sorter: (a, b) => a.totalAmount - b.totalAmount,
+     width: '15%',
+    style: { textAlign: 'right' },
+  },
+  // {
+  //   title: "Action",
+  //   key: "action",
+  //   render: (_, record) => (
+  //     <button 
+  //       className="btn btn-sm btn-outline-primary"
+  //       onClick={() => handleViewOrder(record)}
+  //     >
+  //       View Details
+  //     </button>
+  //   ),
+  // },
+];
+
+  // const handleRefresh = () => {
+  //   fetchTickets();
+  // };
 
    // Add this useEffect to reset state when tab changes
-    useEffect(() => {
-      if (activeTab !== "ticketmanagement") {
-        setShowBrandFormTicket(false);
-        setSelectedBrand(null);
-        setSelectedTicket(null);
-      }
-    }, [activeTab]);
+    // useEffect(() => {
+    //   if (activeTab !== "ticketmanagement") {
+    //     setShowBrandFormTicket(false);
+    //     setSelectedBrand(null);
+    //     setSelectedTicket(null);
+    //   }
+    // }, [activeTab]);
 
   // const fetchCustomers = async () => {
   //   try {
@@ -76,234 +157,234 @@ const TicketManagement = ({
   //   }
   // };
 
-  const fetchReferenceData = async () => {
-    try {
-      const response = await axios.get(
-        `${BASE_URL}api/v1/Product/GetReferenceData?storeId=${storeId}`
-      );
-      if (response.data?.data?.technicians) {
-        return response.data.data.technicians;
-      }
-      return [];
-    } catch (err) {
-      console.error("Error fetching reference data:", err);
-      return [];
-    }
-  };
+  // const fetchReferenceData = async () => {
+  //   try {
+  //     const response = await axios.get(
+  //       `${BASE_URL}api/v1/Product/GetReferenceData?storeId=${storeId}`
+  //     );
+  //     if (response.data?.data?.technicians) {
+  //       return response.data.data.technicians;
+  //     }
+  //     return [];
+  //   } catch (err) {
+  //     console.error("Error fetching reference data:", err);
+  //     return [];
+  //   }
+  // };
 
-  const fetchTickets = async () => {
-    try {
-      setLoading(true);
-      // Fetch all necessary data in parallel
-      const [techniciansData] = await Promise.all([
-        fetchReferenceData(),
-        // fetchCustomers(),
-      ]);
+  // const fetchTickets = async () => {
+  //   try {
+  //     setLoading(true);
+  //     // Fetch all necessary data in parallel
+  //     const [techniciansData] = await Promise.all([
+  //       fetchReferenceData(),
+  //       // fetchCustomers(),
+  //     ]);
 
-      // Then fetch tickets
-      const ticketsResponse = await axios.get(API_URL, {
-        params: { storeId: STORE_ID },
-      });
+  //     // Then fetch tickets
+  //     const ticketsResponse = await axios.get(API_URL, {
+  //       params: { storeId: STORE_ID },
+  //     });
 
-      if (ticketsResponse.data?.data) {
-        // REPLACE THIS EXISTING BLOCK WITH THE UPDATED VERSION:
-        const transformedTickets = ticketsResponse.data.data.map((ticket) => {
-          const technician = techniciansData.find(
-            (t) => t.userId === ticket.technicianId
-          );
+  //     if (ticketsResponse.data?.data) {
+  //       // REPLACE THIS EXISTING BLOCK WITH THE UPDATED VERSION:
+  //       const transformedTickets = ticketsResponse.data.data.map((ticket) => {
+  //         const technician = techniciansData.find(
+  //           (t) => t.userId === ticket.technicianId
+  //         );
 
-          // const customer = customersMap[ticket.customerId] || null;
+  //         // const customer = customersMap[ticket.customerId] || null;
 
-          return {
-            id: ticket.ticketid,
-            ticketNumber: ticket.ticketNo,
-            deviceType: ticket.deviceType,
-            brand: ticket.brand,
-            assignedTo: technician ? technician.userName : "Unassigned",
-            technicianId: ticket.technicianId,
-            date: formatDate(ticket.createdAt),
-            dueDate: formatDate(ticket.dueDate),
-            status: ticket.status || "N/A", // Changed from "Unknown"
-            customerName: ticket.customerName || "N/A",
-            customerNumber: ticket.customerNumber || "N/A",
-            originalData: {
-              ...ticket, // Include all original ticket data
-              ticketid: ticket.ticketid, // Ensure these fields exist
-              orderId: ticket.repairOrderId || "", // Provide fallback
-            },
-          };
-        });
+  //         return {
+  //           id: ticket.ticketid,
+  //           ticketNumber: ticket.ticketNo,
+  //           deviceType: ticket.deviceType,
+  //           brand: ticket.brand,
+  //           assignedTo: technician ? technician.userName : "Unassigned",
+  //           technicianId: ticket.technicianId,
+  //           date: formatDate(ticket.createdAt),
+  //           dueDate: formatDate(ticket.dueDate),
+  //           status: ticket.status || "N/A", // Changed from "Unknown"
+  //           customerName: ticket.customerName || "N/A",
+  //           customerNumber: ticket.customerNumber || "N/A",
+  //           originalData: {
+  //             ...ticket, // Include all original ticket data
+  //             ticketid: ticket.ticketid, // Ensure these fields exist
+  //             orderId: ticket.repairOrderId || "", // Provide fallback
+  //           },
+  //         };
+  //       });
 
-        setTickets(transformedTickets);
+  //       setTickets(transformedTickets);
 
-        if (roleName?.toLowerCase() === "technician") {
-          setFilteredTickets(
-            transformedTickets.filter(
-              (ticket) => ticket.technicianId === userId
-            )
-          );
-        } else {
-          setFilteredTickets(transformedTickets);
-        }
-      }
-    } catch (err) {
-      setError(err.message);
-      console.error("Error fetching tickets:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //       if (roleName?.toLowerCase() === "technician") {
+  //         setFilteredTickets(
+  //           transformedTickets.filter(
+  //             (ticket) => ticket.technicianId === userId
+  //           )
+  //         );
+  //       } else {
+  //         setFilteredTickets(transformedTickets);
+  //       }
+  //     }
+  //   } catch (err) {
+  //     setError(err.message);
+  //     console.error("Error fetching tickets:", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  useEffect(() => {
-    fetchTickets();
-  }, [refreshCount]);
+  // useEffect(() => {
+  //   fetchTickets();
+  // }, [refreshCount]);
 
   // Filter tickets based on search term
-  useEffect(() => {
-    if (searchTerm.trim() === "") {
-      // For technicians, always show only their assigned tickets
-      if (roleName?.toLowerCase() === "technician") {
-        setFilteredTickets(
-          tickets.filter((ticket) => ticket.technicianId === userId)
-        );
-      } else {
-        setFilteredTickets(tickets);
-      }
-    } else {
-      const lowercasedSearch = searchTerm.toLowerCase();
-      const filtered = tickets.filter((ticket) => {
-        return (
-          ticket.ticketNumber.toLowerCase().includes(lowercasedSearch) ||
-          (ticket.customerName &&
-            ticket.customerName.toLowerCase().includes(lowercasedSearch)) ||
-          (ticket.customerNumber &&
-            ticket.customerNumber.toLowerCase().includes(lowercasedSearch)) ||
-          ticket.assignedTo.toLowerCase().includes(lowercasedSearch) ||
-          ticket.status.toLowerCase().includes(lowercasedSearch) ||
-          ticket.date.includes(lowercasedSearch) ||
-          ticket.dueDate.includes(lowercasedSearch)
-        );
-      });
-      setFilteredTickets(filtered);
-    }
-  }, [searchTerm, tickets]);
-  const getStatusBadge = (status) => {
-    if (!status) return "badge bg-secondary text-white";
+  // useEffect(() => {
+  //   if (searchTerm.trim() === "") {
+  //     // For technicians, always show only their assigned tickets
+  //     if (roleName?.toLowerCase() === "technician") {
+  //       setFilteredTickets(
+  //         tickets.filter((ticket) => ticket.technicianId === userId)
+  //       );
+  //     } else {
+  //       setFilteredTickets(tickets);
+  //     }
+  //   } else {
+  //     const lowercasedSearch = searchTerm.toLowerCase();
+  //     const filtered = tickets.filter((ticket) => {
+  //       return (
+  //         ticket.ticketNumber.toLowerCase().includes(lowercasedSearch) ||
+  //         (ticket.customerName &&
+  //           ticket.customerName.toLowerCase().includes(lowercasedSearch)) ||
+  //         (ticket.customerNumber &&
+  //           ticket.customerNumber.toLowerCase().includes(lowercasedSearch)) ||
+  //         ticket.assignedTo.toLowerCase().includes(lowercasedSearch) ||
+  //         ticket.status.toLowerCase().includes(lowercasedSearch) ||
+  //         ticket.date.includes(lowercasedSearch) ||
+  //         ticket.dueDate.includes(lowercasedSearch)
+  //       );
+  //     });
+  //     setFilteredTickets(filtered);
+  //   }
+  // }, [searchTerm, tickets]);
+  // const getStatusBadge = (status) => {
+  //   if (!status) return "badge bg-secondary text-white";
 
-    switch (status.toLowerCase()) {
-      case "delivered":
-        return "badge bg-success text-white";
-      case "completed":
-        return "badge bg-warning text-dark";
-    }
-  };
-  const handleCancelTicket = async (ticketId, reason) => {
-    try {
-      await axios.put(`${BASE_URL}api/v1/Order/CancelTicket`, {
-        ticketId: ticketId,
-        orderId: ticketToCancel?.originalData?.orderId, // Now correctly mapped
-        cancelreason: reason,
-      });
-      fetchTickets();
-      return true;
-    } catch (error) {
-      console.error("Error cancelling ticket:", error);
-      return false;
-    }
-  };
+  //   switch (status.toLowerCase()) {
+  //     case "delivered":
+  //       return "badge bg-success text-white";
+  //     case "completed":
+  //       return "badge bg-warning text-dark";
+  //   }
+  // };
+  // const handleCancelTicket = async (ticketId, reason) => {
+  //   try {
+  //     await axios.put(`${BASE_URL}api/v1/Order/CancelTicket`, {
+  //       ticketId: ticketId,
+  //       orderId: ticketToCancel?.originalData?.orderId, // Now correctly mapped
+  //       cancelreason: reason,
+  //     });
+  //     fetchTickets();
+  //     return true;
+  //   } catch (error) {
+  //     console.error("Error cancelling ticket:", error);
+  //     return false;
+  //   }
+  // };
 
-  const handleCancelClick = (ticket) => {
-    setTicketToCancel(ticket);
-    setShowCancelModal(true);
-  };
+  // const handleCancelClick = (ticket) => {
+  //   setTicketToCancel(ticket);
+  //   setShowCancelModal(true);
+  // };
 
-  const handleEditClick = (ticket) => {
-    setSelectedTicket({
-      ...ticket,
-      originalData: ticket.originalData,
-    });
-    setShowModal(true);
-  };
+  // const handleEditClick = (ticket) => {
+  //   setSelectedTicket({
+  //     ...ticket,
+  //     originalData: ticket.originalData,
+  //   });
+  //   setShowModal(true);
+  // };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedTicket(null);
-  };
+  // const handleCloseModal = () => {
+  //   setShowModal(false);
+  //   setSelectedTicket(null);
+  // };
 
-  const handleViewClick = (ticket) => {
-    const repairData = {
-      repairOrderId: ticket.originalData.repairOrderId,
-      orderNumber: ticket.originalData.orderNumber || "",
-      customerId: ticket.originalData.customerId || "",
-      deviceType: ticket.originalData.deviceType || "",
-      brand: ticket.originalData.brand || "",
-      model: ticket.originalData.model || "",
-      imeiNumber: ticket.originalData.imeiNumber || "",
-      serialNumber: ticket.originalData.serialNumber || "",
-      passcode: ticket.originalData.passcode || "",
-      taskTypeId: ticket.originalData.taskTypeId || "",
-      taskTypeName: ticket.originalData.taskTypeName || "",
-      technicianId: ticket.originalData.technicianId || "",
-      dueDate: ticket.originalData.dueDate || "",
-      dateCreated: ticket.originalData.createdAt || "",
-      customerNotes:
-        ticket.originalData.notes?.find((n) => n.type === "Customer notes")
-          ?.notes || "",
-      internalNotes:
-        ticket.originalData.notes?.find((n) => n.type === "Internal notes")
-          ?.notes || "",
-      serviceCharge: ticket.originalData.serviceCharge || 0,
-      repairCost: ticket.originalData.repairCost || 0,
-    };
+  // const handleViewClick = (ticket) => {
+  //   const repairData = {
+  //     repairOrderId: ticket.originalData.repairOrderId,
+  //     orderNumber: ticket.originalData.orderNumber || "",
+  //     customerId: ticket.originalData.customerId || "",
+  //     deviceType: ticket.originalData.deviceType || "",
+  //     brand: ticket.originalData.brand || "",
+  //     model: ticket.originalData.model || "",
+  //     imeiNumber: ticket.originalData.imeiNumber || "",
+  //     serialNumber: ticket.originalData.serialNumber || "",
+  //     passcode: ticket.originalData.passcode || "",
+  //     taskTypeId: ticket.originalData.taskTypeId || "",
+  //     taskTypeName: ticket.originalData.taskTypeName || "",
+  //     technicianId: ticket.originalData.technicianId || "",
+  //     dueDate: ticket.originalData.dueDate || "",
+  //     dateCreated: ticket.originalData.createdAt || "",
+  //     customerNotes:
+  //       ticket.originalData.notes?.find((n) => n.type === "Customer notes")
+  //         ?.notes || "",
+  //     internalNotes:
+  //       ticket.originalData.notes?.find((n) => n.type === "Internal notes")
+  //         ?.notes || "",
+  //     serviceCharge: ticket.originalData.serviceCharge || 0,
+  //     repairCost: ticket.originalData.repairCost || 0,
+  //   };
 
-    dispatch(ticketAdded(repairData));
+  //   dispatch(ticketAdded(repairData));
 
-    if (
-      ticket.originalData.orderParts &&
-      ticket.originalData.orderParts.length > 0
-    ) {
-      ticket.originalData.orderParts.forEach((part) => {
-        const accessoryItem = {
-          id: part.productId,
-          product: {
-            name: part.productName,
-            price: part.price,
-          },
-          quantity: part.quantity,
-        };
+  //   if (
+  //     ticket.originalData.orderParts &&
+  //     ticket.originalData.orderParts.length > 0
+  //   ) {
+  //     ticket.originalData.orderParts.forEach((part) => {
+  //       const accessoryItem = {
+  //         id: part.productId,
+  //         product: {
+  //           name: part.productName,
+  //           price: part.price,
+  //         },
+  //         quantity: part.quantity,
+  //       };
 
-        dispatch(addPartCart(accessoryItem));
-      });
-    }
+  //       dispatch(addPartCart(accessoryItem));
+  //     });
+  //   }
 
-    const brandData = {
-      name: ticket.brand,
-      category: ticket.deviceType,
-      brandId: "",
-      ticketId: ticket.id,
-      model: ticket.originalData.model,
-      imeiNumber: ticket.originalData.imeiNumber,
-      serialNumber: ticket.originalData.serialNumber,
-      passcode: ticket.originalData.passcode,
-    };
-    setSelectedBrand(brandData);
-    setSelectedTicket(ticket.originalData);
-    setShowBrandFormTicket(true);
-    onViewTicket();
-  };
-  const handleCloseBrandFormTicket = () => {
-    setShowBrandFormTicket(false);
-    setSelectedBrand(null);
-    // Clear the ticket data from Redux when closing
-    dispatch(clearTickets());
-    dispatch(resetCart());
-    // Hide the order list when closing the form
-    onViewTicket(false); // Pass false to hide the order list
-  };
+  //   const brandData = {
+  //     name: ticket.brand,
+  //     category: ticket.deviceType,
+  //     brandId: "",
+  //     ticketId: ticket.id,
+  //     model: ticket.originalData.model,
+  //     imeiNumber: ticket.originalData.imeiNumber,
+  //     serialNumber: ticket.originalData.serialNumber,
+  //     passcode: ticket.originalData.passcode,
+  //   };
+  //   setSelectedBrand(brandData);
+  //   setSelectedTicket(ticket.originalData);
+  //   setShowBrandFormTicket(true);
+  //   onViewTicket();
+  // };
+  // const handleCloseBrandFormTicket = () => {
+  //   setShowBrandFormTicket(false);
+  //   setSelectedBrand(null);
+  //   // Clear the ticket data from Redux when closing
+  //   dispatch(clearTickets());
+  //   dispatch(resetCart());
+  //   // Hide the order list when closing the form
+  //   onViewTicket(false); // Pass false to hide the order list
+  // };
 
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  };
+  // const handleSearchChange = (e) => {
+  //   setSearchTerm(e.target.value);
+  // };
 
   if (loading) {
     return (
@@ -323,7 +404,7 @@ const TicketManagement = ({
 
   return (
     <>
-      <div
+      {/* <div
         className={`modal-dialog modal-dialog-centered ${
           roleName?.toLowerCase() !== "technician"
             ? showOrderList
@@ -619,31 +700,130 @@ const TicketManagement = ({
             )}
           </div>
         </div>
+      </div> */}
+       <div className="modal-dialog modal-dialog-centered modal-lg" style={{ maxWidth: '95%' }}>
+    <div className="modal-content"  style={{ width: '100%' }}>
+      <div className="modal-header">
+        <h5 className="modal-title">Product Orders</h5>
       </div>
-
-      {selectedTicket && (
+      <div className="modal-body">
+        {loading ? (
+          <div className="d-flex justify-content-center my-4">
+            <div className="spinner-border" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="alert alert-danger">
+            Error loading orders: {error}
+          </div>
+        ) : (
+          <div className="card table-list-card mb-0">
+            <div className="card-header d-flex align-items-center justify-content-between">
+              <div className="search-set">
+                <div className="search-input">
+                  <input
+                    type="search"
+                    className="form-control form-control-sm"
+                    placeholder="Search orders..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+              {/* <button
+                className="btn btn-secondary btn-sm"
+                onClick={fetchOrderedProducts}
+              >
+                <i className="ti ti-refresh me-1"></i> Refresh
+              </button> */}
+            </div>
+            <div className="card-body">
+              <div className="table-responsive" style={{ width: '100%', overflowX: 'auto' }}>
+                <table className="table datatable"
+                style={{ 
+        width: '100%',
+        tableLayout: 'fixed', 
+      }}>
+                  <thead>
+                    <tr>
+                      {columns.map((col) => (
+                        <th key={col.dataIndex || col.key}
+                        style={{ 
+                width: col.width,
+                minWidth: col.width,
+                ...col.headerStyle 
+              }}
+                        >{col.title}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orderedProducts
+                      .filter(order => 
+                        searchTerm === '' || 
+                        order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        order.productsText.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((order) => (
+                        <tr key={order.repairOrderId}>
+                          {columns.map((col) => (
+                            <td key={col.dataIndex || col.key}
+                            style={{ 
+                    width: col.width,
+                    minWidth: col.width,
+                    ...col.style,
+                    verticalAlign: 'top' 
+                  }}
+                            >
+                              {col.render 
+                                ? col.render(order[col.dataIndex], order)
+                                : order[col.dataIndex]}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+                {orderedProducts.length === 0 && (
+                  <div className="text-center py-4">
+                    <i className="ti ti-package fs-24 text-muted mb-2"></i>
+                    <h5>No orders found</h5>
+                    <p className="text-muted">
+                      No product orders have been placed yet
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+      {/* {selectedTicket && (
         <ReassignTicketModal
           ticket={selectedTicket}
           show={showModal}
           onClose={handleCloseModal}
         />
-      )}
-      <CancelTicketModal
+      )} */}
+      {/* <CancelTicketModal
         show={showCancelModal}
         onClose={() => setShowCancelModal(false)}
         onCancelTicket={(reason) =>
           handleCancelTicket(ticketToCancel?.id, reason)
         }
-      />
+      /> */}
     </>
   );
 };
 
-TicketManagement.propTypes = {
-  onNewTicketClick: PropTypes.func.isRequired,
-  onViewTicket: PropTypes.func.isRequired, // Add this line
-  showOrderList: PropTypes.bool.isRequired, // Add this line
-  activeTab: PropTypes.string.isRequired, 
-};
+// TicketManagement.propTypes = {
+//   onNewTicketClick: PropTypes.func.isRequired,
+//   onViewTicket: PropTypes.func.isRequired, // Add this line
+//   showOrderList: PropTypes.bool.isRequired, // Add this line
+//   activeTab: PropTypes.string.isRequired, 
+// };
 
 export default TicketManagement;

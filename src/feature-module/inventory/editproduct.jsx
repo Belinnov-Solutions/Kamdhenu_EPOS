@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { all_routes } from "../../Router/all_routes";
-import { DatePicker } from "antd";
+// import { DatePicker } from "antd";
 import Addunits from "../../core/modals/inventory/addunits";
 import AddCategory from "../../core/modals/inventory/addcategory";
 import AddSubcategory from "../../core/modals/inventory/addsubcategory";
@@ -10,10 +10,10 @@ import AddBrand from "../../core/modals/addbrand";
 import { Modal, Button } from "react-bootstrap";
 import {
   ArrowLeft,
-  Calendar,
+  // Calendar,
   // Image,
   LifeBuoy,
-  List,
+  // List,
   Plus,
   PlusCircle,
   // X,
@@ -27,7 +27,7 @@ import AddVarientNew from "../../core/modals/inventory/addVarientNew";
 import CommonTagsInput from "../../core/common/Taginput";
 // import TextEditor from "./texteditor";
 import axios from "axios";
-import moment from 'moment';
+// import moment from 'moment';
 import { useSelector } from "react-redux";
 
 
@@ -349,22 +349,22 @@ const EditProduct = () => {
   // }, [images]);
 
   // Handle date changes
-  const handleDateChange = (date, dateString, fieldName) => {
-    setFormData({
-      ...formData,
-      [fieldName]: date ? dateString : ""
-    });
-  };
-  const store = [
-    { value: "thomas", label: "Thomas" },
-    { value: "rasmussen", label: "Rasmussen" },
-    { value: "fredJohn", label: "Fred John" },
-  ];
-  const warehouse = [
-    { value: "legendary", label: "Legendary" },
-    { value: "determined", label: "Determined" },
-    { value: "sincere", label: "Sincere" },
-  ];
+  // const handleDateChange = (date, dateString, fieldName) => {
+  //   setFormData({
+  //     ...formData,
+  //     [fieldName]: date ? dateString : ""
+  //   });
+  // };
+  // const store = [
+  //   { value: "thomas", label: "Thomas" },
+  //   { value: "rasmussen", label: "Rasmussen" },
+  //   { value: "fredJohn", label: "Fred John" },
+  // ];
+  // const warehouse = [
+  //   { value: "legendary", label: "Legendary" },
+  //   { value: "determined", label: "Determined" },
+  //   { value: "sincere", label: "Sincere" },
+  // ];
   // const category = [
   //   { value: "lenovo", label: "Lenovo" },
   //   { value: "electronics", label: "Electronics" },
@@ -382,10 +382,10 @@ const EditProduct = () => {
   //   { value: "kg", label: "Kg" },
   //   { value: "pc", label: "Pc" },
   // ];
-  const sellingtype = [
-    { value: "transactionalSelling", label: "Transactional selling" },
-    { value: "solutionSelling", label: "Solution selling" },
-  ];
+  // const sellingtype = [
+  //   { value: "transactionalSelling", label: "Transactional selling" },
+  //   { value: "solutionSelling", label: "Solution selling" },
+  // ];
   // const barcodesymbol = [
   //   { value: "code34", label: "Code34" },
   //   { value: "code35", label: "Code35" },
@@ -404,11 +404,11 @@ const EditProduct = () => {
   //   { value: "percentage", label: "Percentage" },
   //   { value: "cash", label: "Cash" },
   // ];
-  const warrenty = [
-    { value: "Replacement Warranty", label: "Replacement Warranty" },
-    { value: "On-Site Warranty", label: "On-Site Warranty" },
-    { value: "Accidental Protection Plan", label: "Accidental Protection Plan" },
-  ];
+  // const warrenty = [
+  //   { value: "Replacement Warranty", label: "Replacement Warranty" },
+  //   { value: "On-Site Warranty", label: "On-Site Warranty" },
+  //   { value: "Accidental Protection Plan", label: "Accidental Protection Plan" },
+  // ];
   // const [isImageVisible, setIsImageVisible] = useState(true);
 
   // const handleRemoveProduct = () => {
@@ -478,7 +478,7 @@ const EditProduct = () => {
                       aria-labelledby="headingSpacingOne"
                     >
                       <div className="accordion-body border-top">
-                        <div className="row">
+                        {/* <div className="row">
                           <div className="col-sm-6 col-12">
                             <div className="mb-3">
                               <label className="form-label">
@@ -505,7 +505,7 @@ const EditProduct = () => {
                               />
                             </div>
                           </div>
-                        </div>
+                        </div> */}
                         <div className="row">
                           <div className="col-sm-6 col-12">
                             <div className="mb-3">
@@ -536,7 +536,7 @@ const EditProduct = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="row">
+                        {/* <div className="row">
                           <div className="col-sm-6 col-12">
                             <div className="mb-3 list position-relative">
                               <label className="form-label">
@@ -549,9 +549,9 @@ const EditProduct = () => {
                                 value={formData.sku}
                                 onChange={handleInputChange}
                               />
-                              {/* <button type="button" className="btn btn-primaryadd">
+                              <button type="button" className="btn btn-primaryadd">
                                 Generate
-                              </button> */}
+                              </button>
                             </div>
                           </div>
                           <div className="col-sm-6 col-12">
@@ -569,7 +569,7 @@ const EditProduct = () => {
                               />
                             </div>
                           </div>
-                        </div>
+                        </div> */}
                         <div className="addservice-info">
                           <div className="row">
                             <div className="col-sm-6 col-12">
@@ -641,7 +641,7 @@ const EditProduct = () => {
                         </div>
                         <div className="add-product-new">
                           <div className="row">
-                            <div className="col-sm-6 col-12">
+                            {/* <div className="col-sm-6 col-12">
                               <div className="mb-3">
                                 <div className="add-newplus">
                                   <label className="form-label">
@@ -657,7 +657,24 @@ const EditProduct = () => {
                                   onChange={(selectedOption) => handleSelectChange(selectedOption, "brandId")}
                                 />
                               </div>
+                            </div> */}
+                           <div className="col-sm-6 col-12">
+                            <div className="mb-3 list position-relative">
+                              <label className="form-label">
+                                SKU<span className="text-danger ms-1">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                className="form-control list"
+                                name="sku"
+                                value={formData.sku}
+                                onChange={handleInputChange}
+                              />
+                              {/* <button type="button" className="btn btn-primaryadd">
+                                Generate
+                              </button> */}
                             </div>
+                          </div>
                             <div className="col-sm-6 col-12">
                               <div className="mb-3">
                                 <div className="add-newplus">
@@ -692,7 +709,7 @@ const EditProduct = () => {
                               />
                             </div>
                           </div> */}
-                          <div className="col-lg-6 col-sm-6 col-12">
+                          {/* <div className="col-lg-6 col-sm-6 col-12">
                             <div className="mb-3 list position-relative">
                               <label className="form-label">
                                 Item Code<span className="text-danger ms-1">*</span>
@@ -704,11 +721,11 @@ const EditProduct = () => {
                                 value={formData.barcode}
                                 onChange={handleInputChange}
                               />
-                              {/* <button type="submit" className="btn btn-primaryadd">
+                              <button type="submit" className="btn btn-primaryadd">
                                 Generate
-                              </button> */}
+                              </button>
                             </div>
-                          </div>
+                          </div> */}
                         </div>
                         {/* Editor */}
                         <div className="col-lg-12">
@@ -1255,7 +1272,7 @@ const EditProduct = () => {
                     </div>
                   </div>  */}
                   {/* Custom fields section */}
-                  <div className="accordion-item border mb-4">
+                  {/* <div className="accordion-item border mb-4">
                     <h2 className="accordion-header" id="headingSpacingFour">
                       <div
                         className="accordion-button collapsed bg-white"
@@ -1279,7 +1296,7 @@ const EditProduct = () => {
                     >
                       <div className="accordion-body border-top">
                         <div>
-                          {/* <div className="p-3 bg-light rounded d-flex align-items-center border mb-3">
+                          <div className="p-3 bg-light rounded d-flex align-items-center border mb-3">
                             <div className=" d-flex align-items-center">
                               <div className="form-check form-check-inline">
                                 <input
@@ -1335,7 +1352,7 @@ const EditProduct = () => {
                                 </label>
                               </div>
                             </div>
-                          </div> */}
+                          </div>
                           <div className="row">
                             <div className="col-sm-6 col-12">
                               <div className="mb-3">
@@ -1384,7 +1401,7 @@ const EditProduct = () => {
                                 </div>
                               </div>
                             </div>
-                            {/* <div className="col-sm-6 col-12">
+                            <div className="col-sm-6 col-12">
                               <div className="mb-3">
                                 <label className="form-label">
                                   Expiry On<span className="text-danger ms-1">*</span>
@@ -1401,12 +1418,12 @@ const EditProduct = () => {
 
                                 </div>
                               </div>
-                            </div> */}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </div> */}
                   <div className="col-lg-12">
                     <div className="btn-addproduct mb-4">
                       <button type="button" className="btn btn-cancel me-2"

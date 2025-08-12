@@ -3,7 +3,7 @@ import {
   Edit,
   // Eye,
   // RotateCcw,
-  Trash2,
+  // Trash2,
 } from "feather-icons-react/build/IconComponents";
 import React, { useState, useEffect } from "react";
 // import { useDispatch, useSelector } from "react-redux";
@@ -15,7 +15,7 @@ import { all_routes } from "../../Router/all_routes";
 import Table from "../../core/pagination/datatable";
 // import { setToogleHeader } from "../../core/redux/action";
 import { useSelector } from "react-redux";
-import { Download } from "react-feather";
+// import { Download } from "react-feather";
 import axios from "axios";
 
 const ProductList = () => {
@@ -52,7 +52,8 @@ const ProductList = () => {
           price: item.price?.toLocaleString() || "0.00",
           unit: item.unit || "-",
           qty: item.quantityAlert?.toString() || "N/A",
-          manufacturedDate: item.manufacturedDate || "-",
+          manufacturedDate: "2025-08-11",
+          // manufacturedDate: item.manufacturedDate || "-",
           // createdby: item.manufacturer || "Admin",
           description: item.description || "-",
           productImage: "assets/img/product/default-product.jpg",
@@ -107,14 +108,15 @@ const ProductList = () => {
 
 
   const columns = [
-    // {
-    //   title: "SKU",
-    //   dataIndex: "sku",
-    //   sorter: (a, b) => a.sku.length - b.sku.length,
-    // },
+    {
+      title: "SKU",
+      dataIndex: "sku",
+      sorter: (a, b) => a.sku.length - b.sku.length,
+    },
     {
       title: "Product",
       dataIndex: "product",
+      flex: 2,
       width: '25%',
       render: (text) => (
         <div className="d-flex align-items-center">
@@ -129,7 +131,8 @@ const ProductList = () => {
     {
       title: "Category",
       dataIndex: "category",
-      width: '20%', 
+      flex: 1.5,
+      width: '20%',
       sorter: (a, b) => a.category.localeCompare(b.category),
     },
     // {
@@ -146,13 +149,15 @@ const ProductList = () => {
     {
       title: "Price",
       dataIndex: "price",
-      width: '15%',
+      flex: 1,
+      width: '20%',
       sorter: (a, b) => Number(a.price) - Number(b.price),
     },
     {
       title: "Unit",
       dataIndex: "unit",
-      width: '15%',
+      flex: 1,
+      width: '20%',
       sorter: (a, b) => a.unit.length - b.unit.length,
     },
     // {
@@ -196,7 +201,8 @@ const ProductList = () => {
     {
       title: "Action",
       dataIndex: "action",
-       width: '25%',
+      flex: 1,
+      width: '25%',
       render: (_, record) => (
         <div className="action-table-data">
           <div className="edit-delete-action">
@@ -210,18 +216,23 @@ const ProductList = () => {
             >
               <Edit className="feather-edit" />
             </Link>
-            <Link
+            {/* <Link
               className="confirm-text p-2"
               to="#" data-bs-toggle="modal" data-bs-target="#delete-modal"
             >
               <Trash2 className="feather-trash-2" />
-            </Link>
+            </Link> */}
           </div>
         </div>
       ),
       // sorter: (a, b) => a.createdby.length - b.createdby.length,
     },
   ];
+  const tableStyles = {
+    '--table-flex-grow': '1 !important',
+    '--table-flex-shrink': '1 !important',
+    '--table-flex-basis': '0 !important',
+  };
 
   // const renderTooltip = (props) => (
   //   <Tooltip id="pdf-tooltip" {...props}>
@@ -304,7 +315,7 @@ const ProductList = () => {
                 Add New Product
               </Link>
             </div>
-            <div className="page-btn import">
+            {/* <div className="page-btn import">
               <Link
                 to="#"
                 className="btn btn-secondary color"
@@ -314,11 +325,11 @@ const ProductList = () => {
                 <Download className="feather me-2" />
                 Import Product
               </Link>
-            </div>
+            </div> */}
           </div>
           {/* /product list */}
           <div className="card table-list-card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+            <div className="">
               {/* <div className="search-set">
                 <div className="search-input">
                   <input
@@ -332,7 +343,7 @@ const ProductList = () => {
                   </button>
                 </div>
               </div> */}
-              {/*  <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+              {/* <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                 <div className="dropdown me-2">
                   <Link
                     to="#"
@@ -557,8 +568,8 @@ const ProductList = () => {
                   </ul>
                 </div>
               </div>
-            </div>
-            <div className="card-body"> */}
+            </div> */}
+              {/* <div className="card-body"> */}
 
               {/* <div className="table-top">
               <div className="search-set">
@@ -686,14 +697,20 @@ const ProductList = () => {
               </div>
             </div> */}
               {/* /Filter */}
-              <div className="table-responsive">
+              <div className="table-responsive" style={tableStyles}>
                 <Table
                   columns={columns}
                   dataSource={dataSource}
                   loading={loading}
                   pagination={{ PageSize: 10 }}
                   scroll={{ x: 'max-content' }}
-  style={{ width: '100%' }}
+                  // style={{
+                  //   width: '100%',
+                  //   marginTop: '20px', 
+                  //   display: 'flex',
+                  //   flexDirection: 'column',
+                  //   flex: 'var(--table-flex-grow) var(--table-flex-shrink) var(--table-flex-basis)'
+                  // }}
                 />
               </div>
             </div>

@@ -28,7 +28,7 @@ const AddSubcategory = ({ onSubCategoryAdded, selectedCategoryId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!selectedCategoryId || !subCategoryName || !categoryCode) {
+    if (!selectedCategoryId || !subCategoryName) {
       setError("Please fill all required fields");
       return;
     }
@@ -90,7 +90,7 @@ const AddSubcategory = ({ onSubCategoryAdded, selectedCategoryId }) => {
                   <div className="alert alert-danger mb-3">{error}</div>
                 )}
                 
-                <div className="mb-3">
+                {/* <div className="mb-3">
                   <label className="form-label">Upload Image</label>
                   <input
                     type="file"
@@ -98,7 +98,7 @@ const AddSubcategory = ({ onSubCategoryAdded, selectedCategoryId }) => {
                     accept="image/*"
                     onChange={(e) => setImageFile(e.target.files[0])}
                   />
-                </div>
+                </div> */}
                 
                 <div className="mb-3">
                   <label className="form-label">Sub Category Name *</label>
@@ -112,7 +112,7 @@ const AddSubcategory = ({ onSubCategoryAdded, selectedCategoryId }) => {
                   />
                 </div>
                 
-                <div className="mb-3">
+                {/* <div className="mb-3">
                   <label className="form-label">Category Code *</label>
                   <input
                     type="text"
@@ -123,7 +123,7 @@ const AddSubcategory = ({ onSubCategoryAdded, selectedCategoryId }) => {
                     required
                   />
                 </div>
-                
+                 */}
                 <div className="mb-3">
                   <label className="form-label">Description</label>
                   <textarea
@@ -135,7 +135,7 @@ const AddSubcategory = ({ onSubCategoryAdded, selectedCategoryId }) => {
                   />
                 </div>
                 
-                <div className="mb-3">
+                {/* <div className="mb-3">
                   <div className="status-toggle modal-status d-flex justify-content-between">
                     <span className="status-label">Status</span>
                     <input
@@ -147,7 +147,7 @@ const AddSubcategory = ({ onSubCategoryAdded, selectedCategoryId }) => {
                     />
                     <label htmlFor="subcategory-status" className="checktoggle" />
                   </div>
-                </div>
+                </div> */}
                 
                 <div className="modal-footer">
                   <button
