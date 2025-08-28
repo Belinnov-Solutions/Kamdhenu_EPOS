@@ -46,12 +46,13 @@ const ProductList = () => {
           key: item.id,
           sku: item.sku,
           product: item.productName,
-          category: getCategoryName(item.categoryId),
+          category: item.categoryName || "-",
           subcategory: item.subCategoryName || "-",
           brand: getBrandName(item.brandId),
           price: item.price?.toLocaleString() || "0.00",
           unit: item.unit || "-",
-          qty: item.quantityAlert?.toString() || "N/A",
+          stock: item.stock?.toLocaleString() || "0",
+          quantityAlert: item.quantityAlert?.toString() || "N/A",
           manufacturedDate: "2025-08-11",
           // manufacturedDate: item.manufacturedDate || "-",
           // createdby: item.manufacturer || "Admin",
@@ -96,10 +97,10 @@ const ProductList = () => {
   }, [categories, brands]);
 
   // helper function to get categoryname from category id
-  const getCategoryName = (id) => {
-    const category = categories.find((cat) => cat.categoryId === id);
-    return category ? category.categoryName : "Unknown";
-  };
+  // const getCategoryName = (id) => {
+  //   const category = categories.find((cat) => cat.categoryId === id);
+  //   return category ? category.categoryName : "Unknown";
+  // };
   // helper function to get brandName from brand id
   const getBrandName = (id) => {
     const brand = brands.find((b) => b.brandId === id);
@@ -160,10 +161,15 @@ const ProductList = () => {
       width: '20%',
       sorter: (a, b) => a.unit.length - b.unit.length,
     },
+    {
+      title: "Stock ",
+      dataIndex: "stock",
+      sorter: (a, b) => Number(a.quantity) - Number(b.quantity),
+    },
     // {
-    //   title: "Qty",
-    //   dataIndex: "qty",
-    //   sorter: (a, b) => Number(a.qty) - Number(b.qty),
+    //   title: "Stock Alert",
+    //   dataIndex: "quantityAlert",
+    //   sorter: (a, b) => Number(a.quantityAlert) - Number(b.quantityAlert),
     // },
     // {
     //   title: "Manufactured Date", // New column

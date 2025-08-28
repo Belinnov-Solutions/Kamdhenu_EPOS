@@ -89,6 +89,7 @@ const EditProduct = () => {
     taxType: "",
     discountType: "",
     discountValue: "",
+    stock:"",
     quantityAlert: "",
     warrantyType: "",
     manufacturer: "",
@@ -241,6 +242,7 @@ const EditProduct = () => {
               taxType: matchedProduct.taxType || "",
               discountType: matchedProduct.discountType || "",
               discountValue: matchedProduct.discountValue || "",
+              stock: matchedProduct.stock || "",
               quantityAlert: matchedProduct.quantityAlert || "",
               warrantyType: matchedProduct.warrantyType || "",
               manufacturer: matchedProduct.manufacturer || "",
@@ -313,6 +315,7 @@ const EditProduct = () => {
         TaxType: formData.taxType,
         DiscountType: formData.discountType,
         DiscountValue: formData.discountValue,
+         stock: parseInt(formData.stock) || 0,
         QuantityAlert: formData.quantityAlert,
         WarrantyType: formData.warrantyType,
         Manufacturer: formData.manufacturer,
@@ -392,13 +395,13 @@ const EditProduct = () => {
   //   { value: "code36", label: "Code36" },
   // ];
   const taxtype = [
-    { value: "exclusive", label: "Exclusive" },
-    { value: "salesTax", label: "Sales Tax" },
+    { value: "GST", label: "GST" },
+    // { value: "salesTax", label: "Sales Tax" },
   ];
   const discounttype = [
     { value: "choose", label: "Choose" },
     { value: "percentage", label: "Percentage" },
-    { value: "cash", label: "Cash" },
+    { value: "Amount", label: "Amount" },
   ];
   // const discounttype1 = [
   //   { value: "percentage", label: "Percentage" },
@@ -830,13 +833,13 @@ const EditProduct = () => {
                                 <div className="col-lg-4 col-sm-6 col-12">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Quantity<span className="text-danger ms-1">*</span>
+                                      Stock<span className="text-danger ms-1">*</span>
                                     </label>
                                     <input
                                       type="text"
                                       className="form-control"
-                                      name="quantityAlert"
-                                      value={formData.quantityAlert}
+                                      name="stock"
+                                      value={formData.stock}
                                       onChange={handleInputChange}
                                     />
                                   </div>
@@ -912,7 +915,7 @@ const EditProduct = () => {
                                 <div className="col-lg-4 col-sm-6 col-12">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Quantity Alert
+                                      Stock Alert
                                       <span className="text-danger ms-1">*</span>
                                     </label>
                                     <input

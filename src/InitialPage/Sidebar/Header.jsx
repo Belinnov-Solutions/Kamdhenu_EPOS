@@ -157,13 +157,7 @@ const Header = () => {
   return (
     <>
       <div className="header"
-        style={{ backgroundColor: "#b38e432f",
-           position: 'fixed',
-  top: 0,
-  width: '100%',
-  zIndex: 1000
-
-         }}>
+        style={{ backgroundColor: "#b38e432f"}}>
         {/* Logo */}
         <div className="main-header">
           <div

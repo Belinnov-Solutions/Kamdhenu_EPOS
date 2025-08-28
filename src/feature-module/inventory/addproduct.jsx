@@ -71,10 +71,11 @@ const AddProduct = () => {
     taxType: "",
     discountType: "",
     discountValue: "",
+    stock: "",
     quantityAlert: "",
-    warrantyType: "",
-    manufacturer: "",
-    manufacturedDate: "",
+    // warrantyType: "",
+    // manufacturer: "",
+    // manufacturedDate: "",
     // expiryDate: ""
   });
 
@@ -183,6 +184,7 @@ const AddProduct = () => {
 
     const submissionData = {
       ...formData,
+      stock: parseInt(formData.stock) || 0,
       //  imageList,
     };
     try {
@@ -217,6 +219,7 @@ const AddProduct = () => {
         taxType: "",
         discountType: "",
         discountValue: "",
+        stock: "",
         quantityAlert: "",
         warrantyType: "",
         manufacturer: "",
@@ -353,7 +356,7 @@ const AddProduct = () => {
   // ];
   const taxtype = [
     { value: "GST", label: "GST" },
-    { value: "salesTax", label: "Sales Tax" },
+    // { value: "salesTax", label: "Sales Tax" },
   ];
   const discounttype = [
     { value: "choose", label: "Choose" },
@@ -782,13 +785,13 @@ const AddProduct = () => {
                               <div className="col-lg-4 col-sm-6 col-12">
                                 <div className="mb-3">
                                   <label className="form-label">
-                                    Quantity<span className="text-danger ms-1">*</span>
+                                    Stock<span className="text-danger ms-1">*</span>
                                   </label>
                                   <input
                                     type="text"
                                     className="form-control"
-                                    name="quantityAlert"  // Same name for both inputs
-                                    value={formData.quantityAlert}
+                                    name="stock"  // Same name for both inputs
+                                    value={formData.stock}
                                     onChange={handleInputChange}
                                   />
                                 </div>
@@ -859,7 +862,7 @@ const AddProduct = () => {
                               <div className="col-lg-4 col-sm-6 col-12">
                                 <div className="mb-3">
                                   <label className="form-label">
-                                    Quantity Alert
+                                    Stock Alert
                                     <span className="text-danger ms-1">*</span>
                                   </label>
                                   <input
