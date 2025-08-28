@@ -53,6 +53,19 @@ const partSlice = createSlice({
     resetCart: (state) => {
       state.cartItems = [];
     },
+    // ADD THIS NEW REDUCER
+    updatePartQuantity: (state, action) => {
+      const { id, quantity } = action.payload;
+      const item = state.cartItems.find((item) => item.id === id);
+      if (item) {
+        item.quantity = quantity;
+
+        // Remove item if quantity is 0
+        if (quantity === 0) {
+          state.cartItems = state.cartItems.filter((item) => item.id !== id);
+        }
+      }
+    },
   },
 });
 
@@ -65,6 +78,7 @@ export const {
   addOrUpdateCartItem,
   removePartItem,
   resetCart,
+  updatePartQuantity, // ADD THIS EXPORT
 } = partSlice.actions;
 
 // Selectors

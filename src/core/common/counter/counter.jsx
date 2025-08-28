@@ -1,3 +1,4 @@
+// CartCounter.js
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
@@ -56,34 +57,54 @@ export const CartCounter = ({
 
   return (
     <div className={`cart-counter-wrapper ${className || ""}`}>
-      <Tooltip title="minus">
-        <Link
-          to="#"
-          className="dec d-flex justify-content-center align-items-center"
-          onClick={handleDecrement}
-        >
-          <i className="ti ti-minus" />
-        </Link>
-      </Tooltip>
-      <input
-        type="text"
-        className="form-control text-center"
-        name="qty"
-        value={quantity}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        inputMode="numeric"
-        maxLength="2"
-      />
-      <Tooltip title="plus">
-        <Link
-          to="#"
-          className="inc d-flex justify-content-center align-items-center"
-          onClick={handleIncrement}
-        >
-          <i className="ti ti-plus" />
-        </Link>
-      </Tooltip>
+      <div className="d-flex align-items-center justify-content-center">
+        <Tooltip title="minus">
+          <Link
+            to="#"
+            className="dec d-flex justify-content-center align-items-center btn btn-sm btn-outline-secondary"
+            onClick={handleDecrement}
+            style={{
+              width: "28px",
+              height: "28px",
+              padding: 0,
+              borderRadius: "4px 0 0 4px",
+            }}
+          >
+            <i className="ti ti-minus fs-12" />
+          </Link>
+        </Tooltip>
+        <input
+          type="text"
+          className="form-control text-center mx-1"
+          name="qty"
+          value={quantity}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          inputMode="numeric"
+          maxLength="2"
+          style={{
+            width: "40px",
+            height: "28px",
+            padding: "0 5px",
+            fontSize: "12px",
+          }}
+        />
+        <Tooltip title="plus">
+          <Link
+            to="#"
+            className="inc d-flex justify-content-center align-items-center btn btn-sm btn-outline-secondary"
+            onClick={handleIncrement}
+            style={{
+              width: "28px",
+              height: "28px",
+              padding: 0,
+              borderRadius: "0 4px 4px 0",
+            }}
+          >
+            <i className="ti ti-plus fs-12" />
+          </Link>
+        </Tooltip>
+      </div>
     </div>
   );
 };

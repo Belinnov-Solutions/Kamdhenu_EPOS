@@ -14,18 +14,15 @@ import {
   addOrUpdateCartItem,
   selectCartItems,
 } from "../../core/redux/accessoriesSlice";
-import CartCounter from "../../core/common/counter/counter";
 import "./Accessories.css";
 
 const Accessories = ({
-  // setShowAlert1,
   selectedCategory,
   setSelectedCategory,
   selectedSubCategory,
   setSelectedSubCategory,
   currentView,
   setCurrentView,
-  // showOrderList,
 }) => {
   const dispatch = useDispatch();
   const accessoryProducts = useSelector(selectAccessoryProducts);
@@ -33,9 +30,7 @@ const Accessories = ({
   const subCategories = useSelector(selectSubCategories);
   const isLoading = useSelector(selectIsLoading);
   const orderItems = useSelector(selectCartItems);
-  // const [selectedProduct, setSelectedProduct] = useState(null);
   const { storeId } = useSelector((state) => state.user);
-  // const [currentView, setCurrentView] = useState('categories');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,8 +41,6 @@ const Accessories = ({
         // Fetch categories
         const categoriesResponse = await axios.get(
           `${BASE_URL}api/v1/Product/GetCategories?storeId=${storeId}`
-          // `https://412ee0ba6528.ngrok-free.app/api/v1/Product/GetCategories?storeId=${storeId}`
-
         );
 
         // Transform categories data
@@ -62,20 +55,23 @@ const Accessories = ({
         );
 
         dispatch(setRepairCategories(transformedCategories));
+
         // Fetch subcategories
         const subCategoriesResponse = await axios.get(
           `${BASE_URL}api/v1/Product/GetSubcategories?storeId=${storeId}`
         );
 
         // Transform subcategories data
-        const transformedSubCategories = subCategoriesResponse.data.data.map((item) => ({
-          id: item.subCategoryId,
-          name: item.subCategoryName,
-          categoryId: item.categoryId,
-          image: item.image
-            ? `${BASE_URL}images/subcategories/${item.image}`
-            : "assets/img/products/pos-product-10.svg",
-        }));
+        const transformedSubCategories = subCategoriesResponse.data.data.map(
+          (item) => ({
+            id: item.subCategoryId,
+            name: item.subCategoryName,
+            categoryId: item.categoryId,
+            image: item.image
+              ? `${BASE_URL}images/subcategories/${item.image}`
+              : "assets/img/products/pos-product-10.svg",
+          })
+        );
 
         dispatch(setSubCategories(transformedSubCategories));
 
@@ -117,21 +113,40 @@ const Accessories = ({
 
     fetchData();
   }, [dispatch, storeId]);
+
   // Handle category and subcategory clicks
   const handleCategoryClick = (categoryId) => {
     setSelectedCategory(categoryId);
-    setCurrentView('subcategories');
+    setCurrentView("subcategories");
   };
 
   const handleSubCategoryClick = (subCategoryId) => {
     setSelectedSubCategory(subCategoryId);
-    setCurrentView('products');
+    setCurrentView("products");
   };
 
-  // const handleBackToSubCategories = () => {
-  //   setSelectedSubCategory(null);
-  //   setCurrentView('subcategories');
-  // }; 
+  // Handle product click to add to cart
+  const handleProductClick = (product) => {
+    const existingItem = orderItems.find((item) => item.id === product.id);
+    const currentQuantity = existingItem ? existingItem.quantity : 0;
+
+    dispatch(
+      addOrUpdateCartItem({
+        id: product.id,
+        product: {
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          category: product.category,
+          categoryId: product.categoryId,
+          subcategoryId: product.subcategoryId,
+          description: product.description,
+        },
+        quantity: currentQuantity + 1,
+      })
+    );
+  };
+
   // Filter products based on selected category and subcategory
   const getFilteredProducts = () => {
     let filtered = accessoryProducts;
@@ -163,222 +178,81 @@ const Accessories = ({
   }
 
   // Show products view
-  if (currentView === 'products') {
+  if (currentView === "products") {
     const filteredProducts = getFilteredProducts();
 
     if (filteredProducts.length === 0) {
       return (
         <div className="text-center py-4">
-          {/* <button 
-            className="btn btn-link mb-3" 
-            onClick={handleBackToSubCategories}
-          >
-            ← Back to Subcategories
-          </button> */}
           <p>No products found for this selection</p>
         </div>
       );
     }
 
-    // const handleProductClick = (product) => {
-    //   // setSelectedProduct(product);
-    //   setShowAlert1((prev) => !prev);
-    // };
-
-    // const closeModal = () => {
-    //   setSelectedProduct(null);
-    // };
-
-    // Show products if a category is selected
-    // if (selectedCategory) {
-    //   const filteredProducts = accessoryProducts.filter(
-    //     (product) => product.categoryId === selectedCategory
-    //   );
-
-    //   if (filteredProducts.length === 0) {
-    //     return (
-    //       <div className="text-center py-4">
-    //         <p>No products found for this category</p>
-    //       </div>
-    //     );
-    //   }
-
     return (
-      <>
-        {/* <button 
-          className="btn btn-link mb-3" 
-          onClick={handleBackToSubCategories}
-        >
-          ← Back to Subcategories
-        </button> */}
-        <div className="row g-3">
-          {filteredProducts.map((product) => (
+      <div className="row g-3">
+        {filteredProducts.map((product) => {
+          const existingItem = orderItems.find(
+            (item) => item.id === product.id
+          );
+          const quantity = existingItem ? existingItem.quantity : 0;
+
+          return (
             <div
               key={product.id}
               className="col-sm-6 col-md-6 col-lg-6 col-xl-4 col-xxl-3"
             >
               <div
-                className="card shadow border-0 rounded-4 p-3 d-flex flex-column justify-content-between h-100"
+                className="card  border-1 rounded-4 p-3 d-flex flex-column justify-content-between h-100 product-card mb-1"
                 style={{
                   backgroundColor: "#fff",
-                  borderLeft: "5px solid #0d6efd",
+                  borderLeft: "5px solid yellow",
+                  cursor: "pointer",
                 }}
-                // onClick={() => handleProductClick(product)}
+                onClick={() => handleProductClick(product)}
                 tabIndex="0"
-              // onMouseEnter={(e) =>
-              //   (e.currentTarget.style.transform = "scale(1.015)")
-              // }
-              // onMouseLeave={(e) =>
-              //   (e.currentTarget.style.transform = "scale(1)")
-              // }
               >
-                <div>
+                <div className="text-center">
                   <div className="d-flex justify-content-between align-items-start mb-2">
-                    <span className="badge bg-success px-3 py-2 fs-12">
-                      &#x20B9;{product.price ? product.price.toFixed(2) : "0.00"}
-                      {product.discountValue > 0 && (
-                        <span className="text-light ms-2">
-                          ({product.discountValue}% off)
-                        </span>
-                      )}
-                    </span>
+                    {quantity > 0 && (
+                      <span className="badge bg-primary px-2 py-1 position-absolute top-0 end-0 m-2">
+                        {quantity}
+                      </span>
+                    )}
                   </div>
 
-                  <h5 className="fw-bold text-dark mb-1">{product.name}</h5>
-                  <span className="badge bg-light text-dark border px-2 py-1 text-uppercase mb-2">
+                  <h6 className="fw-bold text-dark mb-1">{product.name}</h6>
+                  <span className="badge bg-light text-dark border px-2 py-1 text-uppercase mb-2 fs-12">
                     {product.brandName}
                   </span>
-                  {/* <small className="text-muted d-block mb-2">
-                    SKU: {product.sku}
-                  </small> */}
-
-                  {/* <p
-                    className="text-muted small mb-3"
-                    style={{ minHeight: "40px" }}
-                  >
-                    {product.description?.slice(0, 60) ||
-                      "No description provided."}
-                  </p> */}
-                  <small className="text-secondary">
+                  <span className="badge bg-success px-2 py-1 fs-12 mx-auto">
+                    &#x20B9;
+                    {product.price ? product.price.toFixed(2) : "0.00"}
+                    {/* {product.discountValue > 0 && (
+                      <span className="text-light ms-1">
+                        ({product.discountValue}% off)
+                      </span>
+                    )} */}
+                  </span>
+                  <small className="text-secondary d-block">
                     {product.manufacturer}
                     {product.warrantyType && ` • ${product.warrantyType}`}
                   </small>
                 </div>
 
-                <div className="d-flex justify-content-between align-items-center pt-2 border-top">
-                  {/* <small className="text-secondary">
-                    Cat ID: {product.categoryId.slice(0, 6)}...
-                  </small> */}
-                  <CartCounter
-                    className="compact-counter"
-                    defaultValue={0}
-                    productId={product.id}
-                    cartItems={orderItems}
-                    onQuantityChange={(id, quantity) => {
-                      dispatch(
-                        addOrUpdateCartItem({
-                          id: product.id,
-                          product: {
-                            name: product.name,
-                            price: product.price,
-                            image: product.image,
-                            category: product.category,
-                            categoryId: product.categoryId,
-                            subcategoryId: product.subcategoryId,
-                            description: product.description,
-                          },
-                          quantity,
-                        })
-                      );
-                    }}
-                  />
-                </div>
+                {/* <div className="pt-2 border-top text-center">
+                  <small className="text-primary">Click to add to cart</small>
+                </div> */}
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* Product Details Modal */}
-        {/* {selectedProduct && (
-          <div
-            className="modal show"
-            style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
-          >
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">{selectedProduct.name}</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={closeModal}
-                  ></button>
-                </div>
-                <div className="modal-body">
-                  <div className="row">
-                    <div className="col-md-6">
-                      <img
-                        src={selectedProduct.image}
-                        alt={selectedProduct.name}
-                        className="img-fluid rounded"
-                      />
-                    </div>
-                    <div className="col-md-6">
-                      <ul className="list-group list-group-flush">
-                        <li className="list-group-item">
-                          <strong>Brand:</strong> {selectedProduct.brandName}
-                        </li>
-                        <li className="list-group-item">
-                          <strong>SKU:</strong> {selectedProduct.sku}
-                        </li>
-                        <li className="list-group-item">
-                          <strong>Price:</strong> $
-                          {selectedProduct.price.toFixed(2)}
-                        </li>
-
-                        <li className="list-group-item">
-                          <strong>Manufacturer:</strong>{" "}
-                          {selectedProduct.manufacturer}
-                        </li>
-                        <li className="list-group-item">
-                          <strong>Warranty:</strong>{" "}
-                          {selectedProduct.warrantyType}
-                        </li>
-                        {selectedProduct.discountValue > 0 && (
-                          <li className="list-group-item text-success">
-                            <strong>Discount:</strong>{" "}
-                            {selectedProduct.discountValue}%
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <h6>Description</h6>
-                    <p>
-                      {selectedProduct.description ||
-                        "No description available"}
-                    </p>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={closeModal}
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )} */}
-      </>
+          );
+        })}
+      </div>
     );
   }
+
   // Show subcategories view
-  if (currentView === 'subcategories' && selectedCategory) {
+  if (currentView === "subcategories" && selectedCategory) {
     const filteredSubCategories = subCategories.filter(
       (subCat) => subCat.categoryId === selectedCategory
     );
@@ -392,40 +266,29 @@ const Accessories = ({
     }
 
     return (
-      <>
-        <div className="row g-3">
-          {filteredSubCategories.map((subCategory) => (
+      <div className="row g-3">
+        {filteredSubCategories.map((subCategory) => (
+          <div
+            key={subCategory.id}
+            className="col-sm-6 col-md-6 col-lg-6 col-xl-4 col-xxl-3"
+          >
             <div
-              key={subCategory.id}
-              className="col-sm-6 col-md-6 col-lg-6 col-xl-4 col-xxl-3"
+              className="card border-0 shadow-sm h-100 text-center category-card"
+              onClick={() => handleSubCategoryClick(subCategory.id)}
+              style={{
+                cursor: "pointer",
+                borderRadius: "12px",
+                minHeight: "120px",
+              }}
             >
-              <div
-                className="card border-0 shadow-sm h-100 text-center category-card"
-                onClick={() => handleSubCategoryClick(subCategory.id)}
-                style={{
-                  cursor: "pointer",
-                  borderRadius: "12px",
-                  minHeight: "120px",
-                }}
-              >
-                <div className="card-body d-flex align-items-center justify-content-center">
-                  <h5 className="fw-bold mb-0 text-capitalize">{subCategory.name}</h5>
-                </div>
+              <div className="card-body d-flex align-items-center justify-content-center">
+                <h5 className="fw-bold mb-0 text-capitalize">
+                  {subCategory.name}
+                </h5>
               </div>
             </div>
-          ))}
-        </div>
-      </>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="text-center py-4">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <p>Loading categories...</p>
+          </div>
+        ))}
       </div>
     );
   }
@@ -440,7 +303,7 @@ const Accessories = ({
         >
           <div
             className="card border-0 shadow-sm h-100 text-center category-card"
-            onClick={() => handleCategoryClick(category.id)}  // ← CHANGED TO USE handleCategoryClick
+            onClick={() => handleCategoryClick(category.id)}
             style={{
               cursor: "pointer",
               borderRadius: "12px",
@@ -458,14 +321,12 @@ const Accessories = ({
 };
 
 Accessories.propTypes = {
-  setShowAlert1: PropTypes.func.isRequired,
   selectedCategory: PropTypes.string,
   setSelectedCategory: PropTypes.func.isRequired,
   selectedSubCategory: PropTypes.string,
   setSelectedSubCategory: PropTypes.func.isRequired,
-   currentView: PropTypes.string.isRequired,
+  currentView: PropTypes.string.isRequired,
   setCurrentView: PropTypes.func.isRequired,
-  showOrderList: PropTypes.bool,
 };
 
 export default Accessories;

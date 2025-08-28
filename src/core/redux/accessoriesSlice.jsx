@@ -23,8 +23,8 @@ const accessoriesSlice = createSlice({
       state.isLoading = action.payload;
     },
     setSubCategories: (state, action) => {
-    state.subCategories = action.payload;
-  },
+      state.subCategories = action.payload;
+    },
     // setSelectedCategory: (state, action) => {
     //   state.selectedCategory = action.payload;
     // },
@@ -57,6 +57,19 @@ const accessoriesSlice = createSlice({
     resetCart: (state) => {
       state.cartItems = [];
     },
+    // ADD THIS NEW REDUCER
+    updateAccessoryQuantity: (state, action) => {
+      const { id, quantity } = action.payload;
+      const item = state.cartItems.find((item) => item.id === id);
+      if (item) {
+        item.quantity = quantity;
+
+        // Remove item if quantity is 0
+        if (quantity === 0) {
+          state.cartItems = state.cartItems.filter((item) => item.id !== id);
+        }
+      }
+    },
   },
 });
 
@@ -70,6 +83,7 @@ export const {
   addOrUpdateCartItem,
   removeCartItem,
   resetCart,
+  updateAccessoryQuantity, // ADD THIS EXPORT
 } = accessoriesSlice.actions;
 
 // Selectors

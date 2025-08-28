@@ -1,54 +1,122 @@
-/* For TicketManagement when order list is hidden */
-.modal-fullscreen .modal-content {
-  width: 100%;
-  margin: 0;
-  max-width: none;
-}
-
-/* Make the table take full width */
-.custom-datatable-filter {
-  width: 100%;
-}
-
-.custom-datatable-filter table {
-  width: 100% !important;
-  table-layout: auto;
-}
-
-/* For the POS layout */
-.contact-method-container {
-  font-family: Arial, sans-serif;
-  max-width: 300px;
-  margin: 0 auto;
-}
-
-.label {
-  margin-bottom: 8px;
-  font-weight: bold;
-  color: #333;
-}
-
-.button-group {
+/* Adjust the main layout */
+.pos-wrapper {
   display: flex;
-  gap: 6px;
+  flex-direction: row;
 }
 
-.contact-btn {
-  padding: 6px 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: #f8f8f8;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
+/* Products section width */
+.col-md-12.col-lg-8.col-xl-9 {
+  width: 60% !important;
+  flex: 0 0 60% !important;
+  max-width: 60% !important;
 }
 
-.contact-btn:hover {
-  background-color: #e9e9e9;
+/* Order summary section width */
+.col-md-12.col-lg-4.col-xl-3.ps-0.theiaStickySidebar {
+  width: 40% !important;
+  flex: 0 0 40% !important;
+  max-width: 40% !important;
 }
 
-.contact-btn.active {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
+/* Ensure the order summary content fits properly */
+.product-order-list {
+  width: 100%;
+}
+
+/* Make the table in order summary more compact */
+.product-added .table-responsive {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.product-added table {
+  font-size: 13px;
+}
+
+/* Adjust the tabs container */
+.tabs_container {
+  width: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .col-md-12.col-lg-8.col-xl-9,
+  .col-md-12.col-lg-4.col-xl-3.ps-0.theiaStickySidebar {
+    width: 100% !important;
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Remove horizontal scroll bars */
+.pos-wrapper,
+.pos-categories,
+.content-wrap,
+.tab-content-wrap,
+.pos-products,
+.tabs_container,
+.tab_content {
+  overflow-x: hidden !important;
+}
+
+/* Ensure table content doesn't cause horizontal scrolling */
+.table-responsive {
+  overflow-x: hidden !important;
+}
+
+/* Prevent any horizontal scrolling in the main layout */
+.main-wrapper.pos-five,
+.page-wrapper.pos-pg-wrapper,
+.content.pos-design {
+  overflow-x: hidden !important;
+}
+
+/* Cart Counter Styles */
+.cart-counter-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.cart-counter-wrapper .form-control {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+}
+
+.cart-counter-wrapper .btn {
+  min-width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-counter-wrapper .dec {
+  border-radius: 4px 0 0 4px !important;
+}
+
+.cart-counter-wrapper .inc {
+  border-radius: 0 4px 4px 0 !important;
+}
+
+/* Table alignment improvements */
+.table td {
+  vertical-align: middle !important;
+}
+
+.table th.text-center,
+.table td.text-center {
+  text-align: center;
+}
+
+.table th.text-end,
+.table td.text-end {
+  text-align: right;
+}
+
+/* Quantity badge for non-editable items */
+.quantity-badge {
+  min-width: 40px;
+  display: inline-block;
+  text-align: center;
+  padding: 4px 8px;
 }
