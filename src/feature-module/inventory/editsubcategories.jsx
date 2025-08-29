@@ -5,26 +5,27 @@ import axios from "axios";
 // import { Category } from "../../core/common/selectOption/selectOption";
 import { useSelector } from "react-redux";
 
-const EditSubcategories = ({ id, onUpdate }) => {
+const EditSubcategories = ({ id, onUpdate, isOpen, onClose, onMessage }) => {
   const storeId = useSelector((state) => state.user.storeId);
   // const [selectedCategory, setSelectedCategory] = useState(null);
   const [subCategoryName, setSubCategoryName] = useState("");
-  const [categoryCode, setCategoryCode] = useState("");
+  // const [categoryCode, setCategoryCode] = useState("");
   const [values, setValue] = useState("");
-  const [imageFile, setImageFile] = useState(null);
-  const [status, setStatus] = useState(true);
+  // const [imageFile, setImageFile] = useState(null);
+  // const [status, setStatus] = useState(true);
    const [originalData, setOriginalData] = useState(null);
-
+const [isSubmitting, setIsSubmitting] = useState(false);
   // const storeId = "67aa7f75-0ed9-4378-9b3d-50e1e34903ce";
 
-   const resetForm = () => {
-    setCategoryCode("");
+   
+  const resetForm = () => {
+    setSubCategoryName("");
     setValue("");
-    setImageFile(null);
-    setStatus(true);
+    setOriginalData(null);
   };
 
-  const fetchSubcategoryDetails = useCallback(async () => {
+
+ const fetchSubcategoryDetails = useCallback(async () => {
     if (!id) return;
     try {
       const response = await axios.get(
@@ -36,55 +37,88 @@ const EditSubcategories = ({ id, onUpdate }) => {
       );
 
       if (item) {
-        // setSelectedCategory(
-        //   Category.find((cat) => cat.value === item.categoryId)
-        // );
         setSubCategoryName(item.subCategoryName);
-        setCategoryCode(item.code);
         setValue(item.description);
-        setImageFile({ name: item.image });
-        setStatus(item.status === "Active");
         setOriginalData(item);
       }
     } catch (error) {
       console.error("Error fetching subcategory details:", error);
+      onMessage({
+        title: "Error",
+        message: "Failed to fetch subcategory details",
+        type: "error",
+      });
     }
-  }, [id]);
+  }, [id, storeId, onMessage]);
 
   useEffect(() => {
-    fetchSubcategoryDetails();
-  }, [fetchSubcategoryDetails]);
+    if (isOpen && id) {
+      fetchSubcategoryDetails();
+    }
+  }, [isOpen, id, fetchSubcategoryDetails]);
 
   const handleEditSubmit = async () => {
+    if (!subCategoryName || !values) {
+      onMessage({
+        title: "Validation Error",
+        message: "Please fill all required fields",
+        type: "error",
+      });
+      return;
+    }
+
     const payload = {
       SubCategoryId: id,
       categoryId: originalData?.categoryId || "",
-      SubCategoryName: subCategoryName || originalData?.subCategoryName || "",
-      image: imageFile?.name || originalData?.image || "",
-      code: categoryCode || originalData?.code || "",
+      SubCategoryName: subCategoryName,
+      image: originalData?.image || "",
+      code: originalData?.code || "",
       storeid: storeId,
-      description: values || originalData?.description || "",
-      status: status ? "Active" : "Inactive",
+      description: values,
+      status: originalData?.status === "Active" ? "Active" : "Inactive",
     };
 
     try {
+      setIsSubmitting(true);
       await axios.post(
         `${process.env.REACT_APP_BASEURL}api/v1/Product/savesubcategories`,
         payload
       );
-      alert("Subcategory updated successfully");
-      await fetchSubcategoryDetails();
+      
+      onMessage({
+        title: "Success",
+        message: "Subcategory updated successfully",
+        type: "success",
+      });
+      
       onUpdate();
       resetForm();
-
+      onClose();
     } catch (error) {
       console.error("Error updating subcategory:", error);
-      alert("Error updating subcategory");
+      onMessage({
+        title: "Error",
+        message: "Error updating subcategory",
+        type: "error",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  if (!isOpen) return null;
+  
+
   return (
-    <div className="modal fade" id="edit-category">
+     <div
+      className="modal fade show"
+      style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+    >
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="content">
@@ -95,7 +129,7 @@ const EditSubcategories = ({ id, onUpdate }) => {
               <button
                 type="button"
                 className="close bg-danger text-white"
-                data-bs-dismiss="modal"
+                 onClick={handleClose}
               >
                 ×
               </button>
@@ -130,7 +164,7 @@ const EditSubcategories = ({ id, onUpdate }) => {
                     placeholder={originalData?.code || ""}
                   />
                 </div> */}
-                 {/* <div className="mb-3">
+                 <div className="mb-3">
                   <label className="form-label">Description</label>
                   <textarea
                     className="form-control"
@@ -140,7 +174,7 @@ const EditSubcategories = ({ id, onUpdate }) => {
                     placeholder={originalData?.description || ""}
                   />
                 </div>
-                <div className="mb-3">
+                {/* <div className="mb-3">
                   <div className="status-toggle modal-status d-flex justify-content-between">
                     <span className="status-label">Active</span>
                     <input
@@ -159,7 +193,7 @@ const EditSubcategories = ({ id, onUpdate }) => {
               <button
                 type="button"
                 className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3"
-                data-bs-dismiss="modal"
+                onClick={handleClose}
 
               >
                 Cancel
@@ -168,9 +202,20 @@ const EditSubcategories = ({ id, onUpdate }) => {
                 type="button"
                 className="btn btn-primary fs-13 fw-medium p-2 px-3"
                 onClick={handleEditSubmit}
-                data-bs-dismiss="modal"
+               disabled={isSubmitting}
               >
-                Update Subcategory
+               {isSubmitting ? (
+                  <>
+                    <span
+                      className="spinner-border spinner-border-sm me-1"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    Updating...
+                  </>
+                ) : (
+                  "Update Subcategory"
+                )}
               </button>
             </div>
           </div>
@@ -182,8 +227,11 @@ const EditSubcategories = ({ id, onUpdate }) => {
 
 EditSubcategories.propTypes = {
   id: PropTypes.number,
-  fetchSubCategories: PropTypes.func.isRequired,
   onUpdate: PropTypes.func.isRequired,
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onMessage: PropTypes.func.isRequired,
 };
+
 
 export default EditSubcategories;

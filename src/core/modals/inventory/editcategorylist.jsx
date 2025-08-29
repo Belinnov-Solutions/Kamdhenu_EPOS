@@ -3,13 +3,10 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import PropTypes from "prop-types";
 import { useSelector } from "react-redux";
-
-
 // const STORE_ID = process.env.REACT_APP_STORE_ID;
 
-const EditCategoryList = ({ categoryData, onRefresh }) => {
-    const storeId = useSelector((state) => state.user.storeId);
-  
+const EditCategoryList = ({ categoryData, onRefresh, isOpen, onClose, onMessage }) => {
+  const { storeId } = useSelector((state) => state.user);
   const [formData, setFormData] = useState({
     categoryId: 1,
     name: "",
@@ -17,7 +14,7 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
     // status: true,
     description: "",
     image: null,
-    storeId: storeId,
+   storeId: storeId || "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,10 +33,10 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
         name: categoryData.categoryName || "",
         description: categoryData.description || "",
         image: null, // We'll handle image separately
-        storeId: categoryData.storeId,
+        storeId: storeId || categoryData.storeId,
       });
     }
-  }, [categoryData]);
+  }, [categoryData,storeId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -54,49 +51,63 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
     e.preventDefault();
     const BASE_URL = process.env.REACT_APP_BASEURL;
 
-    if (!formData.name.trim()) {
-      alert("Category name is required");
-      return;
+   if (!formData.name.trim()) {
+  onMessage({
+    title: "Validation Error",
+    message: "Category name is required",
+    type: "error",
+  });
+  return;
+}
+
+   try {
+  setIsSubmitting(true);
+
+  const payload = {
+    categoryId: formData.categoryId,
+    CategoryName: formData.name.trim(),
+    description: formData.description.trim(),
+    storeId: formData.storeId,
+    image: formData.image ? formData.image.name : categoryData?.image,
+  };
+
+  const response = await axios.post(
+    `${BASE_URL}api/v1/Product/SaveCategories`,
+    payload,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
     }
+  );
 
-    try {
-      setIsSubmitting(true);
+  onMessage({
+    title: "Success",
+    message: response.data.message || "Category updated successfully!",
+    type: "success",
+  });
 
-      // Use the same payload structure as your add functionality
-      const payload = {
-        categoryId: formData.categoryId,
-        CategoryName: formData.name.trim(),
-        description: formData.description.trim(),
-        storeId: formData.storeId,
-        image: formData.image ? formData.image.name : categoryData?.image,
-      };
-
-      const response = await axios.post(
-        `${BASE_URL}api/v1/Product/SaveCategories`,
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log(response);
-      alert("Category updated successfully!");
-      if (onRefresh) await onRefresh();
-      document.getElementById("add-category")?.classList.remove("show");
-      document.querySelector(".modal-backdrop")?.remove();
-      document.body.classList.remove("modal-open");
-      document.body.style.paddingRight = "";
-    } catch (error) {
-      console.error("Error updating category:", error);
-      alert(error.response?.data?.message || "Failed to update category");
-    } finally {
-      setIsSubmitting(false);
-    }
+  if (onRefresh) await onRefresh();
+  onClose(); // Close the modal
+} catch (error) {
+  console.error("Error updating category:", error);
+  onMessage({
+    title: "Error",
+    message: error.response?.data?.message || "Failed to update category",
+    type: "error",
+  });
+} finally {
+  setIsSubmitting(false);
+}
   };
 
   return (
-    <div className="modal fade" id="edit-category">
+     <>
+    {isOpen && (
+      <div
+        className="modal fade show"
+        style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+      >
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="page-wrapper-new p-0">
@@ -107,9 +118,9 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
                 </div>
                 <button
                   type="button"
-                  className="close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"
+                 className="close bg-danger text-white fs-16"
+                    onClick={onClose}
+                    aria-label="Close"
                 >
                   <span aria-hidden="true">×</span>
                 </button>{" "}
@@ -182,7 +193,7 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
                 <button
                   type="button"
                   className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none"
-                  data-bs-dismiss="modal"
+                  onClick={onClose}
                 >
                   Cancel
                 </button>
@@ -191,7 +202,7 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
                   className="btn btn-primary fs-13 fw-medium p-2 px-3"
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  data-bs-dismiss="modal"
+                 
                 >
                   {isSubmitting ? (
                     <>
@@ -212,6 +223,8 @@ const EditCategoryList = ({ categoryData, onRefresh }) => {
         </div>
       </div>
     </div>
+    )}
+  </>
   );
 };
 
@@ -226,11 +239,17 @@ EditCategoryList.propTypes = {
     storeId: PropTypes.string,
   }),
   onRefresh: PropTypes.func,
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func,
+  onMessage: PropTypes.func,
 };
 
 EditCategoryList.defaultProps = {
   categoryData: null,
   onRefresh: () => {},
+  isOpen: false,
+  onClose: () => {},
+  onMessage: () => {},
 };
 
 export default EditCategoryList;

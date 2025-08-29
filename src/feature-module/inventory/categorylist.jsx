@@ -1,66 +1,54 @@
-import React, { useState, useEffect } from "react"; // Added useEffect import
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import "bootstrap/dist/js/bootstrap.bundle.min";
+// import "bootstrap/dist/js/bootstrap.bundle.min";
 import EditCategoryList from "../../core/modals/inventory/editcategorylist";
 import Table from "../../core/pagination/datatable";
-// import TooltipIcons from "../../core/common/tooltip-content/tooltipIcons";
-// import RefreshIcon from "../../core/common/tooltip-content/refresh";
-// import CollapesIcon from "../../core/common/tooltip-content/collapes";
 import CommonFooter from "../../core/common/footer/commonFooter";
-import CommonDeleteModal from "../../core/common/modal/commonDeleteModal";
+// import CommonDeleteModal from "../../core/common/modal/commonDeleteModal";
 import { useSelector } from "react-redux";
-
-// Access environment variables
-
-// const STORE_ID = process.env.REACT_APP_STORE_ID;
-
+import MessageModal from "./MessageModal";
 const CategoryList = () => {
   const storeId = useSelector((state) => state.user.storeId);
   const [selectedCategory, setSelectedCategory] = useState(null);
-
-  // const dataSource = useSelector(
-  //   (state) => state.rootReducer.categotylist_data
-  // );
-
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [dataSource, setDataSource] = useState([]);
-
   const [formData, setFormData] = useState({
     categoryId: 0,
     name: "",
-    image: null,
-    description: "",
     storeId: storeId,
   });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [messageModal, setMessageModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const fetchCategories = async () => {
     const BASE_URL = process.env.REACT_APP_BASEURL;
     try {
       setIsLoading(true);
       const response = await axios.get(
-        `${BASE_URL}api/v1/Product/GetCategories?storeId=${storeId}`,
+        `${BASE_URL}api/v1/Product/GetCategories?storeId=${storeId}`
       );
 
       const transformedData = response.data.data.map((item) => ({
         id: item.categoryId,
         category: item.categoryName,
-        description: item.description,
         categoryslug: "default-slug",
         createdon: new Date().toLocaleDateString(),
         status: "Active",
-        imageUrl: item.image
-          ? `${BASE_URL}images/categories/${item.image}`
-          : null,
         originalData: item,
       }));
 
-      setDataSource(transformedData); // Update local state with API data
+      setDataSource(transformedData);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      // You might want to set some error state here for UI feedback
     } finally {
       setIsLoading(false);
     }
@@ -72,18 +60,14 @@ const CategoryList = () => {
 
   const handleAddCategory = async () => {
     const BASE_URL = process.env.REACT_APP_BASEURL;
+
     if (!formData.name.trim()) {
-      alert("Category name is required");
-      return;
-    }
-
-    if (!formData.description.trim()) {
-      alert("Description is required");
-      return;
-    }
-
-    if (!formData.image) {
-      alert("Image is required");
+      setMessageModal({
+        isOpen: true,
+        title: "Validation Error",
+        message: "Category name is required",
+        type: "error",
+      });
       return;
     }
 
@@ -92,9 +76,7 @@ const CategoryList = () => {
 
       const payload = {
         CategoryName: formData.name.trim(),
-        image: formData.image.name,
         storeId: formData.storeId,
-        description: formData.description.trim(),
       };
 
       const response = await axios.post(
@@ -107,118 +89,162 @@ const CategoryList = () => {
         }
       );
 
-      alert("Category added successfully!");
-      console.log("API Response:", response.data);
+      setMessageModal({
+        isOpen: true,
+        title: "Success",
+        message: response.data.message || "Category added successfully!",
+        type: "success",
+      });
+
       await fetchCategories();
 
       // Reset form
       setFormData({
         name: "",
-        image: null,
-        description: "",
         storeId: storeId,
       });
 
-      // Close modal - more reliable method
-      document.getElementById("add-category")?.classList.remove("show");
-      document.querySelector(".modal-backdrop")?.remove();
-      document.body.classList.remove("modal-open");
-      document.body.style.paddingRight = "";
+      // Close modal
+      setShowAddModal(false);
     } catch (error) {
       console.error("Full error:", error);
       if (error.response) {
-        alert(
-          `Error: ${error.response.data.message || "Failed to add category"}`
-        );
+        setMessageModal({
+          isOpen: true,
+          title: "Error",
+          message: error.response.data.message || "Failed to add category",
+          type: "error",
+        });
       } else {
-        alert("Network error. Please try again.");
+        setMessageModal({
+          isOpen: true,
+          title: "Network Error",
+          message: "Network error. Please try again.",
+          type: "error",
+        });
       }
     } finally {
       setIsSubmitting(false);
     }
   };
+  // helper functions for message modal
+  const handleMessage = (messageData) => {
+    setMessageModal({
+      isOpen: true,
+      title: messageData.title,
+      message: messageData.message,
+      type: messageData.type,
+    });
+  };
+
+  const closeMessageModal = () => {
+    setMessageModal({ ...messageModal, isOpen: false });
+  };
+
+  const handleCloseAddModal = () => {
+    setFormData({
+      name: "",
+      storeId: storeId,
+    });
+    setShowAddModal(false);
+  };
+
+  // Delete category function
+  const deleteCategory = async () => {
+  if (!categoryToDelete) return;
+
+  const BASE_URL = process.env.REACT_APP_BASEURL;
+
+try {
+  await axios.post(`${BASE_URL}api/v1/Product/DeleteCategory`, null, {
+    params: {
+      categoryId: categoryToDelete,
+      storeId: storeId,
+    },
+  });
+
+    fetchCategories();
+
+    setMessageModal({
+      isOpen: true,
+      title: "Success",
+      message: "Category deleted successfully!",
+      type: "success",
+    });
+  } catch (error) {
+    console.error("Failed to delete category:", error);
+    setMessageModal({
+      isOpen: true,
+      title: "Error",
+      message: "Failed to delete category. Please try again.",
+      type: "error",
+    });
+  }
+};
+
+  // Handle delete click - set the category to delete and show modal
+  const handleDeleteClick = (categoryId) => {
+    setCategoryToDelete(categoryId);
+    setShowDeleteModal(true);
+  };
+  // Handle confirm delete - called when user confirms deletion
+  const handleConfirmDelete = () => {
+    deleteCategory();
+    setShowDeleteModal(false);
+  };
+  const handleCloseDeleteModal = () => {
+    setCategoryToDelete(null);
+    setShowDeleteModal(false);
+  };
+  // reset form data when opening add modal
+  useEffect(() => {
+    if (showAddModal) {
+      setFormData({
+        name: "",
+        storeId: storeId,
+      });
+    }
+  }, [showAddModal, storeId]);
 
   const columns = [
-    // {
-    //   title: "Image",
-    //   dataIndex: "imageUrl",
-    //   render: (imageUrl) =>
-    //     imageUrl ? (
-    //       <img
-    //         src={imageUrl}
-    //         alt="Category"
-    //         style={{
-    //           width: "50px",
-    //           height: "50px",
-    //           objectFit: "cover",
-    //           borderRadius: "4px",
-    //         }}
-    //       />
-    //     ) : (
-    //       <span className="text-muted">No image</span>
-    //     ),
-    // },
     {
       title: "Category",
       dataIndex: "category",
       sorter: (a, b) => a.category.localeCompare(b.category),
+      width: "40%",
     },
-    // {
-    //   title: "Category Slug",
-    //   dataIndex: "categoryslug",
-    //   sorter: (a, b) => a.categoryslug.localeCompare(b.categoryslug),
-    // },
-    // {
-    //   title: "Description",
-    //   dataIndex: "description",
-    //   sorter: (a, b) => a.categoryslug.localeCompare(b.description),
-    // },
     {
-      title: "Created On",
-      dataIndex: "createdon",
-      sorter: (a, b) => new Date(a.createdon) - new Date(b.createdon),
-    },
-    // {
-    //   title: "Status",
-    //   dataIndex: "status",
-    //   render: (text) => (
-    //     <span className="badge bg-success fw-medium fs-10">{text}</span>
-    //   ),
-    //   sorter: (a, b) => a.status.localeCompare(b.status),
-    // },
-    {
-      title: "Actions",
+      title: "",
       dataIndex: "actions",
       key: "actions",
+      width: "100px",
       render: (text, record) => (
         <div className="action-table-data">
           <div className="edit-delete-action">
             <Link
               className="me-2 p-2"
               to="#"
-              data-bs-toggle="modal"
-              data-bs-target="#edit-category"
-              onClick={() =>
+              onClick={() => {
                 setSelectedCategory({
                   ...record.originalData,
                   imageUrl: record.imageUrl,
-                })
-              }
+                });
+                setShowEditModal(true);
+              }}
             >
               <i data-feather="edit" className="feather-edit"></i>
             </Link>
-            {/* <Link
-              data-bs-toggle="modal"
-              data-bs-target="#delete-modal"
+            <Link
               className="p-2"
               to="#"
+              onClick={() => handleDeleteClick(record.id)}
             >
               <i data-feather="trash-2" className="feather-trash-2"></i>
-            </Link> */}
+            </Link>
           </div>
         </div>
       ),
-    },
+    }
   ];
 
   return (
@@ -233,16 +259,13 @@ const CategoryList = () => {
               </div>
             </div>
             <ul className="table-top-head">
-              {/* <TooltipIcons />
-              <RefreshIcon onClick={fetchCategories} /> */}
-              {/* <CollapesIcon /> */}
+              {/* TooltipIcons and RefreshIcon can be added here if needed */}
             </ul>
             <div className="page-btn">
               <Link
                 to="#"
                 className="btn btn-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#add-category"
+                onClick={() => setShowAddModal(true)}
               >
                 <i className="ti ti-circle-plus me-1"></i>
                 Add Category
@@ -258,7 +281,6 @@ const CategoryList = () => {
                     type="text"
                     className="form-control form-control-sm"
                     placeholder="Search..."
-
                   />
                   <button className="btn btn-searchset">
                     <i className="ti ti-search"></i>
@@ -266,69 +288,7 @@ const CategoryList = () => {
                 </div>
               </div>
               <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                {/* <div className="dropdown me-2">
-                  <Link
-                    to="#"
-                    className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown" 
-                  >
-                    Status
-                  </Link>
-                  <ul className="dropdown-menu dropdown-menu-end p-3">
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Active
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Inactive
-                      </Link>
-                    </li>
-                  </ul>
-                </div>  
-                <div className="dropdown">
-                  <Link
-                    to="#"
-                    className="dropdown-t  btn-md d-inline-flex align-items-center"
-                   
-                  >
-                  </Link>
-                  <Link
-                    to="#"
-                    className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown"
-                  >
-                    Sort By : Last 7 Days
-                  </Link>
-                  <ul className="dropdown-menu dropdown-menu-end p-3">
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Recently Added
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Ascending
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Descending
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Last Month
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Last 7 Days
-                      </Link>
-                    </li>
-                  </ul>
-                </div> */}
+                {/* Dropdown menus can be added here if needed */}
               </div>
             </div>
             <div className="card-body mt-2">
@@ -365,112 +325,141 @@ const CategoryList = () => {
       </div>
 
       {/* Add Category Modal */}
-      <div className="modal fade" id="add-category">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="page-wrapper-new p-0">
-              <div className="content">
-                <div className="modal-header">
-                  <div className="page-title">
-                    <h4>Add Category</h4>
+      {showAddModal && (
+        <div
+          className="modal fade show"
+          style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="page-wrapper-new p-0">
+                <div className="content">
+                  <div className="modal-header">
+                    <div className="page-title">
+                      <h4>Add Category</h4>
+                    </div>
+                    <button
+                      type="button"
+                      className="close bg-danger text-white fs-16"
+                      // data-bs-dismiss="modal"
+                      onClick={handleCloseAddModal}
+                      aria-label="Close"
+                    >
+                      <span aria-hidden="true">×</span>
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="close bg-danger text-white fs-16"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                  >
-                    <span aria-hidden="true">×</span>
-                  </button>
-                </div>
-                <div className="modal-body">
-                  <form>
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Category<span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={formData.name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Description<span className="text-danger">*</span>
-                      </label>
-                      <textarea
-                        className="form-control"
-                        value={formData.description}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            description: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    {/* <div className="mb-3">
-                      <label className="form-label">
-                        Upload Image<span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="file"
-                        className="form-control"
-                        accept="image/*"
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            image: e.target.files[0],
-                          })
-                        }
-                      />
-                    </div> */}
-                  </form>
-                </div>
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3"
-                    data-bs-dismiss="modal"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-primary fs-13 fw-medium p-2 px-3"
-                    onClick={handleAddCategory}
-                    data-bs-dismiss="modal"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <span
-                          className="spinner-border spinner-border-sm me-1"
-                          role="status"
-                          aria-hidden="true"
-                        ></span>
-                        Adding...
-                      </>
-                    ) : (
-                      "Add Category"
-                    )}
-                  </button>
+                  <div className="modal-body">
+                    <form>
+                      <div className="mb-3">
+                        <label className="form-label">
+                          Category<span className="text-danger">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={formData.name}
+                          onChange={(e) =>
+                            setFormData({ ...formData, name: e.target.value })
+                          }
+                        />
+                      </div>
+                    </form>
+                  </div>
+                  <div className="modal-footer">
+                    <button
+                      type="button"
+                      className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3"
+                      // data-bs-dismiss="modal"
+                      onClick={handleCloseAddModal}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-primary fs-13 fw-medium p-2 px-3"
+                      onClick={handleAddCategory}
+                      // data-bs-dismiss="modal"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <span
+                            className="spinner-border spinner-border-sm me-1"
+                            role="status"
+                            aria-hidden="true"
+                          ></span>
+                          Adding...
+                        </>
+                      ) : (
+                        "Add Category"
+                      )}
+                    </button>
+
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
+      )}
       <EditCategoryList
         categoryData={selectedCategory}
         onRefresh={fetchCategories}
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onMessage={handleMessage}
       />
-      <CommonDeleteModal />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div
+          className="modal fade show"
+          style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="page-wrapper-new p-0">
+                <div className="content p-5 px-3 text-center">
+                  <span className="rounded-circle d-inline-flex p-2 bg-danger-transparent mb-2">
+                    <i className="ti ti-trash fs-24 text-danger" />
+                  </span>
+                  <h4 className="fs-20 text-gray-9 fw-bold mb-2 mt-1">
+                    Delete Category
+                  </h4>
+                  <p className="text-gray-6 mb-0 fs-16">
+                    Are you sure you want to delete this category?
+                  </p>
+                  <div className="modal-footer-btn mt-3 d-flex justify-content-center">
+                    <button
+                      type="button"
+                      className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none"
+                      onClick={handleCloseDeleteModal}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-primary fs-13 fw-medium p-2 px-3"
+                      onClick={handleConfirmDelete}
+                    >
+                      Yes Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Message Modal */}
+      <MessageModal
+        isOpen={messageModal.isOpen}
+        onClose={closeMessageModal}
+        title={messageModal.title}
+        message={messageModal.message}
+        type={messageModal.type}
+      />
     </div>
   );
 };
