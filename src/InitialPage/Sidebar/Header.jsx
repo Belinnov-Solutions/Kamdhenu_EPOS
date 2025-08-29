@@ -175,7 +175,7 @@ const Header = () => {
             onMouseLeave={expandMenu}
             onMouseOver={expandMenuOpen}
           >
-            <Link to="/dashboard" className="logo logo-normal">
+            <Link to="/index" className="logo logo-normal">
               {/* <ImageWithBasePath src="assets/img/kamdhenuLogo.png" alt="img"
                /> */}
               <img
@@ -187,7 +187,7 @@ const Header = () => {
                   objectFit: "contain",                 
                 }} />
             </Link>
-            <Link to="/dashboard" className="logo logo-white">
+            <Link to="/pos" className="logo logo-white">
               <ImageWithBasePath src="assets/img/logo-white.png" alt="img" />
             </Link>
             {/* <Link to="/dashboard" className="logo-small">
