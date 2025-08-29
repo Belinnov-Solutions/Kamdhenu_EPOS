@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { DateRangePicker } from 'react-bootstrap-daterangepicker';
+import moment from 'moment';
+import PropTypes from 'prop-types';
 import "bootstrap-daterangepicker/daterangepicker.css";
 import axios from "axios";
 import {
@@ -13,7 +16,6 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import PredefinedDateRanges from "../../core/common/range-picker/datePicker";
 import { useSelector } from "react-redux";
 
 // Register the necessary components for Chart.js
@@ -29,12 +31,78 @@ ChartJS.register(
   Legend
 );
 
+const PredefinedDateRanges = ({ onDateChange }) => {
+  const [state, setState] = useState({
+    start: moment().subtract(29, 'days'),
+    end: moment(),
+  });
+
+  const { start, end } = state;
+
+  const handleCallback = (start, end) => {
+    setState({ start, end });
+    if (onDateChange) {
+      onDateChange({ startDate: start, endDate: end });
+    }
+  };
+
+  // Format to "YYYY/MM/DD" as requested
+  const label = `${start.format('YYYY/MM/DD')} - ${end.format('YYYY/MM/DD')}`;
+
+  return (
+    <DateRangePicker
+      initialSettings={{
+        startDate: start.toDate(),
+        endDate: end.toDate(),
+        ranges: {
+          Today: [moment().toDate(), moment().toDate()],
+          Yesterday: [moment().subtract(1, 'days').toDate(), moment().subtract(1, 'days').toDate()],
+          'Last 7 Days': [moment().subtract(6, 'days').toDate(), moment().toDate()],
+          'Last 30 Days': [moment().subtract(29, 'days').toDate(), moment().toDate()],
+          'This Month': [moment().startOf('month').toDate(), moment().endOf('month').toDate()],
+          'Last Month': [
+            moment().subtract(1, 'month').startOf('month').toDate(),
+            moment().subtract(1, 'month').endOf('month').toDate(),
+          ],
+        },
+      }}
+      onCallback={handleCallback}
+    >
+      <div
+        id="reportrange"
+        className="col-4"
+        style={{
+          background: '#fff',
+          cursor: 'pointer',
+          padding: '0.5rem 0.625rem',
+          border: '1px solid #E9EDF4',
+          width: '100%',
+          borderRadius: '5px',
+          fontSize: '14px',
+          color: '#202C4B',
+          height: '38px',
+        }}
+      >
+        <i className="ti ti-calendar"></i>&nbsp;
+        <span>{label}</span>
+      </div>
+    </DateRangePicker>
+  );
+};
+
+// Add PropTypes validation
+PredefinedDateRanges.propTypes = {
+  onDateChange: PropTypes.func
+};
+
 const NewDashboard = () => {
   const BASE_URL = process.env.REACT_APP_BASEURL;
-  const { roleName } = useSelector((state) => state.user);
+  const { roleName, storeId } = useSelector((state) => state.user);
 
   const [salesData, setSalesData] = useState(null);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     dateFrom: null,
@@ -45,6 +113,7 @@ const NewDashboard = () => {
 
   useEffect(() => {
     fetchSalesReport();
+    fetchCategories();
   }, [filters]);
 
   const fetchSalesReport = async () => {
@@ -70,6 +139,21 @@ const NewDashboard = () => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      const response = await axios.get(
+        `${BASE_URL}api/v1/Product/GetCategories?storeId=${storeId}`
+      );
+
+      setCategories(response.data.data);
+      setCategoriesLoading(false);
+    } catch (err) {
+      console.error("Error fetching categories:", err);
+      setCategoriesLoading(false);
+    }
+  };
+
   const handleDateRangeChange = (dates) => {
     setFilters({
       ...filters,
@@ -82,6 +166,13 @@ const NewDashboard = () => {
     setFilters({
       ...filters,
       groupBy,
+    });
+  };
+
+  const handleCategoryFilter = (categoryId) => {
+    setFilters({
+      ...filters,
+      categoryId: categoryId === filters.categoryId ? null : categoryId,
     });
   };
 
@@ -134,9 +225,6 @@ const NewDashboard = () => {
           </div>
           <div className="d-flex gap-2">
             <div className="input-icon-start position-relative mb-3">
-              <span className="input-icon-addon fs-16 text-gray-9">
-                <i className="ti ti-calendar" />
-              </span>
               <PredefinedDateRanges onDateChange={handleDateRangeChange} />
             </div>
             <div className="dropdown mb-3">
@@ -174,15 +262,39 @@ const NewDashboard = () => {
                     Month
                   </button>
                 </li>
-                <li>
-                  <button
-                    className="dropdown-item"
-                    onClick={() => handleGroupByChange("year")}
-                  >
-                    Year
-                  </button>
-                </li>
               </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Category Cards */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <h5 className="mb-3">Categories</h5>
+            <div className="d-flex flex-wrap gap-2">
+              <button
+                className={`btn ${!filters.categoryId ? 'btn-primary' : 'btn-outline-primary'} mb-2`}
+                onClick={() => handleCategoryFilter(null)}
+              >
+                All Categories
+              </button>
+              {categoriesLoading ? (
+                <div className="d-flex justify-content-center w-100">
+                  <div className="spinner-border spinner-border-sm text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              ) : (
+                categories.map((category) => (
+                  <button
+                    key={category.categoryId}
+                    className={`btn ${filters.categoryId === category.categoryId ? 'btn-primary' : 'btn-outline-primary'} mb-2`}
+                    onClick={() => handleCategoryFilter(category.categoryId)}
+                  >
+                    {category.categoryName}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -249,7 +361,7 @@ const NewDashboard = () => {
                   <table className="table table-hover">
                     <thead>
                       <tr>
-                        <th>Date</th>
+                        <th>{filters.groupBy === 'day' ? 'Date' : filters.groupBy === 'week' ? 'Week' : 'Month'}</th>
                         <th>Total Sales</th>
                         <th>Items Sold</th>
                         <th>Orders</th>
@@ -258,14 +370,21 @@ const NewDashboard = () => {
                     </thead>
                     <tbody>
                       {salesData &&
-                        salesData.reportData.map((day, index) => (
+                        salesData.reportData.map((period, index) => (
                           <tr key={index}>
-                            <td>{new Date(day.date).toLocaleDateString()}</td>
-                            <td>${day.totalSalesAmount.toFixed(2)}</td>
-                            <td>{day.itemsSold}</td>
-                            <td>{day.orders}</td>
                             <td>
-                              {day.products
+                              {filters.groupBy === 'day' 
+                                ? new Date(period.date).toLocaleDateString('en-CA')
+                                : filters.groupBy === 'week'
+                                ? `Week ${moment(period.date).week()}, ${moment(period.date).year()}`
+                                : moment(period.date).format('MMMM YYYY')
+                              }
+                            </td>
+                            <td>${period.totalSalesAmount.toFixed(2)}</td>
+                            <td>{period.itemsSold}</td>
+                            <td>{period.orders}</td>
+                            <td>
+                              {period.products
                                 .slice(0, 3)
                                 .map((product, pIndex) => (
                                   <span
@@ -275,9 +394,9 @@ const NewDashboard = () => {
                                     {product.productName}: {product.qtySold}
                                   </span>
                                 ))}
-                              {day.products.length > 3 && (
+                              {period.products.length > 3 && (
                                 <span className="badge bg-secondary">
-                                  +{day.products.length - 3} more
+                                  +{period.products.length - 3} more
                                 </span>
                               )}
                             </td>
