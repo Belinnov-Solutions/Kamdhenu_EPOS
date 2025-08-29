@@ -58,6 +58,7 @@ const Datatable = ({ props, columns, dataSource }) => {
         columns={columns}
         dataSource={filteredDataSource}
         rowKey={(record) => record.id}
+        rowClassName={(record) => record.isLowStock ? "low-stock-row" : ""}
         pagination={{
           locale: { items_per_page: "" },
           nextIcon: (

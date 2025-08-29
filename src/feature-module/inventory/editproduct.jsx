@@ -7,28 +7,29 @@ import Addunits from "../../core/modals/inventory/addunits";
 import AddCategory from "../../core/modals/inventory/addcategory";
 import AddSubcategory from "../../core/modals/inventory/addsubcategory";
 import AddBrand from "../../core/modals/addbrand";
-import { Modal, Button } from "react-bootstrap";
+// import { Modal, Button } from "react-bootstrap";
 import {
   ArrowLeft,
   // Calendar,
   // Image,
-  LifeBuoy,
+  // LifeBuoy,
   // List,
-  Plus,
-  PlusCircle,
+  // Plus,
+  // PlusCircle,
   // X,
 } from "feather-icons-react/build/IconComponents";
 // import ImageWithBasePath from "../../core/img/imagewithbasebath";
-import CounterThree from "../../core/common/counter/counterThree";
+// import CounterThree from "../../core/common/counter/counterThree";
 // import RefreshIcon from "../../core/common/tooltip-content/refresh";
 // import CollapesIcon from "../../core/common/tooltip-content/collapes";
 import AddVariant from "../../core/modals/inventory/addvariant";
 import AddVarientNew from "../../core/modals/inventory/addVarientNew";
-import CommonTagsInput from "../../core/common/Taginput";
+// import CommonTagsInput from "../../core/common/Taginput";
 // import TextEditor from "./texteditor";
 import axios from "axios";
 // import moment from 'moment';
 import { useSelector } from "react-redux";
+import MessageModal from "./MessageModal";
 
 
 const EditProduct = () => {
@@ -36,22 +37,25 @@ const EditProduct = () => {
   const location = useLocation();
   const productId = location.state?.productId;
   const route = all_routes;
-  const [tags, setTags] = useState(["Red", "Black"]);
-  const [product, setProduct] = useState(false);
-  const [product2, setProduct2] = useState(true);
-  const [message, setMessage] = useState({ text: "", type: "" });
+  // const [tags, setTags] = useState(["Red", "Black"]);
+  // const [product, setProduct] = useState(false);
+  // const [product2, setProduct2] = useState(true);
+  // const [message, setMessage] = useState({ text: "", type: "" });
   // const storeId = "67aa7f75-0ed9-4378-9b3d-50e1e34903ce";
   // const [refreshCategories, setRefreshCategories] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [modalTitle, setModalTitle] = useState("");
-  const [modalMessage, setModalMessage] = useState("");
+  const [showMessageModal, setShowMessageModal] = useState(false);
+const [modalMessage, setModalMessage] = useState({ 
+  title: "", 
+  message: "", 
+  type: "info" 
+});
   const navigate = useNavigate();
   // const [images, setImages] = useState([]);
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    navigate(route.productlist); // Navigate to AddProduct after closing modal
-  };
+  // const handleCloseModal = () => {
+  //   setShowModal(false);
+  //   navigate(route.productlist); // Navigate to AddProduct after closing modal
+  // };
 
   // const [selectedDate, setSelectedDate] = useState(new Date());
   // const handleDateChange = (date) => {
@@ -91,6 +95,7 @@ const EditProduct = () => {
     discountValue: "",
     stock:"",
     quantityAlert: "",
+     restock: false,
     warrantyType: "",
     manufacturer: "",
     manufacturedDate: "",
@@ -244,6 +249,7 @@ const EditProduct = () => {
               discountValue: matchedProduct.discountValue || "",
               stock: matchedProduct.stock || "",
               quantityAlert: matchedProduct.quantityAlert || "",
+             restock: matchedProduct.restock || false, 
               warrantyType: matchedProduct.warrantyType || "",
               manufacturer: matchedProduct.manufacturer || "",
               manufacturedDate: matchedProduct.manufacturedDate || "",
@@ -276,10 +282,10 @@ const EditProduct = () => {
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        setMessage({
-          text: "Failed to load product data",
-          type: "error"
-        });
+        // setMessage({
+        //   text: "Failed to load product data",
+        //   type: "error"
+        // });
       }
     };
 
@@ -288,61 +294,64 @@ const EditProduct = () => {
 
   // handleSubmit for update 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    // const imageList = images.map((img, index) => ({
-    //   imgaeName:"",
-    //   imageId: index,
-    //   main: img.main
-    // }));
-
-    try {
-      const payload = {
-        // imageList,
-        Id: formData.id,
-        StoreId: formData.storeId,
-        ProductName: formData.productName,
-        Slug: formData.slug,
-        Sku: formData.sku,
-        SellingType: formData.sellingType,
-        CategoryId: formData.categoryId,
-        SubcategoryId: formData.subcategoryId,
-        BrandId: formData.brandId,
-        Unit: formData.unit,
-        Barcode: formData.barcode,
-        Description: formData.description,
-        IsVariable: formData.isVariable,
-        Price: formData.price,
-        TaxType: formData.taxType,
-        DiscountType: formData.discountType,
-        DiscountValue: formData.discountValue,
-         stock: parseInt(formData.stock) || 0,
-        QuantityAlert: formData.quantityAlert,
-        WarrantyType: formData.warrantyType,
-        Manufacturer: formData.manufacturer,
-
-      };
-      const response = await axios.post(
-        `${process.env.REACT_APP_BASEURL}api/v1/Product/SaveProduct`,
-        payload, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+  e.preventDefault();
+  
+  try {
+    const payload = {
+      Id: formData.id,
+      StoreId: formData.storeId,
+      ProductName: formData.productName,
+      Slug: formData.slug,
+      Sku: formData.sku,
+      SellingType: formData.sellingType,
+      CategoryId: formData.categoryId,
+      SubcategoryId: formData.subcategoryId,
+      BrandId: formData.brandId,
+      Unit: formData.unit,
+      Barcode: formData.barcode,
+      Description: formData.description,
+      IsVariable: formData.isVariable,
+      Price: formData.price,
+      TaxType: formData.taxType,
+      DiscountType: formData.discountType,
+      DiscountValue: formData.discountValue,
+      stock: parseInt(formData.stock) || 0,
+      QuantityAlert: formData.quantityAlert,
+      WarrantyType: formData.warrantyType,
+      Manufacturer: formData.manufacturer,
+    };
+    
+    const response = await axios.post(
+      `${process.env.REACT_APP_BASEURL}api/v1/Product/SaveProduct`,
+      payload, {
+      headers: {
+        'Content-Type': 'application/json'
       }
+    });
 
-      );
-
-      if (response.status === 200) {
-        setModalTitle("Success");
-        setModalMessage("Product updated successfully.");
-        setShowModal(true);
-      }
-    } catch (error) {
-      console.error("Error updating product:", error);
-      setModalTitle("Error");
-      setModalMessage("Failed to update product. Please try again.");
-      setShowModal(true);
+    if (response.status === 200) {
+      setModalMessage({
+        title: "Success",
+        message: "Product updated successfully.",
+        type: "success"
+      });
+      setShowMessageModal(true);
+      
+      // Optional: Navigate after success
+      setTimeout(() => {
+        navigate(route.productlist);
+      }, 2000);
     }
-  };
+  } catch (error) {
+    console.error("Error updating product:", error);
+    setModalMessage({
+      title: "Error",
+      message: "Failed to update product. Please try again.",
+      type: "error"
+    });
+    setShowMessageModal(true);
+  }
+};
   // cleanup effect
   // useEffect(() => {
   //   return () => {
@@ -398,11 +407,11 @@ const EditProduct = () => {
     { value: "GST", label: "GST" },
     // { value: "salesTax", label: "Sales Tax" },
   ];
-  const discounttype = [
-    { value: "choose", label: "Choose" },
-    { value: "percentage", label: "Percentage" },
-    { value: "Amount", label: "Amount" },
-  ];
+  // const discounttype = [
+  //   { value: "choose", label: "Choose" },
+  //   { value: "percentage", label: "Percentage" },
+  //   { value: "Amount", label: "Amount" },
+  // ];
   // const discounttype1 = [
   //   { value: "percentage", label: "Percentage" },
   //   { value: "cash", label: "Cash" },
@@ -447,12 +456,8 @@ const EditProduct = () => {
 
             </ul>
           </div>
-          {/* Message display */}
-          {message.text && (
-            <div className={`alert ${message.type === "success" ? "alert-success" : "alert-danger"}`}>
-              {message.text}
-            </div>
-          )}
+        
+  
           {/* /add */}
           <form onSubmit={handleSubmit}>
             <div className="card mb-0">
@@ -481,6 +486,28 @@ const EditProduct = () => {
                       aria-labelledby="headingSpacingOne"
                     >
                       <div className="accordion-body border-top">
+                          <div className="row mb-3">
+    <div className="col-12">
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          type="checkbox"
+          name="restock"
+          id="restockCheckbox"
+          checked={formData.restock}
+          onChange={(e) => {
+            setFormData({
+              ...formData,
+              restock: e.target.checked
+            });
+          }}
+        />
+        <label className="form-check-label" htmlFor="restockCheckbox">
+          Restock
+        </label>
+      </div>
+    </div>
+  </div>
                         {/* <div className="row">
                           <div className="col-sm-6 col-12">
                             <div className="mb-3">
@@ -525,6 +552,20 @@ const EditProduct = () => {
                             </div>
                           </div>
                           <div className="col-sm-6 col-12">
+                                  <div className="mb-3">
+                                    <label className="form-label">
+                                      Price<span className="text-danger ms-1">*</span>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className="form-control"
+                                      name="price"
+                                      value={formData.price}
+                                      onChange={handleInputChange}
+                                    />
+                                  </div>
+                                </div>
+                          {/* <div className="col-sm-6 col-12">
                             <div className="mb-3">
                               <label className="form-label">
                                 Slug<span className="text-danger ms-1">*</span>
@@ -537,7 +578,7 @@ const EditProduct = () => {
                                 onChange={handleInputChange}
                               />
                             </div>
-                          </div>
+                          </div> */}
                         </div>
                         {/* <div className="row">
                           <div className="col-sm-6 col-12">
@@ -581,7 +622,7 @@ const EditProduct = () => {
                                   <label className="form-label">
                                     Category<span className="text-danger ms-1">*</span>
                                   </label>
-                                  <Link
+                                  {/* <Link
                                     to="#"
                                     data-bs-toggle="modal"
                                     data-bs-target="#add-units-category"
@@ -591,7 +632,7 @@ const EditProduct = () => {
                                       className="plus-down-add"
                                     />
                                     <span>Add New</span>
-                                  </Link>
+                                  </Link> */}
                                 </div>
                                 <Select
                                   classNamePrefix="react-select"
@@ -611,7 +652,7 @@ const EditProduct = () => {
                                   <label className="form-label">
                                     Sub Category<span className="text-danger ms-1">*</span>
                                   </label>
-                                  <Link
+                                  {/* <Link
                                     to="#"
                                     data-bs-toggle="modal"
                                     data-bs-target="#add-units-subcategory"
@@ -621,7 +662,7 @@ const EditProduct = () => {
                                       className="plus-down-add"
                                     />
                                     <span>Add New</span>
-                                  </Link>
+                                  </Link> */}
                                 </div>
                                 <Select
                                   classNamePrefix="react-select"
@@ -698,6 +739,109 @@ const EditProduct = () => {
                           </div>
                         </div>
                         <div className="row">
+                          
+                                <div className="col-sm-6 col-12">
+                                  <div className="mb-3">
+                                    <label className="form-label">
+                                      Stock<span className="text-danger ms-1">*</span>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className="form-control"
+                                      name="stock"
+                                      value={formData.stock}
+                                      onChange={handleInputChange}
+                                    />
+                                  </div>
+                                </div>
+                                
+                                <div className="col-sm-6 col-12">
+                                  <div className="mb-3">
+                                    <label className="form-label">
+                                      Tax Type<span className="text-danger ms-1">*</span>
+                                    </label>
+                                    <Select
+                                      classNamePrefix="react-select"
+                                      options={taxtype}
+                                      // defaultValue={taxtype[0]}
+                                      placeholder="Select Option"
+                                      value={taxtype.find(option => option.value === formData.taxType)}
+                                      onChange={(selectedOption) => handleSelectChange(selectedOption, "taxType")}
+                                    />
+                                  </div>
+                                </div>
+                                {/* <div
+                                  className="col-sm-6 col-12" >
+                                  <div className="mb-3">
+                                    <label className="form-label">
+                                      Discount Type
+                                      <span className="text-danger ms-1">*</span>
+                                    </label>
+                                    <Select
+
+                                      classNamePrefix="react-select"
+                                      options={discounttype}
+                                      // defaultValue={discounttype[0]}
+                                      placeholder="Choose"
+                                      value={discounttype.find(option => option.value === formData.discountType)}
+                                      onChange={(selectedOption) => handleSelectChange(selectedOption, "discountType")}
+                                      menuPortalTarget={document.body}
+                                      styles={{
+
+                                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                                        menu: (base) => ({ ...base, zIndex: 9999 }),
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="col-sm-6 col-12">
+                                  <div className="mb-3">
+                                    <label className="form-label">
+                                      Discount Value
+                                      <span className="text-danger ms-1">*</span>
+                                    </label>
+                                    <input
+                                      className="form-control"
+                                      type="text"
+                                      name="discountValue"
+                                      value={formData.discountValue}
+                                      onChange={handleInputChange}
+                                    />
+                                  </div>
+                                </div> */}
+                                <div className="col-sm-6 col-12">
+                                  <div className="mb-3">
+                                    <label className="form-label">
+                                      Stock Alert
+                                      <span className="text-danger ms-1">*</span>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className="form-control"
+                                      name="quantityAlert"
+                                      value={formData.quantityAlert}
+                                      onChange={handleInputChange}
+                                    />
+                                  </div>
+                                </div>
+                                 <div className="col-lg-6 col-sm-6 col-12">
+                            <div className="mb-3 list position-relative">
+                              <label className="form-label">
+                                 BarCode<span className="text-danger ms-1">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                className="form-control list"
+                                name="barcode"
+                                value={formData.barcode}
+                                onChange={handleInputChange}
+                              />
+                              {/* <button type="submit" className="btn btn-primaryadd">
+                                Generate
+                              </button> */}
+                            </div>
+                          </div>
+                              
                           {/* <div className="col-lg-6 col-sm-6 col-12">
                             <div className="mb-3">
                               <label className="form-label">
@@ -712,23 +856,7 @@ const EditProduct = () => {
                               />
                             </div>
                           </div> */}
-                          {/* <div className="col-lg-6 col-sm-6 col-12">
-                            <div className="mb-3 list position-relative">
-                              <label className="form-label">
-                                Item Code<span className="text-danger ms-1">*</span>
-                              </label>
-                              <input
-                                type="text"
-                                className="form-control list"
-                                name="barcode"
-                                value={formData.barcode}
-                                onChange={handleInputChange}
-                              />
-                              <button type="submit" className="btn btn-primaryadd">
-                                Generate
-                              </button>
-                            </div>
-                          </div> */}
+                         
                         </div>
                         {/* Editor */}
                         <div className="col-lg-12">
@@ -749,7 +877,7 @@ const EditProduct = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="accordion-item border mb-4">
+                  {/* <div className="accordion-item border mb-4">
                     <h2 className="accordion-header" id="headingSpacingTwo">
                       <div
                         className="accordion-button collapsed bg-white"
@@ -798,7 +926,7 @@ const EditProduct = () => {
                                   <span className="checkmark" /> Single Product
                                 </span>
                               </li>
-                              {/* <li className="nav-item" role="presentation">
+                               <li className="nav-item" role="presentation">
                                 <span
                                   className="custom_radio me-2 mb-0"
                                   id="pills-profile-tab"
@@ -817,7 +945,7 @@ const EditProduct = () => {
                                   />
                                   <span className="checkmark" /> Variable Product
                                 </span>
-                              </li> */}
+                              </li> 
                             </ul>
                           </div>
                         </div>
@@ -829,105 +957,7 @@ const EditProduct = () => {
                             aria-labelledby="pills-home-tab"
                           >
                             <div className="single-product">
-                              <div className="row">
-                                <div className="col-lg-4 col-sm-6 col-12">
-                                  <div className="mb-3">
-                                    <label className="form-label">
-                                      Stock<span className="text-danger ms-1">*</span>
-                                    </label>
-                                    <input
-                                      type="text"
-                                      className="form-control"
-                                      name="stock"
-                                      value={formData.stock}
-                                      onChange={handleInputChange}
-                                    />
-                                  </div>
-                                </div>
-                                <div className="col-lg-4 col-sm-6 col-12">
-                                  <div className="mb-3">
-                                    <label className="form-label">
-                                      Price<span className="text-danger ms-1">*</span>
-                                    </label>
-                                    <input
-                                      type="text"
-                                      className="form-control"
-                                      name="price"
-                                      value={formData.price}
-                                      onChange={handleInputChange}
-                                    />
-                                  </div>
-                                </div>
-                                <div className="col-lg-4 col-sm-6 col-12">
-                                  <div className="mb-3">
-                                    <label className="form-label">
-                                      Tax Type<span className="text-danger ms-1">*</span>
-                                    </label>
-                                    <Select
-                                      classNamePrefix="react-select"
-                                      options={taxtype}
-                                      // defaultValue={taxtype[0]}
-                                      placeholder="Select Option"
-                                      value={taxtype.find(option => option.value === formData.taxType)}
-                                      onChange={(selectedOption) => handleSelectChange(selectedOption, "taxType")}
-                                    />
-                                  </div>
-                                </div>
-                                <div
-                                  className="col-lg-4 col-sm-6 col-12" >
-                                  <div className="mb-3">
-                                    <label className="form-label">
-                                      Discount Type
-                                      <span className="text-danger ms-1">*</span>
-                                    </label>
-                                    <Select
-
-                                      classNamePrefix="react-select"
-                                      options={discounttype}
-                                      // defaultValue={discounttype[0]}
-                                      placeholder="Choose"
-                                      value={discounttype.find(option => option.value === formData.discountType)}
-                                      onChange={(selectedOption) => handleSelectChange(selectedOption, "discountType")}
-                                      menuPortalTarget={document.body}
-                                      styles={{
-
-                                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                                        menu: (base) => ({ ...base, zIndex: 9999 }),
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                                <div className="col-lg-4 col-sm-6 col-12">
-                                  <div className="mb-3">
-                                    <label className="form-label">
-                                      Discount Value
-                                      <span className="text-danger ms-1">*</span>
-                                    </label>
-                                    <input
-                                      className="form-control"
-                                      type="text"
-                                      name="discountValue"
-                                      value={formData.discountValue}
-                                      onChange={handleInputChange}
-                                    />
-                                  </div>
-                                </div>
-                                <div className="col-lg-4 col-sm-6 col-12">
-                                  <div className="mb-3">
-                                    <label className="form-label">
-                                      Stock Alert
-                                      <span className="text-danger ms-1">*</span>
-                                    </label>
-                                    <input
-                                      type="text"
-                                      className="form-control"
-                                      name="quantityAlert"
-                                      value={formData.quantityAlert}
-                                      onChange={handleInputChange}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
+                             
                             </div>
                           </div>
                           <div
@@ -1178,7 +1208,7 @@ const EditProduct = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </div> */}
                   {/* Images Section */}
                   {/* <div className="accordion-item border mb-4">
                     <h2 className="accordion-header" id="headingSpacingThree">
@@ -1493,7 +1523,7 @@ const EditProduct = () => {
           </div>
         </div>
       </div>
-      <Modal show={showModal} onHide={handleCloseModal} centered>
+      {/* <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton className="bg-light">
           <Modal.Title className="text-dark">{modalTitle}</Modal.Title>
         </Modal.Header>
@@ -1507,7 +1537,14 @@ const EditProduct = () => {
             Close
           </Button>
         </Modal.Footer>
-      </Modal>
+      </Modal> */}
+      <MessageModal
+  isOpen={showMessageModal}
+  onClose={() => setShowMessageModal(false)}
+  title={modalMessage.title}
+  message={modalMessage.message}
+  type={modalMessage.type}
+/>
       <AddSubcategory
         onSubCategoryAdded={() => {
           // This will refresh the subcategories list when a new one is added

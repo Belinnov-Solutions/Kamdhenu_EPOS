@@ -3,7 +3,7 @@ import {
   Edit,
   // Eye,
   // RotateCcw,
-  // Trash2,
+  Trash2,
 } from "feather-icons-react/build/IconComponents";
 import React, { useState, useEffect } from "react";
 // import { useDispatch, useSelector } from "react-redux";
@@ -17,12 +17,20 @@ import Table from "../../core/pagination/datatable";
 import { useSelector } from "react-redux";
 // import { Download } from "react-feather";
 import axios from "axios";
+import MessageModal from "./MessageModal";
 
 const ProductList = () => {
   // const dataSource = useSelector((state) => state.rootReducer.product_list);
   // const storeId = "67aa7f75-0ed9-4378-9b3d-50e1e34903ce";
   const storeId = useSelector((state) => state.user.storeId);
-
+const [showDeleteModal, setShowDeleteModal] = useState(false);
+const [productToDelete, setProductToDelete] = useState(null);
+const [messageModal, setMessageModal] = useState({
+  isOpen: false,
+  title: "",
+  message: "",
+  type: "info",
+});
   const [dataSource, setDataSource] = useState([]);
   const [loading, setLoading] = useState(false);
   // const [error, setError] = useState(null);
@@ -31,7 +39,8 @@ const ProductList = () => {
   // const data = useSelector((state) => state.rootReducer.toggle_header);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
-
+const [showRestockColumns, setShowRestockColumns] = useState(false);
+ const [showOnlyRestock, setShowOnlyRestock] = useState(false);
   // Fetch Api
   const getProducts = async () => {
     setLoading(true);
@@ -40,27 +49,33 @@ const ProductList = () => {
         `${process.env.REACT_APP_BASEURL}api/v1/Product/GetProducts?storeId=${storeId}`
       );
       const productList = response.data.data;
-      const mappedData = productList.map((item) => {
+     const mappedData = productList.map((item) => {
+  const stock = item.stock ? parseInt(item.stock) : 0;
+  const quantityAlert = item.quantityAlert ? parseInt(item.quantityAlert) : 0;
+   const restock = item.restock ?? false;
+  // Only apply low stock logic if restock is true
+  const isLowStock = restock ? stock <= quantityAlert : false;
+  
+  return {
+    key: item.id,
+    sku: item.sku,
+    product: item.productName,
+    category: item.categoryName || "-",
+    subcategory: item.subCategoryName || "-",
+    brand: getBrandName(item.brandId),
+    price: item.price?.toLocaleString() || "0.00",
+    unit: item.unit || "-",
+    stock: stock.toLocaleString() || "0",
+    quantityAlert: quantityAlert.toString() || "N/A",
+    isLowStock: isLowStock, // Add this flag
+    manufacturedDate: "2025-08-11",
+    description: item.description || "-",
+    productImage: "assets/img/product/default-product.jpg",
+    img: "assets/img/profiles/avatar-05.jpg",
+    restock: item.restock ?? false,
+  };
+});
 
-        return {
-          key: item.id,
-          sku: item.sku,
-          product: item.productName,
-          category: item.categoryName || "-",
-          subcategory: item.subCategoryName || "-",
-          brand: getBrandName(item.brandId),
-          price: item.price?.toLocaleString() || "0.00",
-          unit: item.unit || "-",
-          stock: item.stock?.toLocaleString() || "0",
-          quantityAlert: item.quantityAlert?.toString() || "N/A",
-          manufacturedDate: "2025-08-11",
-          // manufacturedDate: item.manufacturedDate || "-",
-          // createdby: item.manufacturer || "Admin",
-          description: item.description || "-",
-          productImage: "assets/img/product/default-product.jpg",
-          img: "assets/img/profiles/avatar-05.jpg",
-        }
-      });
       setDataSource(mappedData);
       // setError(null);
     } catch (err) {
@@ -70,7 +85,62 @@ const ProductList = () => {
       setLoading(false);
     }
   };
+  // delete product
+  const deleteProduct = async () => {
+  if (!productToDelete) return;
 
+  try {
+    await axios.post(
+      `${process.env.REACT_APP_BASEURL}api/v1/Product/DeleteProduct`,
+      null,
+      {
+        params: {
+          productId: productToDelete,
+          storeId: storeId,
+        },
+      }
+    );
+
+    // Refresh the product list
+    getProducts();
+
+    setMessageModal({
+      isOpen: true,
+      title: "Success",
+      message: "Product deleted successfully!",
+      type: "success",
+    });
+  } catch (error) {
+    console.error("Failed to delete product:", error);
+    setMessageModal({
+      isOpen: true,
+      title: "Error",
+      message: "Failed to delete product. Please try again.",
+      type: "error",
+    });
+  } finally {
+    setShowDeleteModal(false);
+    setProductToDelete(null);
+  }
+};
+// handle delete button click
+const handleDeleteClick = (productId) => {
+  setProductToDelete(productId);
+  setShowDeleteModal(true);
+};
+
+const handleConfirmDelete = () => {
+  deleteProduct();
+};
+
+const handleCloseDeleteModal = () => {
+  setShowDeleteModal(false);
+  setProductToDelete(null);
+};
+
+const closeMessageModal = () => {
+  setMessageModal({ ...messageModal, isOpen: false });
+};
   // fetch reference data 
   const fetchReferenceData = async () => {
     try {
@@ -106,14 +176,14 @@ const ProductList = () => {
     const brand = brands.find((b) => b.brandId === id);
     return brand ? brand.brandName : "Unknown";
   };
+  //  filter products based on the restock flag
+  const filteredDataSource = showOnlyRestock 
+  ? dataSource.filter(item => item.restock === true)
+  : dataSource;
 
 
   const columns = [
-    {
-      title: "SKU",
-      dataIndex: "sku",
-      sorter: (a, b) => a.sku.length - b.sku.length,
-    },
+   
     {
       title: "Product",
       dataIndex: "product",
@@ -128,6 +198,11 @@ const ProductList = () => {
         </div>
       ),
       sorter: (a, b) => a.product.localeCompare(b.product),
+    },
+     {
+      title: "SKU",
+      dataIndex: "sku",
+      sorter: (a, b) => a.sku.length - b.sku.length,
     },
     {
       title: "Category",
@@ -161,16 +236,19 @@ const ProductList = () => {
       width: '20%',
       sorter: (a, b) => a.unit.length - b.unit.length,
     },
+     // Conditionally include stock columns
+  ...(showRestockColumns ? [
     {
-      title: "Stock ",
+      title: "Stock",
       dataIndex: "stock",
-      sorter: (a, b) => Number(a.quantity) - Number(b.quantity),
+      sorter: (a, b) => Number(a.stock) - Number(b.stock),
     },
-    // {
-    //   title: "Stock Alert",
-    //   dataIndex: "quantityAlert",
-    //   sorter: (a, b) => Number(a.quantityAlert) - Number(b.quantityAlert),
-    // },
+    {
+      title: "Stock Alert",
+      dataIndex: "quantityAlert",
+      sorter: (a, b) => Number(a.quantityAlert) - Number(b.quantityAlert),
+    }
+  ] : []),
     // {
     //   title: "Manufactured Date", // New column
     //   dataIndex: "manufacturedDate",
@@ -204,35 +282,32 @@ const ProductList = () => {
     //   ),
     //   sorter: (a, b) => a.createdby.length - b.createdby.length,
     // },
-    {
-      title: "Action",
-      dataIndex: "action",
-      flex: 1,
-      width: '25%',
-      render: (_, record) => (
-        <div className="action-table-data">
-          <div className="edit-delete-action">
-            {/* <Link className="me-2 p-2" to={route.productdetails}>
-              <Eye className="feather-view" />
-            </Link> */}
-            <Link
-              className="me-2 p-2"
-              to={route.editproduct}
-              state={{ productId: record.key }}
-            >
-              <Edit className="feather-edit" />
-            </Link>
-            {/* <Link
-              className="confirm-text p-2"
-              to="#" data-bs-toggle="modal" data-bs-target="#delete-modal"
-            >
-              <Trash2 className="feather-trash-2" />
-            </Link> */}
-          </div>
-        </div>
-      ),
-      // sorter: (a, b) => a.createdby.length - b.createdby.length,
-    },
+   {
+  title: "Action",
+  dataIndex: "action",
+  flex: 1,
+  width: '25%',
+  render: (_, record) => (
+    <div className="action-table-data">
+      <div className="edit-delete-action">
+        <Link
+          className="me-2 p-2"
+          to={route.editproduct}
+          state={{ productId: record.key }}
+        >
+          <Edit className="feather-edit" />
+        </Link>
+        <Link
+          className="confirm-text p-2"
+          to="#"
+          onClick={() => handleDeleteClick(record.key)}
+        >
+          <Trash2 className="feather-trash-2" />
+        </Link>
+      </div>
+    </div>
+  ),
+}
   ];
   // const tableStyles = {
   //   '--table-flex-grow': '1 !important',
@@ -269,9 +344,28 @@ const ProductList = () => {
             <div className="add-item d-flex">
               <div className="page-title">
                 <h4>Product List</h4>
-                <h6>Manage your products</h6>
+                {/* <h6>Manage your products</h6> */}
               </div>
             </div>
+             {/* Add this checkbox section */}
+<div className="restock-checkbox" style={{ marginLeft: 'auto', marginRight: '20px' }}>
+  <div className="form-check">
+    <input
+      type="checkbox"
+      className="form-check-input"
+      id="restockToggle"
+      checked={showOnlyRestock}
+       onChange={(e) => {
+    const checked = e.target.checked;
+    setShowOnlyRestock(checked);
+    setShowRestockColumns(checked); 
+  }}
+    />
+    <label className="form-check-label" htmlFor="restockToggle">
+      Restock Products
+    </label>
+  </div>
+</div>
             <ul className="table-top-head">
               {/* <li>
                 <OverlayTrigger placement="top" overlay={renderTooltip}>
@@ -703,13 +797,15 @@ const ProductList = () => {
               </div>
             </div> */}
               {/* /Filter */}
-              <div className="table-responsive" style={{marginTop: '70px'}}>
+            
+              <div className="table-responsive" style={{marginTop: '60px'}}>
                 <Table
                   columns={columns}
-                  dataSource={dataSource}
+                  dataSource={filteredDataSource}
                   loading={loading}
                   pagination={{ PageSize: 10 }}
                   scroll={{ x: 'max-content' }}
+                   rowClassName={(record) => record.isLowStock ? "low-stock-row" : ""}
                   // style={{
                   //   width: '100%',
                   //   marginTop: '20px', 
@@ -728,41 +824,77 @@ const ProductList = () => {
         </div>
       </div>
       <>
-        {/* delete modal */}
-        <div className="modal fade" id="delete-modal">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="page-wrapper-new p-0">
-                <div className="content p-5 px-3 text-center">
-                  <span className="rounded-circle d-inline-flex p-2 bg-danger-transparent mb-2">
-                    <i className="ti ti-trash fs-24 text-danger" />
-                  </span>
-                  <h4 className="fs-20 text-gray-9 fw-bold mb-2 mt-1">
-                    Delete Product
-                  </h4>
-                  <p className="text-gray-6 mb-0 fs-16">
-                    Are you sure you want to delete product?
-                  </p>
-                  <div className="modal-footer-btn mt-3 d-flex justify-content-center">
-                    <button
-                      type="button"
-                      className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none"
-                      data-bs-dismiss="modal"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-primary fs-13 fw-medium p-2 px-3" data-bs-dismiss="modal"
-                    >
-                      Yes Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
+       
+       {/* Delete Confirmation Modal */}
+{showDeleteModal && (
+  <div
+    className="modal fade show"
+    style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+  >
+    <div className="modal-dialog modal-dialog-centered">
+      <div className="modal-content">
+        <div className="page-wrapper-new p-0">
+          <div className="content p-5 px-3 text-center">
+            <span className="rounded-circle d-inline-flex p-2 bg-danger-transparent mb-2">
+              <i className="ti ti-trash fs-24 text-danger" />
+            </span>
+            <h4 className="fs-20 text-gray-9 fw-bold mb-2 mt-1">
+              Delete Product
+            </h4>
+            <p className="text-gray-6 mb-0 fs-16">
+              Are you sure you want to delete this product?
+            </p>
+            <div className="modal-footer-btn mt-3 d-flex justify-content-center">
+              <button
+                type="button"
+                className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none"
+                onClick={handleCloseDeleteModal}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary fs-13 fw-medium p-2 px-3"
+                onClick={handleConfirmDelete}
+              >
+                Yes Delete
+              </button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+)}
+{/* Message Modal */}
+<MessageModal
+  isOpen={messageModal.isOpen}
+  onClose={closeMessageModal}
+  title={messageModal.title}
+  message={messageModal.message}
+  type={messageModal.type}
+/>
+ {/* styles for quantity alert */}
+<style>
+{`
+  .low-stock-row {
+    background-color: #ffcccc !important;
+  }
+  
+  /* Remove hover effects to maintain the red background */
+  .ant-table-wrapper .ant-table-tbody > tr:hover > td {
+    background: transparent !important;
+  }
+  
+  .ant-table-wrapper .ant-table-tbody > tr.ant-table-row:hover > td {
+    background: transparent !important;
+  }
+  
+  .ant-table-tbody > tr.ant-table-row:hover > td {
+    background: transparent !important;
+  }
+`}
+</style>
       </>
 
     </>

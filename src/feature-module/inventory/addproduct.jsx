@@ -73,8 +73,8 @@ const AddProduct = () => {
     isVariable: false,
     price: "",
     taxType: "",
-    discountType: "",
-    discountValue: "",
+    discountType: null,
+    discountValue: null,
     stock: "",
     quantityAlert: "",
     restock: false,
@@ -84,13 +84,21 @@ const AddProduct = () => {
     // expiryDate: ""
   });
 
-  // Handle input changes
+ // Handle input changes
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    const { name, value, type, checked } = e.target;
+    
+    if (type === "checkbox") {
+      setFormData({
+        ...formData,
+        [name]: checked
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
   };
 
   // Handle barcode input specifically to prevent form submission on Enter
@@ -107,6 +115,14 @@ const AddProduct = () => {
     if (event.key === 'Enter') {
       event.preventDefault(); // Prevent form submission
     }
+  };
+  // Handle restock checkbox change
+  const handleRestockChange = (e) => {
+    const { checked } = e.target;
+    setFormData({
+      ...formData,
+      restock: checked
+    });
   };
 
   // image upload handler
@@ -137,7 +153,7 @@ const AddProduct = () => {
   //   setImages(newImages);
   // };
   // updated handleSelectChange
-  const handleSelectChange = async (selectedOption, fieldName) => {
+   const handleSelectChange = async (selectedOption, fieldName) => {
     const newFormData = {
       ...formData,
       [fieldName]: selectedOption ? selectedOption.value : null
@@ -196,19 +212,14 @@ const AddProduct = () => {
   //   });
   // };
   // Handle form submission
-  const handleSubmit = async (e) => {
+   const handleSubmit = async (e) => {
     e.preventDefault();
-    //   const imageList = images.map((img, index) => ({
-    //   ImageName:"",  
-    //   imageId: index,
-    //   main: img.main
-    // }));
-
+    
     const submissionData = {
       ...formData,
       stock: parseInt(formData.stock) || 0,
-      //  imageList,
     };
+    
     try {
       const response = await axios.post(
         `${process.env.REACT_APP_BASEURL}api/v1/Product/SaveProduct`,
@@ -245,17 +256,16 @@ const AddProduct = () => {
         isVariable: false,
         price: "",
         taxType: "",
-        discountType: "",
-        discountValue: "",
+        discountType: null,
+        discountValue: null,
         stock: "",
         quantityAlert: "",
         warrantyType: "",
         manufacturer: "",
         manufacturedDate: "",
-        restock: false,
+        restock: false, // Reset to false
         // expiryDate: ""
       });
-      //  setSelectedStore(null);
     } catch (error) {
       setModalMessage({
         title: "Error",
@@ -392,19 +402,19 @@ const AddProduct = () => {
   //   { value: "code35", label: "Code35" },
   //   { value: "code36", label: "Code36" },
   // ];
-  const productTypeOptions = [
-    { value: "false", label: "Non-Restockable" },
-    { value: "true", label: "Restockable" },
-  ];
+  // const productTypeOptions = [
+  //   { value: "false", label: "Non-Restockable" },
+  //   { value: "true", label: "Restockable" },
+  // ];
   const taxtype = [
     { value: "GST", label: "GST" },
     // { value: "salesTax", label: "Sales Tax" },
   ];
-  const discounttype = [
-    { value: "choose", label: "Choose" },
-    { value: "percentage", label: "Percentage" },
-    { value: "Amount", label: "Amount" },
-  ];
+  // const discounttype = [
+  //   { value: "choose", label: "Choose" },
+  //   { value: "percentage", label: "Percentage" },
+  //   { value: "Amount", label: "Amount" },
+  // ];
 
   // const warrenty = [
   //   { value: "choose", label: "Choose" },
@@ -475,6 +485,24 @@ const AddProduct = () => {
                     aria-labelledby="headingSpacingOne"
                   >
                     <div className="accordion-body border-top">
+                       {/* Restock Checkbox */}
+                      <div className="row mb-3">
+                        <div className="col-12">
+                          <div className="form-check">
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              name="restock"
+                              id="restockCheckbox"
+                              checked={formData.restock}
+                              onChange={handleRestockChange}
+                            />
+                            <label className="form-check-label" htmlFor="restockCheckbox">
+                              Restock
+                            </label>
+                          </div>
+                        </div>
+                      </div>
                       {/* <div className="row">
                         <div className="col-sm-6 col-12">
                           <div className="mb-3">
@@ -516,7 +544,20 @@ const AddProduct = () => {
                               onChange={handleInputChange} />
                           </div>
                         </div>
-                        <div className="col-sm-6 col-12">
+                           {/* Price field - always visible */}
+                          <div className="col-lg-6 col-sm-6 col-12">
+                            <div className="mb-3">
+                              <label className="form-label">
+                                Price<span className="text-danger ms-1">*</span>
+                              </label>
+                              <input type="text" className="form-control"
+                                name="price"
+                                value={formData.price}
+                                onChange={handleInputChange}
+                              />
+                            </div>
+                          </div>
+                        {/* <div className="col-sm-6 col-12">
                           <div className="mb-3">
                             <label className="form-label">
                               Slug<span className="text-danger ms-1">*</span>
@@ -526,7 +567,7 @@ const AddProduct = () => {
                               value={formData.slug}
                               onChange={handleInputChange} />
                           </div>
-                        </div>
+                        </div> */}
                       </div>
                       {/* <div className="row">
                         <div className="col-sm-6 col-12">
@@ -685,27 +726,11 @@ const AddProduct = () => {
                               />
                             </div>
                           </div>
-                          <div className="col-lg-6 col-sm-6 col-12">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Product Type<span className="text-danger ms-1">*</span>
-                              </label>
-                              <Select
-                                classNamePrefix="react-select"
-                                options={productTypeOptions}
-                                placeholder="Choose"
-                                value={productTypeOptions.find(option => option.value === formData.restock.toString())}
-                                onChange={(selectedOption) => {
-                                  const isRestockable = selectedOption.value === "true";
-                                  setFormData({
-                                    ...formData,
-                                    restock: isRestockable
-                                  });
-                                }}
-                              />
-                            </div>
-                          </div>
-
+                          
+   
+                          {/* Conditionally render fields based on restock status */}
+                          {formData.restock && (
+                            <>
                           <div className="col-lg-6 col-sm-6 col-12">
                             <div className="mb-3 list position-relative">
                               <label className="form-label">
@@ -734,8 +759,82 @@ const AddProduct = () => {
     </button> */}
                             </div>
                           </div>
+                           <div className="col-lg-6 col-sm-6 col-12">
+                                <div className="mb-3">
+                                  <label className="form-label">
+                                    Stock<span className="text-danger ms-1">*</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    name="stock"
+                                    value={formData.stock}
+                                    onChange={handleInputChange}
+                                  />
+                                </div>
+                              </div>
+                               <div className="col-lg-6 col-sm-6 col-12">
+                                <div className="mb-3">
+                                  <label className="form-label">
+                                    Tax Type<span className="text-danger ms-1">*</span>
+                                  </label>
+                                  <Select
+                                    classNamePrefix="react-select"
+                                    options={taxtype}
+                                    placeholder="Select Option"
+                                    onChange={(selectedOption) => handleSelectChange(selectedOption, "taxType")}
+                                  />
+                                </div>
+                              </div>
+                              {/* <div className="col-lg-6 col-sm-6 col-12">
+                                <div className="mb-3" >
+                                  <label className="form-label">
+                                    Discount Type
+                                    <span className="text-danger ms-1">*</span>
+                                  </label>
+                                  <Select
+                                    classNamePrefix="react-select"
+                                    options={discounttype}
+                                    placeholder="Choose"
+                                    menuPortalTarget={document.body}
+                                    styles={{
+                                      menuPortal: base => ({ ...base, zIndex: 9999 }),
+                                    }}
+                                    onChange={(selectedOption) => handleSelectChange(selectedOption, "discountType")}
+                                  />
+                                </div>
+                              </div>
+                              <div className="col-lg-6 col-sm-6 col-12">
+                                <div className="mb-3">
+                                  <label className="form-label">
+                                    Discount Value
+                                    <span className="text-danger ms-1">*</span>
+                                  </label>
+                                  <input className="form-control" type="text"
+                                    name="discountValue"
+                                    value={formData.discountValue}
+                                    onChange={handleInputChange} />
+                                </div>
+                              </div> */}
+                              <div className="col-lg-6 col-sm-6 col-12">
+                                <div className="mb-3">
+                                  <label className="form-label">
+                                    Stock Alert
+                                    <span className="text-danger ms-1">*</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    name="quantityAlert"
+                                    value={formData.quantityAlert}
+                                    onChange={handleInputChange}
+                                  />
+                                </div>
+                              </div>
+                            </>
+                          )}
+                         
                         </div>
-
                       </div>
                       {/* <div className="row">
                         <div className="col-lg-6 col-sm-6 col-12">
@@ -769,7 +868,7 @@ const AddProduct = () => {
                         </div>
                       </div>
                       {/* /Editor */}
- <div className="row">
+ {/* <div className="row">
                               <div className="col-lg-6 col-sm-6 col-12">
                                 <div className="mb-3">
                                   <label className="form-label">
@@ -862,7 +961,7 @@ const AddProduct = () => {
                                   />
                                 </div>
                               </div>
-                            </div>
+                            </div> */}
                     </div>
                   </div>
                 </div>
