@@ -168,28 +168,6 @@ const PosModals = ({ onCustomerCreated }) => {
   };
   // end create customer
 
-  const [input, setInput] = useState("");
-
-  const handleButtonClick = (value) => {
-    setInput((prev) => prev + value);
-  };
-
-  const handleClear = () => {
-    setInput("");
-  };
-
-  const handleBackspace = () => {
-    setInput((prev) => prev.slice(0, -1));
-  };
-
-  const handleSolve = () => {
-    try {
-      setInput(eval(input).toString()); // Evaluates the expression safely
-    } catch (error) {
-      setInput("Error");
-    }
-  };
-
   // Modify the handlePaymentSelection to do something with the selection
   const handlePaymentSelection = async (method) => {
     if (isProcessing) return;
@@ -337,6 +315,7 @@ const PosModals = ({ onCustomerCreated }) => {
           orderId: "",
           responses: prepareChecklistResponses(),
         },
+        totalAmount: calculateTotalPayable(),
       };
 
       // Make the API call
@@ -402,36 +381,6 @@ const PosModals = ({ onCustomerCreated }) => {
     );
   }
 
-  // const handlePrintReceipt = () => {
-  //   // Group items by category
-  //   const itemsByCategory = {};
-  //   const allItems = [
-  //     ...(ticketData.ticketItems || []),
-  //     ...selectedServices,
-  //     ...orderItems,
-  //     ...partItems,
-  //   ];
-
-  //   allItems.forEach((item) => {
-  //     const categoryId = item.categoryId || "uncategorized";
-  //     const categoryName = item.category || "Uncategorized";
-
-  //     if (!itemsByCategory[categoryId]) {
-  //       itemsByCategory[categoryId] = {
-  //         categoryName,
-  //         items: [],
-  //       };
-  //     }
-  //     itemsByCategory[categoryId].items.push(item);
-  //   });
-
-  //   // Print main receipt first
-  //   printMainReceipt(itemsByCategory).then(() => {
-  //     // Then print all category summaries sequentially
-  //     printCategorySummaries(itemsByCategory);
-  //   });
-  // };
-
   // Main receipt printing function
   const handlePrintReceipt = () => {
     // Group items by subcategory
@@ -445,7 +394,9 @@ const PosModals = ({ onCustomerCreated }) => {
 
     allItems.forEach((item) => {
       const subcategoryId = item.subcategoryId || "uncategorized";
-      const subcategoryName = subCategories.find(sub => sub.id === item.subcategoryId)?.name || "Uncategorized";
+      const subcategoryName =
+        subCategories.find((sub) => sub.id === item.subcategoryId)?.name ||
+        "Uncategorized";
 
       if (!itemsBySubcategory[subcategoryId]) {
         itemsBySubcategory[subcategoryId] = {
@@ -456,12 +407,33 @@ const PosModals = ({ onCustomerCreated }) => {
       itemsBySubcategory[subcategoryId].items.push(item);
     });
 
-    // Print main receipt first
-    printMainReceipt(itemsBySubcategory).then(() => {
-      // Then print all subcategory summaries sequentially
-      printSubcategorySummaries(itemsBySubcategory);
-    });
+    // Print main receipt first, then all subcategory summaries automatically
+    printMainReceipt(itemsBySubcategory)
+      .then(() => {
+        // Print all subcategory summaries sequentially without user interaction
+        return printSubcategorySummaries(itemsBySubcategory);
+      })
+      .then(() => {
+        // All printing is complete
+        console.log("All receipts printed successfully");
+
+        // Optionally close the modal after printing is done
+        const modalEl = document.getElementById("order-success-modal");
+        const modal = window.bootstrap.Modal.getInstance(modalEl);
+        if (modal) {
+          modal.hide();
+        }
+
+        // Refresh the page after a delay if needed
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      })
+      .catch((error) => {
+        console.error("Error printing receipts:", error);
+      });
   };
+
   const printMainReceipt = (itemsBySubcategory) => {
     return new Promise((resolve) => {
       const iframe = createHiddenIframe();
@@ -519,14 +491,18 @@ const PosModals = ({ onCustomerCreated }) => {
             </head>
             <body>
                 <div class="store-info">
-                    <div class="store-name">${storeName || "DOMN/DOWN PIZZA STORE"
-        }</div>
-                    <div class="store-details">${userAddress || "PLACE: 978-8-7779-1-0"
-        }</div>
-                    <div class="store-details">Phone: ${userPhone || "80686677-6"
-        }</div>
-                    <div class="store-details">Email: ${userEmail || "admin@pizza@example.com"
-        }</div>
+                    <div class="store-name">${
+                      storeName || "DOMN/DOWN PIZZA STORE"
+                    }</div>
+                    <div class="store-details">${
+                      userAddress || "PLACE: 978-8-7779-1-0"
+                    }</div>
+                    <div class="store-details">Phone: ${
+                      userPhone || "80686677-6"
+                    }</div>
+                    <div class="store-details">Email: ${
+                      userEmail || "admin@pizza@example.com"
+                    }</div>
                 </div>
                 <hr>
                 
@@ -534,26 +510,28 @@ const PosModals = ({ onCustomerCreated }) => {
                     <tbody>
                         <tr>
                             <td style="padding: 1px 0;">
-                                <strong>Customer:</strong> ${customerName || "Walk in"
-        }
+                                <strong>Customer:</strong> ${
+                                  customerName || "Walk in"
+                                }
                             </td>
                         </tr>
                         <tr>
                             <td style="padding: 1px 0;">
-                                <strong>Order #:</strong> ${apiResponse?.orderNumber || "OPD.354905023"
-        }
+                                <strong>Order #:</strong> ${
+                                  apiResponse?.orderNumber || "OPD.354905023"
+                                }
                             </td>
                         </tr>
                         <tr>
                             <td style="padding: 1px 0;">
                                 <strong>Date:</strong> ${new Date().toLocaleDateString(
-          "en-US",
-          {
-            month: "2-digit",
-            day: "2-digit",
-            year: "numeric",
-          }
-        )}
+                                  "en-US",
+                                  {
+                                    month: "2-digit",
+                                    day: "2-digit",
+                                    year: "numeric",
+                                  }
+                                )}
                             </td>
                         </tr>
                     </tbody>
@@ -570,22 +548,23 @@ const PosModals = ({ onCustomerCreated }) => {
                     </thead>
                     <tbody>
                         ${Object.values(itemsBySubcategory)
-          .map((categoryData) =>
-            categoryData.items
-              .map(
-                (item) => `
+                          .map((categoryData) =>
+                            categoryData.items
+                              .map(
+                                (item) => `
                                 <tr>
-                                    <td style="padding: 2px 0;">${item.quantity ? `${item.quantity} x ` : ""
-                  }${item.name || item.taskTypeName}</td>
+                                    <td style="padding: 2px 0;">${
+                                      item.quantity ? `${item.quantity} x ` : ""
+                                    }${item.name || item.taskTypeName}</td>
                                     <td style="text-align: right; padding: 2px 0;">₹${(
-                    item.price * (item.quantity || 1)
-                  ).toFixed(2)}</td>
+                                      item.price * (item.quantity || 1)
+                                    ).toFixed(2)}</td>
                                 </tr>
                             `
-              )
-              .join("")
-          )
-          .join("")}
+                              )
+                              .join("")
+                          )
+                          .join("")}
                     </tbody>
                 </table>
                 
@@ -596,20 +575,20 @@ const PosModals = ({ onCustomerCreated }) => {
                         <tr>
                             <td style="padding: 2px 0;">SUBTOTAL</td>
                             <td style="text-align: right; padding: 2px 0;">₹${calculateSubtotal()?.toFixed(
-            2
-          )}</td>
+                              2
+                            )}</td>
                         </tr>
                         <tr>
                             <td style="padding: 2px 0;">TAX (3%)</td>
                             <td style="text-align: right; padding: 2px 0;">₹${calculateTax()?.toFixed(
-            2
-          )}</td>
+                              2
+                            )}</td>
                         </tr>
                         <tr style="font-weight: bold;">
                             <td style="padding: 2px 0;">TOTAL</td>
                             <td style="text-align: right; padding: 2px 0;">₹${calculateTotalPayable()?.toFixed(
-            2
-          )}</td>
+                              2
+                            )}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -619,8 +598,9 @@ const PosModals = ({ onCustomerCreated }) => {
                 <div style="text-align: center; font-size: 14px;">
                     <div style="font-weight: bold; margin-bottom: 2px;">CUSTOMER COPY</div>
                     <div>THANK YOU FOR VISITING</div>
-                    <div style="font-weight: bold;">${storeName || "DOMN/DOWN PIZZA STORE"
-        }</div>
+                    <div style="font-weight: bold;">${
+                      storeName || "DOMN/DOWN PIZZA STORE"
+                    }</div>
                 </div>
                 
                 <script>
@@ -653,287 +633,161 @@ const PosModals = ({ onCustomerCreated }) => {
     });
   };
 
-  // subCategory summaries printing function
-  // const printCategorySummaries = (itemsByCategory) => {
-  //   const categories = Object.values(itemsByCategory);
-  //   let currentIndex = 0;
-
-  //   const printNextCategory = () => {
-  //     if (currentIndex >= categories.length) return;
-
-  //     const categoryData = categories[currentIndex];
-  //     const iframe = createHiddenIframe();
-  //     const content = `
-  //       <html>
-  //           <head>
-  //               <title>${categoryData.categoryName} Summary</title>
-  //               <style>
-  //                   @page {
-  //                       size: 80mm auto;
-  //                       margin: 0;
-  //                   }
-  //                   body {
-  //                       font-family: Arial, sans-serif;
-  //                       width: 80mm;
-  //                       margin: 0 auto;
-  //                       padding: 5px;
-  //                       font-size: 14px;
-  //                       -webkit-print-color-adjust: exact;
-  //                   }
-  //                   .category-header {
-  //                       font-weight: bold;
-  //                       text-transform: uppercase;
-  //                       margin: 10px 0 5px 0;
-  //                       background-color: #f5f5f5;
-  //                       padding: 3px;
-  //                       text-align: center;
-  //                   }
-  //               </style>
-  //           </head>
-  //           <body>
-  //                  <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
-  //                   <tbody>
-  //                       <tr>
-  //                           <td style="padding: 1px 0;">
-  //                               <strong>Customer:</strong> ${
-  //                                 customerName || "Walk in"
-  //                               }
-  //                           </td>
-  //                       </tr>
-  //                       <tr>
-  //                           <td style="padding: 1px 0;">
-  //                               <strong>Order #:</strong> ${
-  //                                 apiResponse?.orderNumber || "OPD.354905023"
-  //                               }
-  //                           </td>
-  //                       </tr>
-  //                       <tr>
-  //                           <td style="padding: 1px 0;">
-  //                               <strong>Date:</strong> ${new Date().toLocaleDateString(
-  //                                 "en-US",
-  //                                 {
-  //                                   month: "2-digit",
-  //                                   day: "2-digit",
-  //                                   year: "numeric",
-  //                                 }
-  //                               )}
-  //                           </td>
-  //                       </tr>
-  //                   </tbody>
-  //               </table>
-
-  //               <hr>
-
-  //               <div class="category-header">${categoryData.categoryName}</div>
-
-  //               <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
-  //                   <thead>
-  //                       <tr>
-  //                           <th style="text-align: left; padding: 2px 0; border-bottom: 1px dashed #000;">ITEM</th>
-  //                           <th style="text-align: right; padding: 2px 0; border-bottom: 1px dashed #000;">QTY</th>
-  //                       </tr>
-  //                   </thead>
-  //                   <tbody>
-  //                       ${categoryData.items
-  //                         .map(
-  //                           (item) => `
-  //                           <tr>
-  //                               <td style="padding: 2px 0;">${
-  //                                 item.name || item.taskTypeName
-  //                               }</td>
-  //                               <td style="text-align: right; padding: 2px 0;">${
-  //                                 item.quantity || "1"
-  //                               }</td>
-  //                           </tr>
-  //                       `
-  //                         )
-  //                         .join("")}
-  //                   </tbody>
-  //               </table>
-
-  //               <hr>
-
-  //               <div style="text-align: center; font-size: 14px; margin-top: 10px;">
-  //                   <div>${categoryData.categoryName} ITEMS: ${
-  //       categoryData.items.length
-  //     }</div>
-  //                                     <div style="font-weight: bold;">${
-  //                                       storeName || "DOMN/DOWN PIZZA STORE"
-  //                                     }</div>
-  //               </div>
-
-  //               <script>
-  //                   setTimeout(() => {
-  //                       window.print();
-  //                       setTimeout(() => {
-  //                           window.parent.postMessage('categoryPrinted', '*');
-  //                           window.close();
-  //                       }, 100);
-  //                   }, 200);
-  //               </script>
-  //           </body>
-  //       </html>
-  //       `;
-
-  //     document.body.appendChild(iframe);
-  //     const iframeDoc = iframe.contentDocument;
-  //     iframeDoc.open();
-  //     iframeDoc.write(content);
-  //     iframeDoc.close();
-
-  //     const messageHandler = (e) => {
-  //       if (e.data === "categoryPrinted") {
-  //         window.removeEventListener("message", messageHandler);
-  //         document.body.removeChild(iframe);
-  //         currentIndex++;
-  //         printNextCategory();
-  //       }
-  //     };
-  //     window.addEventListener("message", messageHandler);
-  //   };
-
-  //   printNextCategory();
-  // };
   const printSubcategorySummaries = (itemsBySubcategory) => {
-    const subcategories = Object.values(itemsBySubcategory);
-    let currentIndex = 0;
+    return new Promise((resolve) => {
+      const subcategories = Object.values(itemsBySubcategory);
+      let currentIndex = 0;
 
-    const printNextSubcategory = () => {
-      if (currentIndex >= subcategories.length) return;
+      const printNextSubcategory = () => {
+        if (currentIndex >= subcategories.length) {
+          resolve(); // All subcategories printed
+          return;
+        }
 
-      const subcategoryData = subcategories[currentIndex];
-      const iframe = createHiddenIframe();
-      const content = `
-      <html>
+        const subcategoryData = subcategories[currentIndex];
+        const iframe = createHiddenIframe();
+
+        const content = `
+        <html>
           <head>
-              <title>${subcategoryData.subcategoryName} Summary</title>
-              <style>
-                  @page {
-                      size: 80mm auto;
-                      margin: 0;
-                  }
-                  body {
-                      font-family: Arial, sans-serif;
-                      width: 76mm;
-                      margin: 0 auto;
-                      padding: 5px;
-                      font-size: 11px;
-                      -webkit-print-color-adjust: exact;
-                  }
-                  .subcategory-header {
-                      font-weight: bold;
-                      text-transform: uppercase;
-                      margin: 8px 0 4px 0;
-                      background-color: #f5f5f5;
-                      padding: 2px;
-                      text-align: center;
-                  }
-                      .store-name {
-              text-align: center;
-              font-weight: bold;
-              margin-bottom: 4px;
-            }
-              </style>
+            <title>${subcategoryData.subcategoryName} Summary</title>
+            <style>
+              @page {
+                size: 80mm auto;
+                margin: 0;
+              }
+              body {
+                font-family: Arial, sans-serif;
+                width: 76mm;
+                margin: 0 auto;
+                padding: 5px;
+                font-size: 11px;
+                -webkit-print-color-adjust: exact;
+              }
+              .subcategory-header {
+                font-weight: bold;
+                text-transform: uppercase;
+                margin: 8px 0 4px 0;
+                background-color: #f5f5f5;
+                padding: 2px;
+                text-align: center;
+              }
+              .store-name {
+                text-align: center;
+                font-weight: bold;
+                margin-bottom: 4px;
+              }
+            </style>
           </head>
           <body>
-                 <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
-                  <tbody>
-                      <tr>
-                          <td style="padding: 1px 0;">
-                              <strong>Customer:</strong> ${customerName || "Walk in"
-        }
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 1px 0;">
-                              <strong>Order #:</strong> ${apiResponse?.orderNumber || "OPD.354905023"
-        }
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 1px 0;">
-                              <strong>Date:</strong> ${new Date().toLocaleDateString(
-          "en-US",
-          {
-            month: "2-digit",
-            day: "2-digit",
-            year: "numeric",
-          }
-        )}
-                          </td>
-                      </tr>
-                  </tbody>
-              </table>
-              
-              <hr>
-              
-              <div class="subcategory-header">${subcategoryData.subcategoryName}</div>
-              
-              <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
-                  <thead>
-                      <tr>
-                          <th style="text-align: left; padding: 2px 0; border-bottom: 1px dashed #000;">ITEM</th>
-                          <th style="text-align: right; padding: 2px 0; border-bottom: 1px dashed #000;">QTY</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-                      ${subcategoryData.items
-          .map(
-            (item) => `
-                          <tr>
-                              <td style="padding: 2px 0;">${item.name || item.taskTypeName
-              }</td>
-                              <td style="text-align: right; padding: 2px 0;">${item.quantity || "1"
-              }</td>
-                          </tr>
-                      `
-          )
-          .join("")}
-                  </tbody>
-              </table>
-              
-              <hr>
-              
-              <div style="text-align: center; font-size: 14px; margin-top: 10px;">
-                  <div>${subcategoryData.subcategoryName} ITEMS: ${subcategoryData.items.length
+            <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
+              <tbody>
+                <tr>
+                  <td style="padding: 1px 0;">
+                    <strong>Customer:</strong> ${customerName || "Walk in"}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 1px 0;">
+                    <strong>Order #:</strong> ${
+                      apiResponse?.orderNumber || "OPD.354905023"
+                    }
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 1px 0;">
+                    <strong>Date:</strong> ${new Date().toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "2-digit",
+                        day: "2-digit",
+                        year: "numeric",
+                      }
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <hr>
+            
+            <div class="subcategory-header">${
+              subcategoryData.subcategoryName
+            }</div>
+            
+            <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
+              <thead>
+                <tr>
+                  <th style="text-align: left; padding: 2px 0; border-bottom: 1px dashed #000;">ITEM</th>
+                  <th style="text-align: right; padding: 2px 0; border-bottom: 1px dashed #000;">QTY</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${subcategoryData.items
+                  .map(
+                    (item) => `
+                    <tr>
+                      <td style="padding: 2px 0;">${
+                        item.name || item.taskTypeName
+                      }</td>
+                      <td style="text-align: right; padding: 2px 0;">${
+                        item.quantity || "1"
+                      }</td>
+                    </tr>
+                  `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+            
+            <hr>
+            
+            <div style="text-align: center; font-size: 14px; margin-top: 10px;">
+              <div>${subcategoryData.subcategoryName} ITEMS: ${
+          subcategoryData.items.length
         }</div>
-                                    <div style="font-weight: bold;">${storeName || "DOMN/DOWN PIZZA STORE"
-        }</div>
-              </div>
-              
-              <script>
-                  setTimeout(() => {
-                      window.print();
-                      setTimeout(() => {
-                          window.parent.postMessage('subcategoryPrinted', '*');
-                          window.close();
-                      }, 100);
-                  }, 200);
-              </script>
+              <div style="font-weight: bold;">${
+                storeName || "DOMN/DOWN PIZZA STORE"
+              }</div>
+            </div>
+            
+            <script>
+              // Automatically trigger printing without user interaction
+              setTimeout(() => {
+                window.print();
+                setTimeout(() => {
+                  // Signal that this subcategory is done printing
+                  window.parent.postMessage('subcategoryPrinted', '*');
+                }, 500);
+              }, 200);
+            </script>
           </body>
-      </html>
+        </html>
       `;
 
-      document.body.appendChild(iframe);
-      const iframeDoc = iframe.contentDocument;
-      iframeDoc.open();
-      iframeDoc.write(content);
-      iframeDoc.close();
+        document.body.appendChild(iframe);
+        const iframeDoc = iframe.contentDocument;
+        iframeDoc.open();
+        iframeDoc.write(content);
+        iframeDoc.close();
 
-      const messageHandler = (e) => {
-        if (e.data === "subcategoryPrinted") {
-          window.removeEventListener("message", messageHandler);
-          document.body.removeChild(iframe);
-          currentIndex++;
-          printNextSubcategory();
-        }
+        const messageHandler = (e) => {
+          if (e.data === "subcategoryPrinted") {
+            window.removeEventListener("message", messageHandler);
+            document.body.removeChild(iframe);
+            currentIndex++;
+            // Immediately print the next subcategory
+            printNextSubcategory();
+          }
+        };
+
+        window.addEventListener("message", messageHandler);
       };
-      window.addEventListener("message", messageHandler);
-    };
 
-    printNextSubcategory();
+      // Start the printing process
+      printNextSubcategory();
+    });
   };
-
   // Helper function to create hidden iframe
   const createHiddenIframe = () => {
     const iframe = document.createElement("iframe");
@@ -948,17 +802,6 @@ const PosModals = ({ onCustomerCreated }) => {
 
   // In your success modal button, update to call handlePrintReceipt directly:
 
-  const handleKeyPress = (event) => {
-    if (/[0-9+\-*/%.]/.test(event.key)) {
-      setInput((prev) => prev + event.key);
-    } else if (event.key === "Backspace") {
-      handleBackspace();
-    } else if (event.key === "Enter") {
-      handleSolve();
-    } else if (event.key === "c") {
-      handleClear();
-    }
-  };
   const options = {
     taxType: [
       { value: "exclusive", label: "Exclusive" },
@@ -1005,12 +848,6 @@ const PosModals = ({ onCustomerCreated }) => {
     ],
   };
   const calculateSubtotal = () => {
-    // const repairTotal =
-    //   repairData.repairItems?.reduce(
-    //     (total, item) => total + (item.serviceCharge || 0),
-    //     0
-    //   ) || 0;
-
     const ticketTotal =
       ticketData.ticketItems?.reduce(
         (total, item) => total + (item.serviceCharge || 0),
@@ -1302,16 +1139,18 @@ const PosModals = ({ onCustomerCreated }) => {
             <div className="modal-body p-0">
               <div className="text-center p-4">
                 <div
-                  className={`icon-circle ${apiResponse?.error ? "bg-danger" : "bg-success"
-                    } text-white mb-3`}
+                  className={`icon-circle ${
+                    apiResponse?.error ? "bg-danger" : "bg-success"
+                  } text-white mb-3`}
                 >
                   <i
                     className={apiResponse?.error ? "ti ti-x" : "ti ti-check"}
                   />
                 </div>
                 <h3
-                  className={`mb-3 ${apiResponse?.error ? "text-danger" : "text-success"
-                    }`}
+                  className={`mb-3 ${
+                    apiResponse?.error ? "text-danger" : "text-success"
+                  }`}
                 >
                   {apiResponse?.error ? "Failed" : "Success"}
                 </h3>
@@ -1334,8 +1173,9 @@ const PosModals = ({ onCustomerCreated }) => {
                   )}
                   <button
                     type="button"
-                    className={`btn ${apiResponse?.error ? "btn-outline-danger" : "btn-primary"
-                      }`}
+                    className={`btn ${
+                      apiResponse?.error ? "btn-outline-danger" : "btn-primary"
+                    }`}
                     onClick={() => {
                       const modalEl = document.getElementById(
                         "order-success-modal"
@@ -2982,2952 +2822,70 @@ const PosModals = ({ onCustomerCreated }) => {
       </div>
       {/* /Recent Transactions */}
       {/* Orders */}
-      <div
-        className="modal fade pos-modal"
-        id="orders"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Orders</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="tabs-sets">
-                <ul className="nav nav-tabs" id="myTabs" role="tablist">
-                  <li className="nav-item" role="presentation">
-                    <button
-                      className="nav-link active"
-                      id="onhold-tab"
-                      data-bs-toggle="tab"
-                      data-bs-target="#onhold"
-                      type="button"
-                      aria-controls="onhold"
-                      aria-selected="true"
-                      role="tab"
-                    >
-                      Onhold
-                    </button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button
-                      className="nav-link"
-                      id="unpaid-tab"
-                      data-bs-toggle="tab"
-                      data-bs-target="#unpaid"
-                      type="button"
-                      aria-controls="unpaid"
-                      aria-selected="false"
-                      role="tab"
-                    >
-                      Unpaid
-                    </button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button
-                      className="nav-link"
-                      id="paid-tab"
-                      data-bs-toggle="tab"
-                      data-bs-target="#paid"
-                      type="button"
-                      aria-controls="paid"
-                      aria-selected="false"
-                      role="tab"
-                    >
-                      Paid
-                    </button>
-                  </li>
-                </ul>
-                <div className="tab-content">
-                  <div
-                    className="tab-pane fade show active"
-                    id="onhold"
-                    role="tabpanel"
-                    aria-labelledby="onhold-tab"
-                  >
-                    <div className="input-icon-start pos-search position-relative mb-3">
-                      <span className="input-icon-addon">
-                        <i className="ti ti-search" />
-                      </span>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Search Product"
-                      />
-                    </div>
-                    <div className="order-body">
-                      <div className="card bg-light mb-3">
-                        <div className="card-body">
-                          <span className="badge bg-dark fs-12 mb-2">
-                            Order ID : #45698
-                          </span>
-                          <div className="row g-3">
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Cashier :
-                                </span>{" "}
-                                admin
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Total :
-                                </span>{" "}
-                                $900
-                              </p>
-                            </div>
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Customer :
-                                </span>{" "}
-                                Botsford
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Date :
-                                </span>{" "}
-                                24 Dec 2024 13:39:11
-                              </p>
-                            </div>
-                          </div>
-                          <div className="bg-info-transparent p-1 rounded text-center my-3">
-                            <p className="text-info fw-medium">
-                              Customer need to recheck the product once
-                            </p>
-                          </div>
-                          <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
-                            <Link to="#" className="btn btn-md btn-orange">
-                              Open Order
-                            </Link>
-                            <Link
-                              to="#"
-                              className="btn btn-md btn-teal"
-                              data-bs-dismiss="modal"
-                              data-bs-toggle="modal"
-                              data-bs-target="#products"
-                            >
-                              View Products
-                            </Link>
-                            <Link to="#" className="btn btn-md btn-indigo">
-                              Print
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="card bg-light mb-0">
-                        <div className="card-body">
-                          <span className="badge bg-dark fs-12 mb-2">
-                            Order ID : #666659
-                          </span>
-                          <div className="mb-3">
-                            <div className="row g-3">
-                              <div className="col-md-6">
-                                <p className="fs-15 mb-1">
-                                  <span className="fs-14 fw-bold text-gray-9">
-                                    Cashier :
-                                  </span>{" "}
-                                  admin
-                                </p>
-                                <p className="fs-15">
-                                  <span className="fs-14 fw-bold text-gray-9">
-                                    Total :
-                                  </span>{" "}
-                                  $900
-                                </p>
-                              </div>
-                              <div className="col-md-6">
-                                <p className="fs-15 mb-1">
-                                  <span className="fs-14 fw-bold text-gray-9">
-                                    Customer :
-                                  </span>{" "}
-                                  Botsford
-                                </p>
-                                <p className="fs-15">
-                                  <span className="fs-14 fw-bold text-gray-9">
-                                    Date :
-                                  </span>{" "}
-                                  24 Dec 2024 13:39:11
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="tab-pane fade" id="unpaid" role="tabpanel">
-                    <div className="input-icon-start pos-search position-relative mb-3">
-                      <span className="input-icon-addon">
-                        <i className="ti ti-search" />
-                      </span>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Search Product"
-                      />
-                    </div>
-                    <div className="order-body">
-                      <div className="card bg-light mb-3">
-                        <div className="card-body">
-                          <span className="badge bg-dark fs-12 mb-2">
-                            Order ID : #45698
-                          </span>
-                          <div className="row g-3">
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Cashier :
-                                </span>{" "}
-                                admin
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Total :
-                                </span>{" "}
-                                $900
-                              </p>
-                            </div>
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Customer :
-                                </span>{" "}
-                                Anastasia
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Date :
-                                </span>{" "}
-                                24 Dec 2024 13:39:11
-                              </p>
-                            </div>
-                          </div>
-                          <div className="bg-info-transparent p-1 rounded text-center my-3">
-                            <p className="text-info fw-medium">
-                              Customer need to recheck the product once
-                            </p>
-                          </div>
-                          <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
-                            <Link to="#" className="btn btn-md btn-orange">
-                              Open Order
-                            </Link>
-                            <Link
-                              to="#"
-                              className="btn btn-md btn-teal"
-                              data-bs-dismiss="modal"
-                              data-bs-toggle="modal"
-                              data-bs-target="#products"
-                            >
-                              View Products
-                            </Link>
-                            <Link to="#" className="btn btn-md btn-indigo">
-                              Print
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="card bg-light mb-0">
-                        <div className="card-body">
-                          <span className="badge bg-dark fs-12 mb-2">
-                            Order ID : #666659
-                          </span>
-                          <div className="row g-3">
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Cashier :
-                                </span>{" "}
-                                admin
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Total :
-                                </span>{" "}
-                                $900
-                              </p>
-                            </div>
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Customer :
-                                </span>{" "}
-                                Lucia
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Date :
-                                </span>{" "}
-                                24 Dec 2024 13:39:11
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="tab-pane fade" id="paid" role="tabpanel">
-                    <div className="input-icon-start pos-search position-relative mb-3">
-                      <span className="input-icon-addon">
-                        <i className="ti ti-search" />
-                      </span>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Search Product"
-                      />
-                    </div>
-                    <div className="order-body">
-                      <div className="card bg-light mb-3">
-                        <div className="card-body">
-                          <span className="badge bg-dark fs-12 mb-2">
-                            Order ID : #45698
-                          </span>
-                          <div className="row g-3">
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Cashier :
-                                </span>{" "}
-                                admin
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Total :
-                                </span>{" "}
-                                $1000
-                              </p>
-                            </div>
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Customer :
-                                </span>{" "}
-                                Hugo
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Date :
-                                </span>{" "}
-                                24 Dec 2024 13:39:11
-                              </p>
-                            </div>
-                          </div>
-                          <div className="bg-info-transparent p-1 rounded text-center my-3">
-                            <p className="text-info fw-medium">
-                              Customer need to recheck the product once
-                            </p>
-                          </div>
-                          <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
-                            <Link to="#" className="btn btn-md btn-orange">
-                              Open Order
-                            </Link>
-                            <Link
-                              to="#"
-                              className="btn btn-md btn-teal"
-                              data-bs-dismiss="modal"
-                              data-bs-toggle="modal"
-                              data-bs-target="#products"
-                            >
-                              View Products
-                            </Link>
-                            <Link to="#" className="btn btn-md btn-indigo">
-                              Print
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="card bg-light mb-0">
-                        <div className="card-body">
-                          <span className="badge bg-dark fs-12 mb-2">
-                            Order ID : #666659
-                          </span>
-                          <div className="row g-3">
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Cashier :
-                                </span>{" "}
-                                admin
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Total :
-                                </span>{" "}
-                                $9100
-                              </p>
-                            </div>
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Customer :
-                                </span>{" "}
-                                Antonio
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Date :
-                                </span>{" "}
-                                23 Dec 2024 13:39:11
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+
       {/* /Orders */}
       {/* Scan */}
-      <div className="modal fade modal-default" id="scan-payment">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-body p-0">
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-              <div className="success-wrap scan-wrap text-center">
-                <h5>
-                  <span className="text-gray-6">Amount to Pay :</span> $150
-                </h5>
-                <div className="scan-img">
-                  <ImageWithBasePath
-                    src="assets/img/icons/scan-img.svg"
-                    alt="img"
-                  />
-                </div>
-                <p className="mb-3">
-                  Scan your Phone or UPI App to Complete the payment
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+
       {/* /Scan */}
       {/* Order Tax */}
-      <div className="modal fade modal-default" id="order-tax">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Order Tax</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="mb-3">
-                  <label className="form-label">
-                    Order Tax <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={options.taxRates}
-                    classNamePrefix="react-select select"
-                    placeholder="Select"
-                  />
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+
       {/* /Order Tax */}
       {/* Shipping Cost */}
-      <div className="modal fade modal-default" id="shipping-cost">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Shipping Cost</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="mb-3">
-                  <label className="form-label">
-                    Shipping Cost <span className="text-danger">*</span>
-                  </label>
-                  <input type="text" className="form-control" />
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+
       {/* /Shipping Cost */}
       {/* Coupon Code */}
-      <div className="modal fade modal-default" id="coupon-code">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Coupon Code</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="mb-3">
-                  <label className="form-label">
-                    Coupon Code <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={options.couponCodes}
-                    classNamePrefix="react-select select"
-                    placeholder="Select"
-                    defaultValue={options.couponCodes[0]}
-                  />
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+
       {/* /Coupon Code */}
       {/* Discount */}
-      <div className="modal fade modal-default" id="discount">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Discount </h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="mb-3">
-                  <label className="form-label">
-                    Order Discount Type <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={options.discountMode}
-                    classNamePrefix="react-select select"
-                    placeholder="Select"
-                    defaultValue={options.discountMode[0]}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">
-                    Value <span className="text-danger">*</span>
-                  </label>
-                  <input type="text" className="form-control" />
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+
       {/* /Discount */}
 
       {/* Payment Methods Modal */}
-      <div
-        className="modal fade"
-        id="payment-methods-modal"
-        tabIndex="-1"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Select Payment Method</h5>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div className="modal-body">
-              <div className="row align-items-center methods g-2">
-                <div className="col-sm-6 col-md-4 d-flex">
-                  <Link
-                    to="#"
-                    className="payment-item d-flex align-items-center justify-content-center p-2 flex-fill"
-                    data-bs-dismiss="modal"
-                  >
-                    <img
-                      src="assets/img/icons/cash-icon.svg"
-                      className="me-2"
-                      alt="img"
-                    />
-                    <p className="fs-14 fw-medium">Cash</p>
-                  </Link>
-                </div>
-                <div className="col-sm-6 col-md-4 d-flex">
-                  <Link
-                    to="#"
-                    className="payment-item d-flex align-items-center justify-content-center p-2 flex-fill"
-                    data-bs-dismiss="modal"
-                    onClick={() => handlePaymentSelection("card")}
-                  >
-                    <img
-                      src="assets/img/icons/card.svg"
-                      className="me-2"
-                      alt="img"
-                    />
-                    <p className="fs-14 fw-medium">Card</p>
-                  </Link>
-                </div>
-                <div className="col-sm-6 col-md-4 d-flex">
-                  <Link
-                    to="#"
-                    className="payment-item d-flex align-items-center justify-content-center p-2 flex-fill"
-                    data-bs-dismiss="modal"
-                    onClick={() => handlePaymentSelection("points")}
-                  >
-                    <img
-                      src="assets/img/icons/points.svg"
-                      className="me-2"
-                      alt="img"
-                    />
-                    <p className="fs-14 fw-medium">Online</p>
-                  </Link>
-                </div>
-                {/* Add other payment methods similarly */}
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-bs-dismiss="modal"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Cash Payment */}
-      <div
-        className="modal fade modal-default"
-        id="cash-payment"
-        aria-labelledby="payment-completed"
-      >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-body p-0">
-              <div className="success-wrap">
-                <div className="text-center">
-                  <div className="icon-success bg-success text-white mb-2">
-                    <i className="ti ti-check" />
-                  </div>
-                  <h3 className="mb-2">Congratulations, Sale Completed</h3>
-                  <div className="p-2 d-flex align-items-center justify-content-center gap-2 flex-wrap mb-3">
-                    <p className="fs-13 fw-medium pe-2 border-end mb-0">
-                      Bill Amount : <span className="text-gray-9">$150</span>
-                    </p>
-                    <p className="fs-13 fw-medium pe-2 border-end mb-0">
-                      Total Paid : <span className="text-gray-9">$200</span>
-                    </p>
-                    <p className="fs-13 fw-medium mb-0">
-                      Change : <span className="text-gray-9">$50</span>
-                    </p>
-                  </div>
-                </div>
-                <div className="bg-success-transparent p-2 mb-3 br-5 border-start border-success d-flex align-items-center">
-                  <span className="avatar avatar-sm bg-success rounded-circle flex-shrink-0 fs-16 me-2">
-                    <i className="ti ti-mail-opened" />
-                  </span>
-                  <p className="fs-13 fw-medium text-gray-9">
-                    A receipt of this transaction will be sent to the registered
-                    info@customer@example.com
-                  </p>
-                </div>
-                <div className="resend-form mb-3">
-                  <input
-                    type="text"
-                    className="form-control"
-                    defaultValue="infocustomer@example.com"
-                  />
-                  <button
-                    type="button"
-                    data-bs-dismiss="modal"
-                    className="btn btn-primary btn-xs"
-                  >
-                    Resend Email
-                  </button>
-                </div>
-                <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    className="btn btn-md btn-light flex-fill"
-                    data-bs-toggle="modal"
-                    data-bs-target="#print-receipt"
-                  >
-                    <i className="ti ti-printer me-1" />
-                    Print Receipt
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-md btn-teal flex-fill"
-                  >
-                    <i className="ti ti-gift me-1" />
-                    Gift Receipt
-                  </button>
-                  <Link to="#" className="btn btn-md btn-dark flex-fill">
-                    <i className="ti ti-shopping-cart me-1" />
-                    Next Order
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+
       {/* /Cash Payment */}
       {/* Card Payment */}
-      <div className="modal fade modal-default" id="card-payment">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-body p-0">
-              <div className="success-wrap">
-                <div className="text-center">
-                  <div className="icon-success bg-success text-white mb-2">
-                    <i className="ti ti-check" />
-                  </div>
-                  <h3 className="mb-2">Congratulations, Sale Completed</h3>
-                  <div className="p-2 text-center mb-3">
-                    <p className="fs-13 fw-medium">
-                      Bill Amount : <span className="text-gray-9">$150</span>
-                    </p>
-                  </div>
-                </div>
-                <div className="bg-success-transparent p-2 mb-3 br-5 border-start border-success d-flex align-items-center">
-                  <span className="avatar avatar-sm bg-success rounded-circle flex-shrink-0 fs-16 me-2">
-                    <i className="ti ti-mail-opened" />
-                  </span>
-                  <p className="fs-13 fw-medium text-gray-9">
-                    A receipt of this transaction will be sent to the registered
-                    info@customer@example.com
-                  </p>
-                </div>
-                <div className="resend-form mb-3">
-                  <input
-                    type="text"
-                    className="form-control"
-                    defaultValue="infocustomer@example.com"
-                  />
-                  <button
-                    type="button"
-                    data-bs-dismiss="modal"
-                    className="btn btn-primary btn-xs"
-                  >
-                    Resend Email
-                  </button>
-                </div>
-                <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    className="btn btn-md btn-light flex-fill"
-                    data-bs-toggle="modal"
-                    data-bs-target="#print-receipt"
-                  >
-                    <i className="ti ti-printer me-1" />
-                    Print Receipt
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-md btn-teal flex-fill"
-                  >
-                    <i className="ti ti-gift me-1" />
-                    Gift Receipt
-                  </button>
-                  <Link to="#" className="btn btn-md btn-dark flex-fill">
-                    <i className="ti ti-shopping-cart me-1" />
-                    Next Order
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+
       {/* /Card Payment */}
       {/* Active Gift Card */}
-      <div
-        className="modal fade pos-modal"
-        id="gift-payment"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Pay By Gift Card</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body pb-1">
-              <div className="mb-3">
-                <ImageWithBasePath
-                  src="assets/img/icons/gift-card.svg"
-                  alt="img"
-                />
-              </div>
-              <div className="resend-form mb-3">
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Scan Barcode / Enter Number"
-                />
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-primary btn-xs"
-                  data-bs-toggle="modal"
-                  data-bs-target="#redeem-value"
-                >
-                  Check
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+
       {/* /Active Gift Card */}
       {/* Redeem Value */}
-      <div
-        className="modal fade pos-modal"
-        id="redeem-value"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Redeem Value</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body">
-                <div className="bg-info-transparent p-2 br-8 mb-3">
-                  <p className="text-info">
-                    Balance isn’t enough to pay, you can still make a partial
-                    payment
-                  </p>
-                </div>
-                <div className="card bg-light shadow-none text-center">
-                  <div className="card-body">
-                    <p className="text-gray-5 mb-1">Gift Card Number</p>
-                    <h2 className="display-1">5698</h2>
-                  </div>
-                </div>
-                <div className="bg-danger-transparent p-2 mb-3 br-5 border-start border-danger d-flex align-items-center">
-                  <span className="avatar avatar-sm bg-danger rounded-circle fs-16 me-2">
-                    <i className="ti ti-gift" />
-                  </span>
-                  <p className="fs-16 text-gray-9">
-                    Available gift card balance : $45.56
-                  </p>
-                </div>
-                <div>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter Bill Amount"
-                  />
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Make Partial Payment
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+
       {/* /Redeem Value */}
       {/* Redeem Value */}
-      <div
-        className="modal fade pos-modal"
-        id="redeem-fullpayment"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Redeem Value</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body">
-                <div className="card bg-light shadow-none text-center">
-                  <div className="card-body">
-                    <p className="text-gray-5 mb-1">Gift Card Number</p>
-                    <h2 className="display-1">5698</h2>
-                  </div>
-                </div>
-                <div className="bg-success-transparent p-2 mb-3 br-5 border-start border-success">
-                  <span className="avatar avatar-sm bg-success rounded-circle fs-16 me-2">
-                    <i className="ti ti-gift" />
-                  </span>
-                  <p className="fs-16 text-gray-9">
-                    Available gift card balance : $45.56
-                  </p>
-                </div>
-                <div>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter Bill Amount"
-                  />
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Make Payment
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+
       {/* /Redeem Value */}
       {/* Barcode */}
-      <div
-        className="modal fade pos-modal"
-        id="barcode"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Barcode</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body">
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter Barcode of the Product"
-                  />
-                </div>
-                <div className="card bg-light shadow-none border-0 br-0 mb-0">
-                  <div className="card-body d-flex align-items-center justify-content-between">
-                    <div>
-                      <p className="fs-13 mb-1">Tablet 1.02 inch</p>
-                      <h6 className="fs-13 fw-semibold">$3000</h6>
-                    </div>
-                    <div className="qty-item m-0">
-                      <Link
-                        to="#"
-                        className="dec d-flex justify-content-center align-items-center"
-                        data-bs-toggle="tooltip"
-                        data-bs-placement="top"
-                        title="minus"
-                      >
-                        <i className="ti ti-minus" />
-                      </Link>
-                      <input
-                        type="text"
-                        className="form-control text-center"
-                        name="qty"
-                        defaultValue={4}
-                      />
-                      <Link
-                        to="#"
-                        className="inc d-flex justify-content-center align-items-center"
-                        data-bs-toggle="tooltip"
-                        data-bs-placement="top"
-                        title="plus"
-                      >
-                        <i className="ti ti-plus" />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Add Item
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+
       {/* /Barcode */}
       {/* Split Payment */}
-      <div
-        className="modal fade pos-modal"
-        id="split-payment"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered modal-lg"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Split Payment</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body">
-                <div className="additem-info">
-                  <div className="bg-light p-3 add-info">
-                    <div className="row align-items-center g-2">
-                      <div className="col-lg-2">
-                        <h6 className="fs-14 fw-semibold">Payment 2</h6>
-                      </div>
-                      <div className="col-lg-4">
-                        <Select
-                          options={options.paymentMethods}
-                          classNamePrefix="react-select select"
-                          placeholder="Select"
-                          defaultValue={options.paymentMethods[0]}
-                        />
-                      </div>
-                      <div className="col-lg-4">
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="Enter Amount"
-                        />
-                      </div>
-                      <div className="col-lg-2">
-                        <button className="btn btn-dark w-100">Charge</button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-light p-3 add-info">
-                    <div className="row align-items-center g-2">
-                      <div className="col-lg-2">
-                        <h6 className="fs-14 fw-semibold">Payment 2</h6>
-                      </div>
-                      <div className="col-lg-4">
-                        <Select
-                          options={options.paymentMethods}
-                          classNamePrefix="react-select select"
-                          placeholder="Select"
-                          defaultValue={options.paymentMethods[0]}
-                        />
-                      </div>
-                      <div className="col-lg-4">
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="Enter Amount"
-                        />
-                      </div>
-                      <div className="col-lg-2">
-                        <button className="btn btn-dark w-100">Charge</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-end">
-                  <Link to="#" className="btn btn-primary btn-md add-item">
-                    Add More
-                  </Link>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <Link
-                  to="#"
-                  className="btn btn-md btn-primary"
-                  data-bs-dismiss="modal"
-                  data-bs-toggle="modal"
-                  data-bs-target="#cash-payment"
-                >
-                  Complete Sale
-                </Link>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+
       {/* /Split Payment */}
       {/* Payment Cash */}
-      <div className="modal fade modal-default" id="payment-cash">
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Finalize Sale</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="row">
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Received Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Paying Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="change-item mb-3">
-                      <label className="form-label">Change</label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={0.0}
-                        />
-                      </div>
-                    </div>
-                    {/* <div className="point-item mb-3">
-                  <label className="form-label">Balance Point</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    defaultValue={200}
-                  />
-                </div> */}
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Payment Type <span className="text-danger">*</span>
-                      </label>
 
-                      <Select
-                        options={options.paymentTypes}
-                        classNamePrefix="react-select select"
-                        placeholder="Select"
-                        defaultValue={options.paymentTypes[1]}
-                      />
-                    </div>
-                    <div className="quick-cash payment-content bg-light d-block mb-3">
-                      <div className="d-flex align-items-center flex-wra gap-4">
-                        <h5 className="text-nowrap">Quick Cash</h5>
-                        <div className="d-flex align-items-center flex-wrap gap-3">
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash1"
-                              defaultChecked
-                            />
-                            <label className="btn btn-white" htmlFor="cash1">
-                              10
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash2"
-                            />
-                            <label className="btn btn-white" htmlFor="cash2">
-                              20
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash3"
-                            />
-                            <label className="btn btn-white" htmlFor="cash3">
-                              50
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash4"
-                            />
-                            <label className="btn btn-white" htmlFor="cash4">
-                              100
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash5"
-                            />
-                            <label className="btn btn-white" htmlFor="cash5">
-                              500
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash6"
-                            />
-                            <label className="btn btn-white" htmlFor="cash6">
-                              1000
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="point-wrap payment-content mb-3">
-                      <div className=" bg-success-transparent d-flex align-items-center justify-content-between flex-wrap p-2 gap-2 br-5">
-                        <h6 className="fs-14 fw-bold text-success">
-                          You have 2000 Points to Use
-                        </h6>
-                        <Link to="#" className="btn btn-dark btn-md">
-                          Use for this Purchase
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Receiver</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Sale Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Staff Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
       {/* /Payment Cash  */}
       {/* Payment Card  */}
-      <div className="modal fade modal-default" id="payment-card">
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Finalize Sale</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="row">
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Received Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Paying Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="change-item mb-3">
-                      <label className="form-label">Change</label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={0.0}
-                        />
-                      </div>
-                    </div>
-                    <div className="point-item mb-3">
-                      <label className="form-label">Balance Point</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        defaultValue={200}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Payment Type <span className="text-danger">*</span>
-                      </label>
 
-                      <Select
-                        options={options.paymentTypes}
-                        classNamePrefix="react-select select"
-                        placeholder="Select"
-                        defaultValue={options.paymentTypes[0]}
-                      />
-                    </div>
-                    <div className="quick-cash payment-content bg-light  mb-3">
-                      <div className="d-flex align-items-center flex-wra gap-4">
-                        <h5 className="text-nowrap">Quick Cash</h5>
-                        <div className="d-flex align-items-center flex-wrap gap-3">
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash11"
-                              defaultChecked
-                            />
-                            <label className="btn btn-white" htmlFor="cash11">
-                              10
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash12"
-                            />
-                            <label className="btn btn-white" htmlFor="cash12">
-                              20
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash13"
-                            />
-                            <label className="btn btn-white" htmlFor="cash13">
-                              50
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash14"
-                            />
-                            <label className="btn btn-white" htmlFor="cash14">
-                              100
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash15"
-                            />
-                            <label className="btn btn-white" htmlFor="cash15">
-                              500
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash16"
-                            />
-                            <label className="btn btn-white" htmlFor="cash16">
-                              1000
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="point-wrap payment-content mb-3">
-                      <div className=" bg-success-transparent d-flex align-items-center justify-content-between flex-wrap p-2 gap-2 br-5">
-                        <h6 className="fs-14 fw-bold text-success">
-                          You have 2000 Points to Use
-                        </h6>
-                        <Link to="#" className="btn btn-dark btn-md">
-                          Use for this Purchase
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Receiver</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Sale Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Staff Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
       {/* /Payment Card  */}
       {/* Payment Cheque */}
-      <div className="modal fade modal-default" id="payment-cheque">
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Finalize Sale</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="row">
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Received Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Paying Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="change-item mb-3">
-                      <label className="form-label">Change</label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={0.0}
-                        />
-                      </div>
-                    </div>
-                    {/* <div className="point-item mb-3">
-                  <label className="form-label">Balance Point</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    defaultValue={200}
-                  />
-                </div> */}
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Payment Type <span className="text-danger">*</span>
-                      </label>
-                      <Select
-                        options={options.paymentTypes}
-                        classNamePrefix="react-select select"
-                        placeholder="Select"
-                        defaultValue={options.paymentTypes[2]}
-                      />
-                    </div>
-                    <div className="quick-cash payment-content bg-light  mb-3">
-                      <div className="d-flex align-items-center flex-wra gap-4">
-                        <h5 className="text-nowrap">Quick Cash</h5>
-                        <div className="d-flex align-items-center flex-wrap gap-3">
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash21"
-                              defaultChecked
-                            />
-                            <label className="btn btn-white" htmlFor="cash21">
-                              10
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash22"
-                            />
-                            <label className="btn btn-white" htmlFor="cash22">
-                              20
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash23"
-                            />
-                            <label className="btn btn-white" htmlFor="cash23">
-                              50
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash24"
-                            />
-                            <label className="btn btn-white" htmlFor="cash24">
-                              100
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash25"
-                            />
-                            <label className="btn btn-white" htmlFor="cash25">
-                              500
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash26"
-                            />
-                            <label className="btn btn-white" htmlFor="cash26">
-                              1000
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="point-wrap payment-content mb-3">
-                      <div className=" bg-success-transparent d-flex align-items-center justify-content-between flex-wrap p-2 gap-2 br-5">
-                        <h6 className="fs-14 fw-bold text-success">
-                          You have 2000 Points to Use
-                        </h6>
-                        <Link to="#" className="btn btn-dark btn-md">
-                          Use for this Purchase
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Receiver</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Sale Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Staff Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+
       {/* /Payment Cheque */}
       {/*  Payment Deposit */}
-      <div className="modal fade modal-default" id="payment-deposit">
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Finalize Sale</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="row">
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Received Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Paying Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="change-item mb-3">
-                      <label className="form-label">Change</label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={0.0}
-                        />
-                      </div>
-                    </div>
-                    {/* <div className="point-item mb-3">
-                  <label className="form-label">Balance Point</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    defaultValue={200}
-                  />
-                </div> */}
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Payment Type <span className="text-danger">*</span>
-                      </label>
-                      <Select
-                        options={options.paymentTypes}
-                        classNamePrefix="react-select select"
-                        placeholder="Select"
-                        defaultValue={options.paymentTypes[3]}
-                      />
-                    </div>
-                    <div className="quick-cash payment-content bg-light  mb-3">
-                      <div className="d-flex align-items-center flex-wra gap-4">
-                        <h5 className="text-nowrap">Quick Cash</h5>
-                        <div className="d-flex align-items-center flex-wrap gap-3">
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash31"
-                              defaultChecked
-                            />
-                            <label className="btn btn-white" htmlFor="cash31">
-                              10
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash32"
-                            />
-                            <label className="btn btn-white" htmlFor="cash32">
-                              20
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash33"
-                            />
-                            <label className="btn btn-white" htmlFor="cash33">
-                              50
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash34"
-                            />
-                            <label className="btn btn-white" htmlFor="cash34">
-                              100
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash35"
-                            />
-                            <label className="btn btn-white" htmlFor="cash35">
-                              500
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash36"
-                            />
-                            <label className="btn btn-white" htmlFor="cash36">
-                              1000
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="point-wrap payment-content mb-3">
-                      <div className=" bg-success-transparent d-flex align-items-center justify-content-between flex-wrap p-2 gap-2 br-5">
-                        <h6 className="fs-14 fw-bold text-success">
-                          You have 2000 Points to Use
-                        </h6>
-                        <Link to="#" className="btn btn-dark btn-md">
-                          Use for this Purchase
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Receiver</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Sale Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Staff Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+
       {/* /Payment Deposit */}
       {/* Payment Point */}
-      <div className="modal fade modal-default" id="payment-points">
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Finalize Sale</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="row">
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Received Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Paying Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    {/* <div className="change-item mb-3">
-                  <label className="form-label">Change</label>
-                  <div className="input-icon-start position-relative">
-                    <span className="input-icon-addon text-gray-9">
-                      <i className="ti ti-currency-dollar" />
-                    </span>
-                    <input
-                      type="text"
-                      className="form-control"
-                      defaultValue={0.0}
-                    />
-                  </div>
-                </div> */}
-                    <div className="point-item mb-3">
-                      <label className="form-label">Balance Point</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        defaultValue={200}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Payment Type <span className="text-danger">*</span>
-                      </label>
-                      <Select
-                        options={options.paymentTypes}
-                        classNamePrefix="react-select select"
-                        placeholder="Select"
-                        defaultValue={options.paymentTypes[4]}
-                      />
-                    </div>
-                    <div className="quick-cash payment-content bg-light  mb-3">
-                      <div className="d-flex align-items-center flex-wra gap-4">
-                        <h5 className="text-nowrap">Quick Cash</h5>
-                        <div className="d-flex align-items-center flex-wrap gap-3">
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash41"
-                              defaultChecked
-                            />
-                            <label className="btn btn-white" htmlFor="cash41">
-                              10
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash42"
-                            />
-                            <label className="btn btn-white" htmlFor="cash42">
-                              20
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash43"
-                            />
-                            <label className="btn btn-white" htmlFor="cash43">
-                              50
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash44"
-                            />
-                            <label className="btn btn-white" htmlFor="cash44">
-                              100
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash45"
-                            />
-                            <label className="btn btn-white" htmlFor="cash45">
-                              500
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash46"
-                            />
-                            <label className="btn btn-white" htmlFor="cash46">
-                              1000
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="point-wrap payment-content d-block mb-3">
-                      <div className=" bg-success-transparent d-flex align-items-center justify-content-between flex-wrap p-2 gap-2 br-5">
-                        <h6 className="fs-14 fw-bold text-success">
-                          You have 2000 Points to Use
-                        </h6>
-                        <Link to="#" className="btn btn-dark btn-md">
-                          Use for this Purchase
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Receiver</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Sale Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Staff Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+
       {/* /Payment Point */}
       {/* Calculator */}
-      <div
-        className="modal fade pos-modal"
-        id="calculator"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div
-              className="modal-body p-0"
-              onKeyDown={handleKeyPress}
-              tabIndex="0"
-            >
-              <div className="calculator-wrap">
-                <div className="p-3">
-                  <div className="d-flex align-items-center">
-                    <h3>Calculator</h3>
-                    <button
-                      type="button"
-                      className="close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                    >
-                      <span aria-hidden="true">×</span>
-                    </button>
-                  </div>
-                  <div>
-                    <input
-                      className="input"
-                      type="text"
-                      placeholder="0"
-                      value={input}
-                      readOnly
-                    />
-                  </div>
-                </div>
-                <div className="calculator-body d-flex justify-content-between">
-                  {/* Column 1 */}
-                  <div className="text-center">
-                    <button className="btn btn-clear" onClick={handleClear}>
-                      C
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("7")}
-                    >
-                      7
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("4")}
-                    >
-                      4
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("1")}
-                    >
-                      1
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick(",")}
-                    >
-                      ,
-                    </button>
-                  </div>
 
-                  {/* Column 2 */}
-                  <div className="text-center">
-                    <button
-                      className="btn btn-expression"
-                      onClick={() => handleButtonClick("/")}
-                    >
-                      ÷
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("8")}
-                    >
-                      8
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("5")}
-                    >
-                      5
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("2")}
-                    >
-                      2
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("00")}
-                    >
-                      00
-                    </button>
-                  </div>
-
-                  {/* Column 3 */}
-                  <div className="text-center">
-                    <button
-                      className="btn btn-expression"
-                      onClick={() => handleButtonClick("%")}
-                    >
-                      %
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("9")}
-                    >
-                      9
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("6")}
-                    >
-                      6
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("3")}
-                    >
-                      3
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick(".")}
-                    >
-                      .
-                    </button>
-                  </div>
-
-                  {/* Column 4 */}
-                  <div className="text-center">
-                    <button className="btn btn-clear" onClick={handleBackspace}>
-                      <i className="ti ti-backspace" />
-                    </button>
-                    <button
-                      className="btn btn-expression"
-                      onClick={() => handleButtonClick("*")}
-                    >
-                      x
-                    </button>
-                    <button
-                      className="btn btn-expression"
-                      onClick={() => handleButtonClick("-")}
-                    >
-                      -
-                    </button>
-                    <button
-                      className="btn btn-expression"
-                      onClick={() => handleButtonClick("+")}
-                    >
-                      +
-                    </button>
-                    <button className="btn btn-clear" onClick={handleSolve}>
-                      =
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
       {/* /Calculator */}
       {/* Cash Register Details */}
-      <div
-        className="modal fade pos-modal"
-        id="cash-register"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Cash Register Details</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="table-responsive">
-                <table className="table table-striped border">
-                  <tbody>
-                    <tr>
-                      <td>Cash in Hand</td>
-                      <td className="text-gray-9 fw-medium text-end">$45689</td>
-                    </tr>
-                    <tr>
-                      <td>Total Sale Amount</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $565597.88
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Total Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $566867.97
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Cash Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $3355.84
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Total Sale Return</td>
-                      <td className="text-gray-9 fw-medium text-end">$1959</td>
-                    </tr>
-                    <tr>
-                      <td>Total Expense</td>
-                      <td className="text-gray-9 fw-medium text-end">$0</td>
-                    </tr>
-                    <tr>
-                      <td className="text-gray-9 fw-bold bg-secondary-transparent">
-                        Total Cash
-                      </td>
-                      <td className="text-gray-9 fw-bold text-end bg-secondary-transparent">
-                        $587130.97
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-              <button
-                type="button"
-                className="btn btn-md btn-primary"
-                data-bs-dismiss="modal"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Cash Register Details */}
-      {/* Today&apos;s Sale */}
-      <div
-        className="modal fade pos-modal"
-        id="today-sale"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Today&apos;s Sale</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="table-responsive">
-                <table className="table table-striped border">
-                  <tbody>
-                    <tr>
-                      <td>Total Sale Amount</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $565597.88
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Cash Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $3355.84
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Credit Card Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">$1959</td>
-                    </tr>
-                    <tr>
-                      <td>Cheque Payment:</td>
-                      <td className="text-gray-9 fw-medium text-end">$0</td>
-                    </tr>
-                    <tr>
-                      <td>Deposit Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $565597.88
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Points Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $3355.84
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Gift Card Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $565597.88
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Scan &amp; Pay</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $3355.84
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Pay Later</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $3355.84
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Total Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $565597.88
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Total Sale Return</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $565597.88
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Total Expense:</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $565597.88
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="text-gray-9 fw-bold bg-secondary-transparent">
-                        Total Cash
-                      </td>
-                      <td className="text-gray-9 fw-bold text-end bg-secondary-transparent">
-                        $587130.97
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-              <button
-                type="button"
-                className="btn btn-md btn-primary"
-                data-bs-dismiss="modal"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+
       {/* /Today&apos;s Sale */}
       {/* Today&apos;s Profit */}
-      <div
-        className="modal fade pos-modal"
-        id="today-profit"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Today&apos;s Profit</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="row justify-content-center g-3 mb-3">
-                <div className="col-lg-4 col-md-6 d-flex">
-                  <div className="border border-success bg-success-transparent br-8 p-3 flex-fill">
-                    <p className="fs-16 text-gray-9 mb-1">Total Sale</p>
-                    <h3 className="text-success">$89954</h3>
-                  </div>
-                </div>
-                <div className="col-lg-4 col-md-6 d-flex">
-                  <div className="border border-danger bg-danger-transparent br-8 p-3 flex-fill">
-                    <p className="fs-16 text-gray-9 mb-1">Expense</p>
-                    <h3 className="text-danger">$89954</h3>
-                  </div>
-                </div>
-                <div className="col-lg-4 col-md-6 d-flex">
-                  <div className="border border-info bg-info-transparent br-8 p-3 flex-fill">
-                    <p className="fs-16 text-gray-9 mb-1">Total Profit </p>
-                    <h3 className="text-info">$2145</h3>
-                  </div>
-                </div>
-              </div>
-              <div className="table-responsive">
-                <table className="table table-striped border">
-                  <tbody>
-                    <tr>
-                      <td>Product Revenue</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $565597.88
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Product Cost</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $3355.84
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Expense</td>
-                      <td className="text-gray-9 fw-medium text-end">$1959</td>
-                    </tr>
-                    <tr>
-                      <td>Total Stock Adjustment</td>
-                      <td className="text-gray-9 fw-medium text-end">$0</td>
-                    </tr>
-                    <tr>
-                      <td>Deposit Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $565597.88
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Total Purchase Shipping Cost</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $3355.84
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Total Sell Discount</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $565597.88
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Total Sell Return</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $3355.84
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Closing Stock</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $3355.84
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Total Sales</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $565597.88
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Total Sale Return</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $565597.88
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Total Expense</td>
-                      <td className="text-gray-9 fw-medium text-end">
-                        $565597.88
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="text-gray-9 fw-bold bg-secondary-transparent">
-                        Total Cash
-                      </td>
-                      <td className="text-gray-9 fw-bold text-end bg-secondary-transparent">
-                        $587130.97
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-              <button
-                type="button"
-                className="btn btn-md btn-primary"
-                data-bs-dismiss="modal"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+
       {/* /Today&apos;s Profit */}
     </>
   );

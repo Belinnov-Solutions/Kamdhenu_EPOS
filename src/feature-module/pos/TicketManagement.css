@@ -1,24 +1,73 @@
-/* Add to your stylesheet */
-.responsive-width {
+/* OrderList.css - Specific to Order List only */
+
+/* Target only the Order List table */
+.order-list-table.datatable {
   width: 100%;
-  max-width: 100%;
-  margin: 0 auto;
+  table-layout: auto;
+  border-collapse: collapse;
 }
 
-@media (min-width: 768px) {
-  .responsive-width {
-    width: 90%;
+.order-list-table.datatable th,
+.order-list-table.datatable td {
+  padding: 0.5rem 0.75rem; /* Reduce padding */
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 200px; /* Set a max-width for cells */
+}
+
+.order-list-table.datatable thead th {
+  font-weight: 600;
+  background-color: #f8f9fa;
+}
+
+/* Make specific columns narrower if needed */
+.order-list-table.datatable th:nth-child(1), /* Order # */
+.order-list-table.datatable td:nth-child(1) {
+  width: 120px;
+}
+
+.order-list-table.datatable th:nth-child(3), /* Phone */
+.order-list-table.datatable td:nth-child(3) {
+  width: 130px;
+}
+
+.order-list-table.datatable th:nth-child(4), /* Date */
+.order-list-table.datatable td:nth-child(4) {
+  width: 100px;
+}
+
+.order-list-table.datatable th:nth-child(7), /* Quantity */
+.order-list-table.datatable td:nth-child(7),
+.order-list-table.datatable th:nth-child(8), /* Price */
+.order-list-table.datatable td:nth-child(8),
+.order-list-table.datatable th:nth-child(9), /* Total */
+.order-list-table.datatable td:nth-child(9) {
+  width: 80px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .order-list-table.datatable th,
+  .order-list-table.datatable td {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.9rem;
   }
 }
 
-@media (min-width: 992px) {
-  .responsive-width {
-    width: 85%;
+@media (max-width: 992px) {
+  .order-list-table.datatable th:nth-child(1),
+  .order-list-table.datatable td:nth-child(1) {
+    width: 100px;
   }
 }
 
-@media (min-width: 1200px) {
-  .responsive-width {
-    width: 80%;
+/* Hide less important columns on small screens */
+@media (max-width: 768px) {
+  .order-list-table.datatable th:nth-child(3), /* Phone */
+  .order-list-table.datatable td:nth-child(3),
+  .order-list-table.datatable th:nth-child(6), /* Brand */
+  .order-list-table.datatable td:nth-child(6) {
+    display: none;
   }
 }
