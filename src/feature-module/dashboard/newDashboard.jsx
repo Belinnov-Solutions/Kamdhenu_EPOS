@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { DateRangePicker } from 'react-bootstrap-daterangepicker';
 import moment from 'moment';
 import PropTypes from 'prop-types';
@@ -17,6 +17,7 @@ import {
   Legend,
 } from "chart.js";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 // Register the necessary components for Chart.js
 ChartJS.register(
@@ -98,6 +99,7 @@ PredefinedDateRanges.propTypes = {
 const NewDashboard = () => {
   const BASE_URL = process.env.REACT_APP_BASEURL;
   const { roleName, storeId } = useSelector((state) => state.user);
+  const navigate = useNavigate(); // Initialize navigate
 
   const [salesData, setSalesData] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -110,6 +112,8 @@ const NewDashboard = () => {
     categoryId: null,
     groupBy: "day",
   });
+
+  const categoriesContainerRef = useRef(null);
 
   useEffect(() => {
     fetchSalesReport();
@@ -173,6 +177,28 @@ const NewDashboard = () => {
     setFilters({
       ...filters,
       categoryId: categoryId === filters.categoryId ? null : categoryId,
+    });
+  };
+
+  const scrollCategories = (direction) => {
+    if (categoriesContainerRef.current) {
+      const scrollAmount = 300;
+      if (direction === 'left') {
+        categoriesContainerRef.current.scrollLeft -= scrollAmount;
+      } else {
+        categoriesContainerRef.current.scrollLeft += scrollAmount;
+      }
+    }
+  };
+
+  // Function to handle view details navigation
+  const handleViewDetails = (period) => {
+    // You can pass any necessary data to the dashboard page via state
+    navigate('/dashboard', { 
+      state: { 
+        periodData: period,
+        groupBy: filters.groupBy
+      } 
     });
   };
 
@@ -267,34 +293,67 @@ const NewDashboard = () => {
           </div>
         </div>
 
-        {/* Category Cards */}
+        {/* Category Cards with Slider */}
         <div className="row mb-4">
           <div className="col-12">
-            <h5 className="mb-3">Categories</h5>
-            <div className="d-flex flex-wrap gap-2">
-              <button
-                className={`btn ${!filters.categoryId ? 'btn-primary' : 'btn-outline-primary'} mb-2`}
-                onClick={() => handleCategoryFilter(null)}
-              >
-                All Categories
-              </button>
-              {categoriesLoading ? (
-                <div className="d-flex justify-content-center w-100">
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <h5 className="mb-0">Categories</h5>
+              <div className="d-flex gap-2">
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => scrollCategories('left')}
+                  disabled={categoriesLoading}
+                >
+                  <i className="ti ti-chevron-left"></i>
+                </button>
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => scrollCategories('right')}
+                  disabled={categoriesLoading}
+                >
+                  <i className="ti ti-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div className="position-relative">
+              {categoriesLoading && (
+                <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-light bg-opacity-75 rounded">
                   <div className="spinner-border spinner-border-sm text-primary" role="status">
                     <span className="visually-hidden">Loading...</span>
                   </div>
                 </div>
-              ) : (
-                categories.map((category) => (
+              )}
+              
+              <div 
+                ref={categoriesContainerRef}
+                className="d-flex overflow-auto pb-2 scrollbar-hidden"
+                style={{
+                  scrollBehavior: 'smooth',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  gap: '0.75rem'
+                }}
+              >
+                <button
+                  className={`btn ${!filters.categoryId ? 'btn-primary' : 'btn-outline-primary'} flex-shrink-0 mb-2`}
+                  onClick={() => handleCategoryFilter(null)}
+                  style={{ minWidth: '120px' }}
+                >
+                  All Categories
+                </button>
+                
+                {categories.map((category) => (
                   <button
                     key={category.categoryId}
-                    className={`btn ${filters.categoryId === category.categoryId ? 'btn-primary' : 'btn-outline-primary'} mb-2`}
+                    className={`btn ${filters.categoryId === category.categoryId ? 'btn-primary' : 'btn-outline-primary'} flex-shrink-0 mb-2`}
                     onClick={() => handleCategoryFilter(category.categoryId)}
+                    style={{ minWidth: '120px' }}
                   >
                     {category.categoryName}
                   </button>
-                ))
-              )}
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -309,7 +368,7 @@ const NewDashboard = () => {
                 <div className="ms-2">
                   <p className="text-white mb-1">Total Sales</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
-                    <h4 className="text-white">${totalSales.toFixed(2)}</h4>
+                    <h4 className="text-white">₹{totalSales.toFixed(2)}</h4>
                   </div>
                 </div>
               </div>
@@ -365,7 +424,8 @@ const NewDashboard = () => {
                         <th>Total Sales</th>
                         <th>Items Sold</th>
                         <th>Orders</th>
-                        <th>Top Products</th>
+                        {/* <th>Top Products</th> */}
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -380,12 +440,12 @@ const NewDashboard = () => {
                                 : moment(period.date).format('MMMM YYYY')
                               }
                             </td>
-                            <td>${period.totalSalesAmount.toFixed(2)}</td>
+                            <td>₹{period.totalSalesAmount.toFixed(2)}</td>
                             <td>{period.itemsSold}</td>
                             <td>{period.orders}</td>
-                            <td>
+                            {/* <td>
                               {period.products
-                                .slice(0, 3)
+                                .slice(0, 2) // Show only 2 products
                                 .map((product, pIndex) => (
                                   <span
                                     key={pIndex}
@@ -394,11 +454,19 @@ const NewDashboard = () => {
                                     {product.productName}: {product.qtySold}
                                   </span>
                                 ))}
-                              {period.products.length > 3 && (
+                              {period.products.length > 2 && (
                                 <span className="badge bg-secondary">
-                                  +{period.products.length - 3} more
+                                  +{period.products.length - 2} more
                                 </span>
                               )}
+                            </td> */}
+                            <td>
+                              <button
+                                className="btn btn-sm btn-outline-primary"
+                                onClick={() => handleViewDetails(period)}
+                              >
+                                View Details
+                              </button>
                             </td>
                           </tr>
                         ))}
@@ -457,7 +525,7 @@ const NewDashboard = () => {
                             <tr key={index}>
                               <td>{product.name}</td>
                               <td>{product.qty}</td>
-                              <td>${product.revenue.toFixed(2)}</td>
+                              <td>₹{product.revenue.toFixed(2)}</td>
                             </tr>
                           ));
                         })()}
@@ -475,8 +543,20 @@ const NewDashboard = () => {
           2025 © Belinnov Solutions. All Right Reserved
         </p>
       </div>
+      
+      <style>
+        {`
+          .scrollbar-hidden::-webkit-scrollbar {
+            display: none;
+          }
+          .scrollbar-hidden {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}
+      </style>
     </div>
   );
 };
-
+ 
 export default NewDashboard;
