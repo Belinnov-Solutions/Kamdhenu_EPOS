@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { DateRangePicker } from 'react-bootstrap-daterangepicker';
-import moment from 'moment';
-import PropTypes from 'prop-types';
+import { DateRangePicker } from "react-bootstrap-daterangepicker";
+import moment from "moment";
+import PropTypes from "prop-types";
 import "bootstrap-daterangepicker/daterangepicker.css";
 import axios from "axios";
 import {
@@ -34,7 +34,7 @@ ChartJS.register(
 
 const PredefinedDateRanges = ({ onDateChange }) => {
   const [state, setState] = useState({
-    start: moment().subtract(29, 'days'),
+    start: moment().subtract(29, "days"),
     end: moment(),
   });
 
@@ -48,7 +48,7 @@ const PredefinedDateRanges = ({ onDateChange }) => {
   };
 
   // Format to "YYYY/MM/DD" as requested
-  const label = `${start.format('YYYY/MM/DD')} - ${end.format('YYYY/MM/DD')}`;
+  const label = `${start.format("YYYY/MM/DD")} - ${end.format("YYYY/MM/DD")}`;
 
   return (
     <DateRangePicker
@@ -57,13 +57,25 @@ const PredefinedDateRanges = ({ onDateChange }) => {
         endDate: end.toDate(),
         ranges: {
           Today: [moment().toDate(), moment().toDate()],
-          Yesterday: [moment().subtract(1, 'days').toDate(), moment().subtract(1, 'days').toDate()],
-          'Last 7 Days': [moment().subtract(6, 'days').toDate(), moment().toDate()],
-          'Last 30 Days': [moment().subtract(29, 'days').toDate(), moment().toDate()],
-          'This Month': [moment().startOf('month').toDate(), moment().endOf('month').toDate()],
-          'Last Month': [
-            moment().subtract(1, 'month').startOf('month').toDate(),
-            moment().subtract(1, 'month').endOf('month').toDate(),
+          Yesterday: [
+            moment().subtract(1, "days").toDate(),
+            moment().subtract(1, "days").toDate(),
+          ],
+          "Last 7 Days": [
+            moment().subtract(6, "days").toDate(),
+            moment().toDate(),
+          ],
+          "Last 30 Days": [
+            moment().subtract(29, "days").toDate(),
+            moment().toDate(),
+          ],
+          "This Month": [
+            moment().startOf("month").toDate(),
+            moment().endOf("month").toDate(),
+          ],
+          "Last Month": [
+            moment().subtract(1, "month").startOf("month").toDate(),
+            moment().subtract(1, "month").endOf("month").toDate(),
           ],
         },
       }}
@@ -73,15 +85,15 @@ const PredefinedDateRanges = ({ onDateChange }) => {
         id="reportrange"
         className="col-4"
         style={{
-          background: '#fff',
-          cursor: 'pointer',
-          padding: '0.5rem 0.625rem',
-          border: '1px solid #E9EDF4',
-          width: '100%',
-          borderRadius: '5px',
-          fontSize: '14px',
-          color: '#202C4B',
-          height: '38px',
+          background: "#fff",
+          cursor: "pointer",
+          padding: "0.5rem 0.625rem",
+          border: "1px solid #E9EDF4",
+          width: "100%",
+          borderRadius: "5px",
+          fontSize: "14px",
+          color: "#202C4B",
+          height: "38px",
         }}
       >
         <i className="ti ti-calendar"></i>&nbsp;
@@ -93,7 +105,7 @@ const PredefinedDateRanges = ({ onDateChange }) => {
 
 // Add PropTypes validation
 PredefinedDateRanges.propTypes = {
-  onDateChange: PropTypes.func
+  onDateChange: PropTypes.func,
 };
 
 const NewDashboard = () => {
@@ -183,7 +195,7 @@ const NewDashboard = () => {
   const scrollCategories = (direction) => {
     if (categoriesContainerRef.current) {
       const scrollAmount = 300;
-      if (direction === 'left') {
+      if (direction === "left") {
         categoriesContainerRef.current.scrollLeft -= scrollAmount;
       } else {
         categoriesContainerRef.current.scrollLeft += scrollAmount;
@@ -194,11 +206,11 @@ const NewDashboard = () => {
   // Function to handle view details navigation
   const handleViewDetails = (period) => {
     // You can pass any necessary data to the dashboard page via state
-    navigate('/dashboard', { 
-      state: { 
+    navigate("/dashboard", {
+      state: {
         periodData: period,
-        groupBy: filters.groupBy
-      } 
+        groupBy: filters.groupBy,
+      },
     });
   };
 
@@ -301,54 +313,63 @@ const NewDashboard = () => {
               <div className="d-flex gap-2">
                 <button
                   className="btn btn-sm btn-outline-secondary"
-                  onClick={() => scrollCategories('left')}
+                  onClick={() => scrollCategories("left")}
                   disabled={categoriesLoading}
                 >
                   <i className="ti ti-chevron-left"></i>
                 </button>
                 <button
                   className="btn btn-sm btn-outline-secondary"
-                  onClick={() => scrollCategories('right')}
+                  onClick={() => scrollCategories("right")}
                   disabled={categoriesLoading}
                 >
                   <i className="ti ti-chevron-right"></i>
                 </button>
               </div>
             </div>
-            
+
             <div className="position-relative">
               {categoriesLoading && (
                 <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-light bg-opacity-75 rounded">
-                  <div className="spinner-border spinner-border-sm text-primary" role="status">
+                  <div
+                    className="spinner-border spinner-border-sm text-primary"
+                    role="status"
+                  >
                     <span className="visually-hidden">Loading...</span>
                   </div>
                 </div>
               )}
-              
-              <div 
+
+              <div
                 ref={categoriesContainerRef}
                 className="d-flex overflow-auto pb-2 scrollbar-hidden"
                 style={{
-                  scrollBehavior: 'smooth',
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                  gap: '0.75rem'
+                  scrollBehavior: "smooth",
+                  scrollbarWidth: "none",
+                  msOverflowStyle: "none",
+                  gap: "0.75rem",
                 }}
               >
                 <button
-                  className={`btn ${!filters.categoryId ? 'btn-primary' : 'btn-outline-primary'} flex-shrink-0 mb-2`}
+                  className={`btn ${
+                    !filters.categoryId ? "btn-primary" : "btn-outline-primary"
+                  } flex-shrink-0 mb-2`}
                   onClick={() => handleCategoryFilter(null)}
-                  style={{ minWidth: '120px' }}
+                  style={{ minWidth: "120px" }}
                 >
                   All Categories
                 </button>
-                
+
                 {categories.map((category) => (
                   <button
                     key={category.categoryId}
-                    className={`btn ${filters.categoryId === category.categoryId ? 'btn-primary' : 'btn-outline-primary'} flex-shrink-0 mb-2`}
+                    className={`btn ${
+                      filters.categoryId === category.categoryId
+                        ? "btn-primary"
+                        : "btn-outline-primary"
+                    } flex-shrink-0 mb-2`}
                     onClick={() => handleCategoryFilter(category.categoryId)}
-                    style={{ minWidth: '120px' }}
+                    style={{ minWidth: "120px" }}
                   >
                     {category.categoryName}
                   </button>
@@ -420,7 +441,13 @@ const NewDashboard = () => {
                   <table className="table table-hover">
                     <thead>
                       <tr>
-                        <th>{filters.groupBy === 'day' ? 'Date' : filters.groupBy === 'week' ? 'Week' : 'Month'}</th>
+                        <th>
+                          {filters.groupBy === "day"
+                            ? "Date"
+                            : filters.groupBy === "week"
+                            ? "Week"
+                            : "Month"}
+                        </th>
                         <th>Total Sales</th>
                         <th>Items Sold</th>
                         <th>Orders</th>
@@ -433,12 +460,15 @@ const NewDashboard = () => {
                         salesData.reportData.map((period, index) => (
                           <tr key={index}>
                             <td>
-                              {filters.groupBy === 'day' 
-                                ? new Date(period.date).toLocaleDateString('en-CA')
-                                : filters.groupBy === 'week'
-                                ? `Week ${moment(period.date).week()}, ${moment(period.date).year()}`
-                                : moment(period.date).format('MMMM YYYY')
-                              }
+                              {filters.groupBy === "day"
+                                ? new Date(period.date).toLocaleDateString(
+                                    "en-CA"
+                                  )
+                                : filters.groupBy === "week"
+                                ? `Week ${moment(period.date).week()}, ${moment(
+                                    period.date
+                                  ).year()}`
+                                : moment(period.date).format("MMMM YYYY")}
                             </td>
                             <td>₹{period.totalSalesAmount.toFixed(2)}</td>
                             <td>{period.itemsSold}</td>
@@ -543,7 +573,7 @@ const NewDashboard = () => {
           2025 © Belinnov Solutions. All Right Reserved
         </p>
       </div>
-      
+
       <style>
         {`
           .scrollbar-hidden::-webkit-scrollbar {
@@ -558,5 +588,5 @@ const NewDashboard = () => {
     </div>
   );
 };
- 
+
 export default NewDashboard;

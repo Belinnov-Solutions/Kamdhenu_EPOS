@@ -54,6 +54,7 @@ const PosModals = ({ onCustomerCreated }) => {
   const productType = cartItems.length > 0 ? "Product" : "Service";
   const parts = cartItems.map((item) => ({
     productId: item.id,
+    subCategories: item.subcategoryId,
     productName: item.name,
     brandName: item.brand || "Generic", // Add default if brand isn't available
     partDescription: item.description || "No description",
