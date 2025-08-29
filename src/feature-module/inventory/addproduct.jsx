@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { all_routes } from "../../Router/all_routes";
 // import { DatePicker } from "antd";
@@ -12,31 +12,33 @@ import {
   // Calendar,
   // Image,
   Info,
-  LifeBuoy,
+  // LifeBuoy,
   // List,
-  Plus,
+  // Plus,
   PlusCircle,
   // X,
 } from "feather-icons-react/build/IconComponents";
 // import ImageWithBasePath from "../../core/img/imagewithbasebath";
-import CounterThree from "../../core/common/counter/counterThree";
+// import CounterThree from "../../core/common/counter/counterThree";
 // import RefreshIcon from "../../core/common/tooltip-content/refresh"; 
 // import CollapesIcon from "../../core/common/tooltip-content/collapes";
 import AddVariant from "../../core/modals/inventory/addvariant";
 import AddVarientNew from "../../core/modals/inventory/addVarientNew";
-import CommonTagsInput from "../../core/common/Taginput";
+// import CommonTagsInput from "../../core/common/Taginput";
 // import TextEditor from "./texteditor";
 import axios from "axios";
 // import moment from 'moment';
 import { useSelector } from "react-redux";
+import MessageModal from "./MessageModal";
 
 const AddProduct = () => {
+  const navigate = useNavigate();
   const storeId = useSelector((state) => state.user.storeId);
   const route = all_routes;
-  const [tags, setTags] = useState(["Red", "Black"]);
-  const [product, setProduct] = useState(false);
-  const [product2, setProduct2] = useState(true);
-  const [message, setMessage] = useState({ text: "", type: "" });
+  // const [tags, setTags] = useState(["Red", "Black"]);
+  // const [product, setProduct] = useState(false);
+  // const [product2, setProduct2] = useState(true);
+
   const [refreshCategories, setRefreshCategories] = useState(false);
   // const storeId = "67aa7f75-0ed9-4378-9b3d-50e1e34903ce";
   // const [storeOptions, setStoreOptions] = useState([]);
@@ -52,6 +54,8 @@ const AddProduct = () => {
     isLoading: true,
     error: null
   });
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState({ title: "", message: "", type: "info" });
 
   // State for form fields
   const [formData, setFormData] = useState({
@@ -73,6 +77,7 @@ const AddProduct = () => {
     discountValue: "",
     stock: "",
     quantityAlert: "",
+    restock: false,
     // warrantyType: "",
     // manufacturer: "",
     // manufacturedDate: "",
@@ -87,6 +92,23 @@ const AddProduct = () => {
       [name]: value
     });
   };
+
+  // Handle barcode input specifically to prevent form submission on Enter
+  const handleBarcodeInput = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  // Prevent form submission when Enter is pressed in barcode field
+  const handleBarcodeKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault(); // Prevent form submission
+    }
+  };
+
   // image upload handler
   // const handleImageUpload = (e) => {
   //   const files = Array.from(e.target.files);
@@ -196,10 +218,16 @@ const AddProduct = () => {
         }
       });
 
-      setMessage({
-        text: response.data.message,
+      setModalMessage({
+        title: "Success",
+        message: response.data.message,
         type: "success"
       });
+      setShowMessageModal(true);
+      // Add navigation on success
+      setTimeout(() => {
+        navigate(route.productlist);
+      }, 2000);
 
       // Reset form after successful submission
       setFormData({
@@ -224,14 +252,17 @@ const AddProduct = () => {
         warrantyType: "",
         manufacturer: "",
         manufacturedDate: "",
+        restock: false,
         // expiryDate: ""
       });
-    //  setSelectedStore(null);
+      //  setSelectedStore(null);
     } catch (error) {
-      setMessage({
-        text: error.response?.data?.message || "Failed to add product",
+      setModalMessage({
+        title: "Error",
+        message: error.response?.data?.message || "Failed to add product",
         type: "error"
       });
+      setShowMessageModal(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -271,10 +302,12 @@ const AddProduct = () => {
         isLoading: false,
         error: error.message || "Failed to load reference data"
       }));
-      setMessage({
-        text: "Failed to load product reference data",
+      setModalMessage({
+        title: "Error",
+        message: "Failed to load product reference data",
         type: "error"
       });
+      setShowMessageModal(true);
     }
   };
   // fetch store from api
@@ -301,6 +334,11 @@ const AddProduct = () => {
       hasFetchedStores.current = true;
     }
   }, [formData.storeId, refreshCategories]);
+  // Handle cancel button click
+  const handleCancel = () => {
+    navigate(route.productlist);
+  };
+
 
   // cleanup for object URLs
   //   useEffect(() => {
@@ -354,6 +392,10 @@ const AddProduct = () => {
   //   { value: "code35", label: "Code35" },
   //   { value: "code36", label: "Code36" },
   // ];
+  const productTypeOptions = [
+    { value: "false", label: "Non-Restockable" },
+    { value: "true", label: "Restockable" },
+  ];
   const taxtype = [
     { value: "GST", label: "GST" },
     // { value: "salesTax", label: "Sales Tax" },
@@ -405,14 +447,6 @@ const AddProduct = () => {
               </li>
             </ul>
           </div>
-
-          {/* Message display */}
-          {message.text && (
-            <div className={`alert ${message.type === "success" ? "alert-success" : "alert-danger"}`}>
-              {message.text}
-            </div>
-          )}
-
           {/* /add */}
           <form className="add-product-form" onSubmit={handleSubmit}>
             <div className="add-product">
@@ -494,7 +528,7 @@ const AddProduct = () => {
                           </div>
                         </div>
                       </div>
-                     {/* <div className="row">
+                      {/* <div className="row">
                         <div className="col-sm-6 col-12">
                           <div className="mb-3 list position-relative">
                             <label className="form-label">
@@ -512,7 +546,7 @@ const AddProduct = () => {
                           </div>
                         </div>
                         </div> */}
-                         {/* <div className="col-sm-6 col-12">
+                      {/* <div className="col-sm-6 col-12">
                           <div className="mb-3">
                             <label className="form-label">
                               Selling Type<span className="text-danger ms-1">*</span>
@@ -618,21 +652,21 @@ const AddProduct = () => {
                             </div>
                           </div> */}
                           <div className="col-sm-6 col-12">
-                          <div className="mb-3 list position-relative">
-                            <label className="form-label">
-                              SKU<span className="text-danger ms-1">*</span>
-                            </label>
-                            <input type="text" className="form-control list"
-                              name="sku"
-                              value={formData.sku}
-                              onChange={handleInputChange}
-                              required
-                            />
-                            {/* <button type="button" className="btn btn-primaryadd">
+                            <div className="mb-3 list position-relative">
+                              <label className="form-label">
+                                SKU<span className="text-danger ms-1">*</span>
+                              </label>
+                              <input type="text" className="form-control list"
+                                name="sku"
+                                value={formData.sku}
+                                onChange={handleInputChange}
+                                required
+                              />
+                              {/* <button type="button" className="btn btn-primaryadd">
                               Generate
                             </button> */}
+                            </div>
                           </div>
-                        </div>
                           <div className="col-sm-6 col-12">
                             <div className="mb-3">
                               <div className="add-newplus">
@@ -651,7 +685,57 @@ const AddProduct = () => {
                               />
                             </div>
                           </div>
+                          <div className="col-lg-6 col-sm-6 col-12">
+                            <div className="mb-3">
+                              <label className="form-label">
+                                Product Type<span className="text-danger ms-1">*</span>
+                              </label>
+                              <Select
+                                classNamePrefix="react-select"
+                                options={productTypeOptions}
+                                placeholder="Choose"
+                                value={productTypeOptions.find(option => option.value === formData.restock.toString())}
+                                onChange={(selectedOption) => {
+                                  const isRestockable = selectedOption.value === "true";
+                                  setFormData({
+                                    ...formData,
+                                    restock: isRestockable
+                                  });
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="col-lg-6 col-sm-6 col-12">
+                            <div className="mb-3 list position-relative">
+                              <label className="form-label">
+                                BarCode<span className="text-danger ms-1">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                className="form-control list"
+                                name="barcode"
+                                value={formData.barcode}
+                                onChange={handleBarcodeInput}
+                                onKeyDown={handleBarcodeKeyDown}
+                                placeholder="Scan barcode"
+                              />
+                              {/* <button 
+      type="button"
+      className="btn btn-primaryadd"
+      onClick={() => {
+        // Add your barcode generation logic here
+        // For example, generate a random barcode:
+        const randomBarcode = Math.random().toString(36).substring(2, 10).toUpperCase();
+        setFormData({...formData, barcode: randomBarcode});
+      }}
+    >
+      Generate
+    </button> */}
+                            </div>
+                          </div>
                         </div>
+
                       </div>
                       {/* <div className="row">
                         <div className="col-lg-6 col-sm-6 col-12">
@@ -666,21 +750,10 @@ const AddProduct = () => {
                               onChange={(selectedOption) => handleSelectChange(selectedOption, "barcode")}
                             />
                           </div>
-                        </div>
-                        <div className="col-lg-6 col-sm-6 col-12">
-                          <div className="mb-3 list position-relative">
-                            <label className="form-label">
-                              Item Code<span className="text-danger ms-1">*</span>
-                            </label>
-                            <input type="text" className="form-control list"
-                              value={formData.barcode}
-                              onChange={handleInputChange} />
-                            <button type="submit" className="btn btn-primaryadd">
-                              Generate
-                            </button>
-                          </div>
-                        </div>
-                      </div> */}
+                        </div>*/}
+
+
+                      {/* </div>  */}
                       {/* Editor */}
                       <div className="col-lg-12">
                         <div className="summer-description-box">
@@ -696,93 +769,8 @@ const AddProduct = () => {
                         </div>
                       </div>
                       {/* /Editor */}
-
-                    </div>
-                  </div>
-                </div>
-                {/* Pricing & Stocks Section */}
-                <div className="accordion-item border mb-4">
-                  <h2 className="accordion-header" id="headingSpacingTwo">
-                    <div
-                      className="accordion-button collapsed bg-white"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#SpacingTwo"
-                      aria-expanded="true"
-                      aria-controls="SpacingTwo"
-                    >
-                      <div className="d-flex align-items-center justify-content-between flex-fill">
-                        <h5 className="d-flex align-items-center">
-                          <LifeBuoy data-feather="life-buoy" className="text-primary me-2" />
-                          <span>Pricing &amp; Stocks</span>
-                        </h5>
-                      </div>
-                    </div>
-                  </h2>
-                  <div
-                    id="SpacingTwo"
-                    className="accordion-collapse collapse show"
-                    aria-labelledby="headingSpacingTwo"
-                  >
-                    <div className="accordion-body border-top">
-                      <div className="mb-3s">
-                        <label className="form-label">
-                          Product Type<span className="text-danger ms-1">*</span>
-                        </label>
-                        <div className="single-pill-product mb-3">
-                          <ul className="nav nav-pills" id="pills-tab1" role="tablist">
-                            <li className="nav-item" role="presentation">
-                              <span
-                                className="custom_radio me-4 mb-0 active"
-                                id="pills-home-tab"
-                                data-bs-toggle="pill"
-                                data-bs-target="#pills-home"
-                                role="tab"
-                                aria-controls="pills-home"
-                                aria-selected="true"
-                              >
-                                <input
-                                  type="radio"
-                                  className="form-control"
-                                  name="isVariable"
-                                  checked={!formData.isVariable}
-                                  onChange={() => setFormData({ ...formData, isVariable: false })}
-                                />
-                                <span className="checkmark" /> Single Product
-                              </span>
-                            </li>
-                            {/* <li className="nav-item" role="presentation">
-                              <span
-                                className="custom_radio me-2 mb-0"
-                                id="pills-profile-tab"
-                                data-bs-toggle="pill"
-                                data-bs-target="#pills-profile"
-                                role="tab"
-                                aria-controls="pills-profile"
-                                aria-selected="false"
-                              >
-                                <input
-                                  type="radio"
-                                  className="form-control"
-                                  name="isVariable"
-                                  checked={formData.isVariable}
-                                  onChange={() => setFormData({ ...formData, isVariable: true })}
-                                />
-                                <span className="checkmark" /> Variable Product
-                              </span>
-                            </li> */}
-                          </ul>
-                        </div>
-                      </div>
-                      <div className="tab-content" id="pills-tabContent">
-                        <div
-                          className="tab-pane fade show active"
-                          id="pills-home"
-                          role="tabpanel"
-                          aria-labelledby="pills-home-tab"
-                        >
-                          <div className="single-product">
-                            <div className="row">
-                              <div className="col-lg-4 col-sm-6 col-12">
+ <div className="row">
+                              <div className="col-lg-6 col-sm-6 col-12">
                                 <div className="mb-3">
                                   <label className="form-label">
                                     Stock<span className="text-danger ms-1">*</span>
@@ -796,7 +784,7 @@ const AddProduct = () => {
                                   />
                                 </div>
                               </div>
-                              <div className="col-lg-4 col-sm-6 col-12">
+                              <div className="col-lg-6 col-sm-6 col-12">
                                 <div className="mb-3">
                                   <label className="form-label">
                                     Price<span className="text-danger ms-1">*</span>
@@ -808,7 +796,7 @@ const AddProduct = () => {
                                   />
                                 </div>
                               </div>
-                              <div className="col-lg-4 col-sm-6 col-12">
+                              <div className="col-lg-6 col-sm-6 col-12">
                                 <div className="mb-3">
                                   <label className="form-label">
                                     Tax Type<span className="text-danger ms-1">*</span>
@@ -821,7 +809,7 @@ const AddProduct = () => {
                                   />
                                 </div>
                               </div>
-                              <div className="col-lg-4 col-sm-6 col-12">
+                              <div className="col-lg-6 col-sm-6 col-12">
                                 <div className="mb-3" >
                                   <label className="form-label">
                                     Discount Type
@@ -847,7 +835,7 @@ const AddProduct = () => {
                                   />
                                 </div>
                               </div>
-                              <div className="col-lg-4 col-sm-6 col-12">
+                              <div className="col-lg-6 col-sm-6 col-12">
                                 <div className="mb-3">
                                   <label className="form-label">
                                     Discount Value
@@ -859,7 +847,7 @@ const AddProduct = () => {
                                     onChange={handleInputChange} />
                                 </div>
                               </div>
-                              <div className="col-lg-4 col-sm-6 col-12">
+                              <div className="col-lg-6 col-sm-6 col-12">
                                 <div className="mb-3">
                                   <label className="form-label">
                                     Stock Alert
@@ -875,6 +863,91 @@ const AddProduct = () => {
                                 </div>
                               </div>
                             </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Pricing & Stocks Section */}
+                {/* <div className="accordion-item border mb-4">
+                  <h2 className="accordion-header" id="headingSpacingTwo">
+                    <div
+                      className="accordion-button collapsed bg-white"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#SpacingTwo"
+                      aria-expanded="true"
+                      aria-controls="SpacingTwo"
+                    >
+                      <div className="d-flex align-items-center justify-content-between flex-fill">
+                        <h5 className="d-flex align-items-center">
+                          <LifeBuoy data-feather="life-buoy" className="text-primary me-2" />
+                          <span>Pricing &amp; Stocks</span>
+                        </h5>
+                      </div>
+                    </div>
+                  </h2>
+                  <div
+                    id="SpacingTwo"
+                    className="accordion-collapse collapse show"
+                    aria-labelledby="headingSpacingTwo"
+                  >
+                    <div className="accordion-body border-top">
+                      <div className="mb-3s">
+                        <label className="form-label">
+                          Type<span className="text-danger ms-1">*</span>
+                        </label>
+                        <div className="single-pill-product mb-3">
+                          <ul className="nav nav-pills" id="pills-tab1" role="tablist">
+                            <li className="nav-item" role="presentation">
+                              <span
+                                className="custom_radio me-4 mb-0 active"
+                                id="pills-home-tab"
+                                data-bs-toggle="pill"
+                                data-bs-target="#pills-home"
+                                role="tab"
+                                aria-controls="pills-home"
+                                aria-selected="true"
+                              >
+                                <input
+                                  type="radio"
+                                  className="form-control"
+                                  name="isVariable"
+                                  checked={!formData.isVariable}
+                                  onChange={() => setFormData({ ...formData, isVariable: false })}
+                                />
+                                <span className="checkmark" /> Single Product
+                              </span>
+                            </li>
+                          <li className="nav-item" role="presentation">
+                              <span
+                                className="custom_radio me-2 mb-0"
+                                id="pills-profile-tab"
+                                data-bs-toggle="pill"
+                                data-bs-target="#pills-profile"
+                                role="tab"
+                                aria-controls="pills-profile"
+                                aria-selected="false"
+                              >
+                                <input
+                                  type="radio"
+                                  className="form-control"
+                                  name="isVariable"
+                                  checked={formData.isVariable}
+                                  onChange={() => setFormData({ ...formData, isVariable: true })}
+                                />
+                                <span className="checkmark" /> Variable Product
+                              </span>
+                            </li> 
+                          </ul>
+                        </div>
+                      </div>
+                      <div className="tab-content" id="pills-tabContent">
+                        <div
+                          className="tab-pane fade show active"
+                          id="pills-home"
+                          role="tabpanel"
+                          aria-labelledby="pills-home-tab"
+                        >
+                          <div className="single-product">
+                           
                           </div>
                         </div>
                         <div
@@ -1125,7 +1198,7 @@ const AddProduct = () => {
                       </div>
                     </div>
                   </div>
-                </div>
+                </div> */}
                 {/* Images Section */}
                 {/* <div className="accordion-item border mb-4">
                   <h2 className="accordion-header" id="headingSpacingThree">
@@ -1246,7 +1319,7 @@ const AddProduct = () => {
                   >
                     <div className="accordion-body border-top">
                       <div> */}
-                        {/* <div className="p-3 bg-light rounded d-flex align-items-center border mb-3">
+                {/* <div className="p-3 bg-light rounded d-flex align-items-center border mb-3">
                           <div className=" d-flex align-items-center">
                             <div className="form-check form-check-inline">
                               <input
@@ -1303,7 +1376,7 @@ const AddProduct = () => {
                             </div>
                           </div>
                         </div> */}
-                        {/* <div className="row">
+                {/* <div className="row">
                           <div className="col-sm-6 col-12">
                             <div className="mb-3">
                               <label className="form-label">
@@ -1349,7 +1422,7 @@ const AddProduct = () => {
                               </div>
                             </div>
                           </div> */}
-                          {/* <div className="col-sm-6 col-12">
+                {/* <div className="col-sm-6 col-12">
                             <div className="mb-3">
                               <label className="form-label">
                                 Expiry On<span className="text-danger ms-1">*</span>
@@ -1365,7 +1438,7 @@ const AddProduct = () => {
                               </div>
                             </div>
                           </div> */}
-                        {/* </div>
+                {/* </div>
                       </div>
                     </div>
                   </div>
@@ -1374,7 +1447,8 @@ const AddProduct = () => {
             </div>
             <div className="col-lg-12">
               <div className="d-flex align-items-center justify-content-end mb-4">
-                <button type="button" className="btn btn-secondary me-2">
+                <button type="button" className="btn btn-secondary me-2"
+                  onClick={handleCancel}>
                   Cancel
                 </button>
                 <button type="submit"
@@ -1439,6 +1513,13 @@ const AddProduct = () => {
           }
         }}
         selectedCategoryId={formData.categoryId}
+      />
+      <MessageModal
+        isOpen={showMessageModal}
+        onClose={() => setShowMessageModal(false)}
+        title={modalMessage.title}
+        message={modalMessage.message}
+        type={modalMessage.type}
       />
     </>
   );

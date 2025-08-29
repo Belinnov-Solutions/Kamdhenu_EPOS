@@ -234,11 +234,11 @@ const ProductList = () => {
       // sorter: (a, b) => a.createdby.length - b.createdby.length,
     },
   ];
-  const tableStyles = {
-    '--table-flex-grow': '1 !important',
-    '--table-flex-shrink': '1 !important',
-    '--table-flex-basis': '0 !important',
-  };
+  // const tableStyles = {
+  //   '--table-flex-grow': '1 !important',
+  //   '--table-flex-shrink': '1 !important',
+  //   '--table-flex-basis': '0 !important',
+  // };
 
   // const renderTooltip = (props) => (
   //   <Tooltip id="pdf-tooltip" {...props}>
@@ -703,7 +703,7 @@ const ProductList = () => {
               </div>
             </div> */}
               {/* /Filter */}
-              <div className="table-responsive" style={tableStyles}>
+              <div className="table-responsive" style={{marginTop: '70px'}}>
                 <Table
                   columns={columns}
                   dataSource={dataSource}
