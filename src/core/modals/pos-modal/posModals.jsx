@@ -952,7 +952,7 @@ const PosModals = ({ onCustomerCreated }) => {
               </div>
 
               {/* Items Table */}
-              <div className="receipt-items mb-4">
+              <div className="receipt-items mb-4 scrollable-section">
                 <table className="table table-sm mb-0">
                   <thead>
                     <tr className="border-bottom">

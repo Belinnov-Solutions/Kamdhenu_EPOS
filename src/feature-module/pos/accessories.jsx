@@ -190,6 +190,7 @@ const Accessories = ({
     }
 
     return (
+       <div className="products-container">
       <div className="row g-3">
         {filteredProducts.map((product) => {
           const existingItem = orderItems.find(
@@ -248,6 +249,7 @@ const Accessories = ({
           );
         })}
       </div>
+      </div>
     );
   }
 
@@ -266,6 +268,7 @@ const Accessories = ({
     }
 
     return (
+       <div className="products-container">
       <div className="row g-3">
         {filteredSubCategories.map((subCategory) => (
           <div
@@ -290,11 +293,13 @@ const Accessories = ({
           </div>
         ))}
       </div>
+      </div>
     );
   }
 
   // Show categories by default
   return (
+    <div className="products-container">
     <div className="row g-3">
       {repairCategories.map((category) => (
         <div
@@ -316,6 +321,7 @@ const Accessories = ({
           </div>
         </div>
       ))}
+    </div>
     </div>
   );
 };

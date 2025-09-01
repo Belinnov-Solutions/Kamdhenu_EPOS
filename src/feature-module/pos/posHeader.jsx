@@ -91,7 +91,7 @@ const PosHeader = () => {
       <div
         className="header pos-header"
         // style={{ backgroundColor: "rgb(62 18 81)" }}
-        style={{ backgroundColor: "#b38e432f" }}
+        style={{backgroundColor: "#f8f0e3ff"}}
       >
         {/* Logo */}
         <div className="header-left active">

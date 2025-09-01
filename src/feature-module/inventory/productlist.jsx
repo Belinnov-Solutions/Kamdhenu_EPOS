@@ -177,9 +177,10 @@ const closeMessageModal = () => {
     return brand ? brand.brandName : "Unknown";
   };
   //  filter products based on the restock flag
-  const filteredDataSource = showOnlyRestock 
-  ? dataSource.filter(item => item.restock === true)
-  : dataSource;
+  const filteredDataSource = dataSource.filter(item =>
+  showOnlyRestock ? item.restock === true : item.restock === false
+);
+
 
 
   const columns = [
