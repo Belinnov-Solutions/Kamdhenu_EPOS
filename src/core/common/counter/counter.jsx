@@ -8,6 +8,7 @@ export const CartCounter = ({
   defaultValue,
   onQuantityChange,
   productId,
+  productName, 
   cartItems,
   className,
 }) => {
@@ -56,6 +57,22 @@ export const CartCounter = ({
   };
 
   return (
+      <div className={`cart-counter-wrapper ${className || ""}`}>
+      {/* Add product name display */}
+      {productName && (
+        <div className="product-name mb-1" style={{
+          fontSize: "12px",
+          fontWeight: "500",
+          textAlign: "center",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          maxWidth: "100px"
+        }}>
+          {productName}
+        </div>
+      )}
+      <div className="d-flex align-items-center justify-content-center"></div>
     <div className={`cart-counter-wrapper ${className || ""}`}>
       <div className="d-flex align-items-center justify-content-center">
         <Tooltip title="minus">
@@ -106,6 +123,8 @@ export const CartCounter = ({
         </Tooltip>
       </div>
     </div>
+    </div>
+    
   );
 };
 
@@ -113,6 +132,7 @@ CartCounter.propTypes = {
   defaultValue: PropTypes.number,
   onQuantityChange: PropTypes.func,
   productId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    productName: PropTypes.string,
   cartItems: PropTypes.array,
   className: PropTypes.string,
 };

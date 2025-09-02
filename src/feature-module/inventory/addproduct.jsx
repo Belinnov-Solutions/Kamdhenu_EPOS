@@ -56,7 +56,7 @@ const AddProduct = () => {
   });
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [modalMessage, setModalMessage] = useState({ title: "", message: "", type: "info" });
-
+const[errors,setErrors]=useState({});
   // State for form fields
   const [formData, setFormData] = useState({
     storeId: storeId,
@@ -85,8 +85,16 @@ const AddProduct = () => {
   });
 
  // Handle input changes
-  const handleInputChange = (e) => {
+ const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
+    }
     
     if (type === "checkbox") {
       setFormData({
@@ -100,7 +108,6 @@ const AddProduct = () => {
       });
     }
   };
-
   // Handle barcode input specifically to prevent form submission on Enter
   const handleBarcodeInput = (e) => {
     const { name, value } = e.target;
@@ -154,6 +161,13 @@ const AddProduct = () => {
   // };
   // updated handleSelectChange
    const handleSelectChange = async (selectedOption, fieldName) => {
+    // Clear error for this field
+    if (errors[fieldName]) {
+      setErrors(prev => ({
+        ...prev,
+        [fieldName]: null
+      }));
+    }
     const newFormData = {
       ...formData,
       [fieldName]: selectedOption ? selectedOption.value : null
@@ -212,12 +226,67 @@ const AddProduct = () => {
   //   });
   // };
   // Handle form submission
-   const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form
+    const newErrors = {};
+    
+    if (!formData.productName.trim()) {
+      newErrors.productName = "Product name is required";
+    }
+    
+    if (!formData.sku.trim()) {
+      newErrors.sku = "SKU is required";
+    }
+    
+    if (!formData.categoryId) {
+      newErrors.categoryId = "Category is required";
+    }
+    
+    if (!formData.subcategoryId) {
+      newErrors.subcategoryId = "Subcategory is required";
+    }
+    
+    if (!formData.unit) {
+      newErrors.unit = "Unit is required";
+    }
+    
+    if (!formData.price || isNaN(formData.price) || parseFloat(formData.price) <= 0) {
+      newErrors.price = "Valid price is required";
+    }
+    
+    if (formData.restock) {
+      if (!formData.barcode.trim()) {
+        newErrors.barcode = "Barcode is required for restockable products";
+      }
+      
+      if (!formData.stock || isNaN(formData.stock) || parseInt(formData.stock) < 0) {
+        newErrors.stock = "Valid stock quantity is required";
+      }
+      
+      if (!formData.taxType) {
+        newErrors.taxType = "Tax type is required";
+      }
+      
+      if (!formData.quantityAlert || isNaN(formData.quantityAlert) || parseInt(formData.quantityAlert) < 0) {
+        newErrors.quantityAlert = "Valid stock alert quantity is required";
+      }
+    }
+    
+    // Set errors and return if validation fails
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      return;
+    }
+    
+    setIsSubmitting(true);
     
     const submissionData = {
       ...formData,
       stock: parseInt(formData.stock) || 0,
+      quantityAlert: parseInt(formData.quantityAlert) || 0,
+      price: parseFloat(formData.price)
     };
     
     try {
@@ -542,6 +611,11 @@ const AddProduct = () => {
                               name="productName"
                               value={formData.productName}
                               onChange={handleInputChange} />
+                               {errors.productName && (
+                            <div className="invalid-feedback d-block">
+                              {errors.productName}
+                            </div>
+                          )}
                           </div>
                         </div>
                            {/* Price field - always visible */}
@@ -555,6 +629,11 @@ const AddProduct = () => {
                                 value={formData.price}
                                 onChange={handleInputChange}
                               />
+                               {errors.price && (
+                            <div className="invalid-feedback d-block">
+                              {errors.price}
+                            </div>
+                          )}
                             </div>
                           </div>
                         {/* <div className="col-sm-6 col-12">
@@ -629,10 +708,13 @@ const AddProduct = () => {
                                 // isDisabled={referenceData.isLoading || referenceData.error}
                                 value={referenceData.categories.find(option => option.value === formData.categoryId)}
                                 onChange={(selectedOption) => handleSelectChange(selectedOption, "categoryId")}
-                              />
-                              {referenceData.error && (
-                                <div className="text-danger small mt-1">{referenceData.error}</div>
-                              )}
+                                className={errors.categoryId ? 'is-invalid' : ''}
+                             />
+                             {errors.categoryId && (
+                              <div className="invalid-feedback d-block">
+                                {errors.categoryId}
+                              </div>
+                            )}
                             </div>
                           </div>
                           <div className="col-sm-6 col-12">
@@ -666,7 +748,14 @@ const AddProduct = () => {
                                 // isDisabled={!formData.categoryId || referenceData.isLoading || referenceData.error}
                                 value={referenceData.subcategories.find(option => option.value === formData.subcategoryId)}
                                 onChange={(selectedOption) => handleSelectChange(selectedOption, "subcategoryId")}
-                              />
+                                                            className={errors.subcategoryId ? 'is-invalid' : ''}
+                            />
+                            {errors.subcategoryId && (
+                              <div className="invalid-feedback d-block">
+                                {errors.subcategoryId}
+                              </div>
+                            )}
+
 
                             </div>
                           </div>
@@ -703,9 +792,11 @@ const AddProduct = () => {
                                 onChange={handleInputChange}
                                 required
                               />
-                              {/* <button type="button" className="btn btn-primaryadd">
-                              Generate
-                            </button> */}
+                             {errors.sku && (
+                              <div className="invalid-feedback d-block">
+                                {errors.sku}
+                              </div>
+                            )}
                             </div>
                           </div>
                           <div className="col-sm-6 col-12">
@@ -723,7 +814,13 @@ const AddProduct = () => {
                                 // isDisabled={referenceData.isLoading || referenceData.error}
                                 value={referenceData.units.find(option => option.value === formData.unit)}
                                 onChange={(selectedOption) => handleSelectChange(selectedOption, "unit")}
-                              />
+                              className={errors.unit ? 'is-invalid' : ''}
+                            />
+                            {errors.unit && (
+                              <div className="invalid-feedback d-block">
+                                {errors.unit}
+                              </div>
+                            )}
                             </div>
                           </div>
                           
@@ -745,6 +842,11 @@ const AddProduct = () => {
                                 onKeyDown={handleBarcodeKeyDown}
                                 placeholder="Scan barcode"
                               />
+                              {errors.barcode && (
+                                  <div className="invalid-feedback d-block">
+                                    {errors.barcode}
+                                  </div>
+                                )}
                               {/* <button 
       type="button"
       className="btn btn-primaryadd"
@@ -771,6 +873,11 @@ const AddProduct = () => {
                                     value={formData.stock}
                                     onChange={handleInputChange}
                                   />
+                                  {errors.stock && (
+                                  <div className="invalid-feedback d-block">
+                                    {errors.stock}
+                                  </div>
+                                )}
                                 </div>
                               </div>
                                <div className="col-lg-6 col-sm-6 col-12">
@@ -784,6 +891,11 @@ const AddProduct = () => {
                                     placeholder="Select Option"
                                     onChange={(selectedOption) => handleSelectChange(selectedOption, "taxType")}
                                   />
+                                  {errors.taxType && (
+                                  <div className="invalid-feedback d-block">
+                                    {errors.taxType}
+                                  </div>
+                                )}
                                 </div>
                               </div>
                               {/* <div className="col-lg-6 col-sm-6 col-12">
@@ -829,6 +941,11 @@ const AddProduct = () => {
                                     value={formData.quantityAlert}
                                     onChange={handleInputChange}
                                   />
+                                  {errors.quantityAlert && (
+                                  <div className="invalid-feedback d-block">
+                                    {errors.quantityAlert}
+                                  </div>
+                                )}
                                 </div>
                               </div>
                             </>

@@ -14,8 +14,8 @@ import { removeSelectedService } from "../../core/redux/serviceTypeSlice";
 import "./pos.css";
 import { clearTickets } from "../../core/redux/ticketSlice";
 import { resetCart } from "../../core/redux/partSlice";
- import { updateAccessoryQuantity, addOrUpdateCartItem as addAccessoryToCart } from "../../core/redux/accessoriesSlice";
- import { updatePartQuantity, addOrUpdateCartItem as addPartToCart } from "../../core/redux/partSlice";
+import { updateAccessoryQuantity, addOrUpdateCartItem as addAccessoryToCart } from "../../core/redux/accessoriesSlice";
+import { updatePartQuantity, addOrUpdateCartItem as addPartToCart } from "../../core/redux/partSlice";
 import CartCounter from "../../core/common/counter/counter";
 import SearchSuggestions from "./SearchSuggestions";
 
@@ -62,7 +62,7 @@ const Pos = () => {
   // Memoized filtered products based on search text
   const filteredProducts = useMemo(() => {
     if (!searchText.trim()) return [];
-    
+
     const query = searchText.trim().toLowerCase();
     return products.filter(
       (product) =>
@@ -76,9 +76,9 @@ const Pos = () => {
   useEffect(() => {
     setHasItems(
       ticketData.ticketItems?.length > 0 ||
-        selectedServices.length > 0 ||
-        orderItems.length > 0 ||
-        partItems.length > 0
+      selectedServices.length > 0 ||
+      orderItems.length > 0 ||
+      partItems.length > 0
     );
   }, [ticketData.ticketItems, selectedServices, orderItems, partItems]);
 
@@ -166,7 +166,7 @@ const Pos = () => {
         console.error("Error fetching products:", err);
       }
     };
-    
+
     fetchProducts();
   }, [storeId]);
 
@@ -249,22 +249,24 @@ const Pos = () => {
   const addProductToCart = useCallback((product) => {
     const productData = {
       id: product.id,
-      name: product.productName,
+      name: product.productName || product.productname || product.ProductName ||
+        product.name ||
+        "",
       price: product.price,
       quantity: 1,
       product
     };
-    
+
     // Determine if it's an accessory or part based on some logic
     // This might need adjustment based on your actual data structure
     const isAccessory = product.categoryType === 'accessory'; // Adjust this condition
-    
+
     if (isAccessory) {
       dispatch(addAccessoryToCart(productData));
     } else {
       dispatch(addPartToCart(productData));
     }
-    
+
     setSearchText("");
     setShowSuggestions(false);
   }, [dispatch]);
@@ -281,19 +283,19 @@ const Pos = () => {
   const handleSearchEnter = useCallback((e) => {
     if (e.key === "Enter" && searchText.trim()) {
       const query = searchText.trim().toLowerCase();
-      
+
       // First try exact barcode match
       let foundProduct = products.find(
         (p) => p.barcode?.toLowerCase() === query
       );
-      
+
       // If no barcode match, try product name
       if (!foundProduct) {
         foundProduct = products.find(
           (p) => p.productName?.toLowerCase() === query
         );
       }
-      
+
       // If still not found, try partial match
       if (!foundProduct) {
         foundProduct = products.find(
@@ -343,11 +345,11 @@ const Pos = () => {
           orderNumber: data.orderNumber || "",
           items: data.taskName
             ? [
-                {
-                  name: data.taskName || "Unknown item",
-                  price: data.servicePrice || 0,
-                },
-              ]
+              {
+                name: data.taskName || "Unknown item",
+                price: data.servicePrice || 0,
+              },
+            ]
             : [],
           totalAmount: data.totalAmount || 0,
           customerName: data.customerName || "",
@@ -374,6 +376,18 @@ const Pos = () => {
       setLoading(false);
     }
   }, [repairData, storeId]);
+  // Normalize an item's display name, regardless of how slices stored it
+  const resolveItemName = useCallback(
+    (item) =>
+      item?.name ||
+      item?.productName ||
+      item?.product?.productName ||
+      item?.productname ||
+      item?.product?.productname ||
+      item?.sku ||
+      "Unnamed",
+    []
+  );
 
   return (
     <div className="main-wrapper pos-five">
@@ -381,17 +395,16 @@ const Pos = () => {
         <div className="content pos-design p-0">
           <div className="row pos-wrapper">
             <div
-              className={`col-md-12 ${
-                (roleName === "Admin" ||
+              className={`col-md-12 ${(roleName === "Admin" ||
                   roleName === "Super Admin" ||
                   roleName === "Franchise Admin" ||
                   roleName === "Store Manager") &&
-                (showOrderList ||
-                  (activeTab === "accessories" &&
-                    accessoriesNav.currentView === "products"))
+                  (showOrderList ||
+                    (activeTab === "accessories" &&
+                      accessoriesNav.currentView === "products"))
                   ? ""
                   : ""
-              } d-flex`}
+                } d-flex`}
             >
               <div className="pos-categories tabs_wrapper p-0 flex-fill">
                 <div className="content-wrap">
@@ -401,49 +414,49 @@ const Pos = () => {
                         roleName === "Super Admin" ||
                         roleName === "Store Manager" ||
                         roleName === "Franchise Admin") && (
-                        <li
-                          id="accessories"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleTabChange("accessories");
-                          }}
-                          className={
-                            activeTab === "accessories" ? "active" : ""
-                          }
-                        >
-                          <h6>
-                            <Link to="#" onClick={(e) => e.preventDefault()}>
-                              <b>Products</b>
-                            </Link>
-                          </h6>
-                        </li>
-                      )}
+                          <li
+                            id="accessories"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleTabChange("accessories");
+                            }}
+                            className={
+                              activeTab === "accessories" ? "active" : ""
+                            }
+                          >
+                            <h6>
+                              <Link to="#" onClick={(e) => e.preventDefault()}>
+                                <b>Products</b>
+                              </Link>
+                            </h6>
+                          </li>
+                        )}
 
                       {(roleName === "Admin" ||
                         roleName === "Super Admin" ||
                         roleName === "Store Manager" ||
                         roleName === "Franchise Admin" ||
                         roleName === "Technician") && (
-                        <li
-                          id="ticketmanagement"
-                          onClick={() => {
-                            setActiveTab("ticketmanagement");
-                            setShowOrderList(false);
-                          }}
-                          className={
-                            activeTab === "ticketmanagement" ? "active" : ""
-                          }
-                        >
-                          <h6>
-                            <Link to="#">
-                              <b>
-                                Order <br />
-                                List
-                              </b>
-                            </Link>
-                          </h6>
-                        </li>
-                      )}
+                          <li
+                            id="ticketmanagement"
+                            onClick={() => {
+                              setActiveTab("ticketmanagement");
+                              setShowOrderList(false);
+                            }}
+                            className={
+                              activeTab === "ticketmanagement" ? "active" : ""
+                            }
+                          >
+                            <h6>
+                              <Link to="#">
+                                <b>
+                                  Order <br />
+                                  List
+                                </b>
+                              </Link>
+                            </h6>
+                          </li>
+                        )}
                     </ul>
                   </div>
                   {(roleName === "Admin" ||
@@ -494,9 +507,9 @@ const Pos = () => {
                                         )}
                                         {isScanning && (
                                           <div className="position-absolute top-100 start-0 mt-1">
-                                            <small className="text-muted">
+                                            {/* <small className="text-muted">
                                               Scanning... Press Enter to confirm
-                                            </small>
+                                            </small> */}
                                           </div>
                                         )}
                                       </>
@@ -592,122 +605,117 @@ const Pos = () => {
                                         {(selectedServices.length > 0 ||
                                           orderItems.length > 0 ||
                                           partItems.length > 0) && (
-                                          <>
-                                            {selectedServices.map((item) => (
-                                              <tr key={`service-${item.id}`}>
-                                                <td
-                                                  style={{
-                                                    overflow: "hidden",
-                                                    textOverflow: "ellipsis",
-                                                    whiteSpace: "nowrap",
-                                                  }}
-                                                >
-                                                  <div className="d-flex align-items-center">
-                                                    <h6
-                                                      className="fs-13 fw-normal m-0"
-                                                      style={{
-                                                        overflow: "hidden",
-                                                        textOverflow:
-                                                          "ellipsis",
-                                                      }}
-                                                    >
-                                                      {item.name}
-                                                    </h6>
-                                                  </div>
-                                                </td>
-                                                <td className="text-center">
-                                                  <span className="badge bg-secondary">
-                                                    1
-                                                  </span>
-                                                </td>
-                                                <td className="fs-13 fw-semibold text-gray-9 text-end">
-                                                  ₹{item.price}
-                                                </td>
-                                              </tr>
-                                            ))}
+                                            <>
+                                              {selectedServices.map((item) => (
+                                                <tr key={`service-${item.id}`}>
+                                                  <td
+                                                    style={{
+                                                      overflow: "hidden",
+                                                      textOverflow: "ellipsis",
+                                                      whiteSpace: "nowrap",
+                                                    }}
+                                                  >
+                                                    <div className="d-flex align-items-center">
+                                                      <h6 className="fs-13 fw-normal m-0" style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                        {resolveItemName(item)}
+                                                      </h6>
+                                                    </div>
+                                                  </td>
+                                                  <td className="text-center">
+                                                    <span className="badge bg-secondary">
+                                                      1
+                                                    </span>
+                                                  </td>
+                                                  <td className="fs-13 fw-semibold text-gray-9 text-end">
+                                                    ₹{item.price}
+                                                  </td>
+                                                </tr>
+                                              ))}
 
-                                            {orderItems.map((item) => (
-                                              <tr key={`order-item-${item.id}`}>
-                                                <td
-                                                  style={{
-                                                    overflow: "hidden",
-                                                    textOverflow: "ellipsis",
-                                                    whiteSpace: "nowrap",
-                                                  }}
-                                                >
-                                                  <div className="d-flex align-items-center">
-                                                    <h6
-                                                      className="fs-13 fw-normal m-0"
-                                                      style={{
-                                                        overflow: "hidden",
-                                                        textOverflow:
-                                                          "ellipsis",
-                                                      }}
-                                                    >
-                                                      {item.name}
-                                                    </h6>
-                                                  </div>
-                                                </td>
-                                                <td className="text-center">
-                                                  <CartCounter
-                                                    defaultValue={item.quantity}
-                                                    onQuantityChange={
-                                                      handleQuantityChange
-                                                    }
-                                                    productId={item.id}
-                                                    cartItems={orderItems}
-                                                    className="mx-auto"
-                                                  />
-                                                </td>
-                                                <td className="fs-13 fw-semibold text-gray-9 text-end">
-                                                  ₹{item.price * item.quantity}
-                                                </td>
-                                              </tr>
-                                            ))}
+                                              {orderItems.map((item) => (
+                                                <tr key={`order-item-${item.id}`}>
+                                                  <td
+                                                    style={{
+                                                      overflow: "hidden",
+                                                      textOverflow: "ellipsis",
+                                                      whiteSpace: "nowrap",
+                                                    }}
+                                                  >
+                                                    <div className="d-flex align-items-center">
+                                                      <h6
+                                                        className="fs-13 fw-normal m-0"
+                                                        style={{
+                                                          overflow: "hidden",
+                                                          textOverflow:
+                                                            "ellipsis",
+                                                        }}
+                                                      >
+                                                        {item.name}
+                                                      </h6>
+                                                    </div>
+                                                  </td>
+                                                  <td className="text-center">
+                                                    <CartCounter
+                                                      defaultValue={item.quantity}
+                                                      onQuantityChange={
+                                                        handleQuantityChange
+                                                      }
+                                                      productId={item.id}
+                                                      productName={resolveItemName(item)}
+                                                      cartItems={orderItems}
+                                                      className="mx-auto"
+                                                    />
+                                                  </td>
+                                                  <td className="fs-13 fw-semibold text-gray-9 text-end">
+                                                    ₹{item.price * item.quantity}
+                                                  </td>
+                                                </tr>
+                                              ))}
 
-                                            {partItems.map((item) => (
-                                              <tr key={`part-item-${item.id}`}>
-                                                <td
-                                                  style={{
-                                                    overflow: "hidden",
-                                                    textOverflow: "ellipsis",
-                                                    whiteSpace: "nowrap",
-                                                  }}
-                                                >
-                                                  <div className="d-flex align-items-center">
-                                                    <h6
-                                                      className="fs-13 fw-normal m-0"
-                                                      style={{
-                                                        overflow: "hidden",
-                                                        textOverflow:
-                                                          "ellipsis",
-                                                      }}
-                                                    >
-                                                      {item.name}
-                                                    </h6>
-                                                  </div>
-                                                </td>
-                                                <td className="text-center">
-                                                  <CartCounter
-                                                    defaultValue={item.quantity}
-                                                    onQuantityChange={
-                                                      handleQuantityChange
-                                                    }
-                                                    productId={item.id}
-                                                    cartItems={partItems}
-                                                    className="mx-auto"
-                                                  />
-                                                </td>
-                                                <td
-                                                  className="fs-13 fw-semibold text-gray-9 text-end"
-                                                  style={{ fontSize: "12px" }}
-                                                >
-                                                  ₹{item.price * item.quantity}
-                                                </td>
-                                              </tr>
-                                            ))}
-                                          </>
-                                        )}
+                                              {partItems.map((item) => (
+                                                <tr key={`part-item-${item.id}`}>
+                                                  <td
+                                                    style={{
+                                                      overflow: "hidden",
+                                                      textOverflow: "ellipsis",
+                                                      whiteSpace: "nowrap",
+                                                    }}
+                                                  >
+                                                    <div className="d-flex align-items-center">
+                                                      <h6
+                                                        className="fs-13 fw-normal m-0"
+                                                        style={{
+                                                          overflow: "hidden",
+                                                          textOverflow:
+                                                            "ellipsis",
+                                                        }}
+                                                      >
+                                                        {item.name}
+                                                      </h6>
+                                                    </div>
+                                                  </td>
+                                                  <td className="text-center">
+                                                    <CartCounter
+                                                      defaultValue={item.quantity}
+                                                      onQuantityChange={
+                                                        handleQuantityChange
+                                                      }
+                                                      productId={item.id}
+                                                      productName={resolveItemName(item)}
+                                                      cartItems={partItems}
+                                                      className="mx-auto"
+                                                    />
+                                                  </td>
+                                                  <td
+                                                    className="fs-13 fw-semibold text-gray-9 text-end"
+                                                    style={{ fontSize: "12px" }}
+                                                  >
+                                                    ₹{item.price * item.quantity}
+                                                  </td>
+                                                </tr>
+                                              ))}
+                                            </>
+                                          )}
 
                                         {!ticketData.ticketItems?.length &&
                                           selectedServices.length === 0 &&
@@ -779,23 +787,22 @@ const Pos = () => {
                           (activeTab === "accessories" &&
                             (accessoriesNav.currentView === "products" ||
                               accessoriesNav.currentView ===
-                                "subcategories"))) && (
-                          <button
-                            onClick={handleBackClick}
-                            className="btn btn-sm btn-outline-secondary me-3"
-                          >
-                            <i className="ti ti-arrow-left me-1"></i> Back
-                          </button>
-                        )}
+                              "subcategories"))) && (
+                            <button
+                              onClick={handleBackClick}
+                              className="btn btn-sm btn-outline-secondary me-3"
+                            >
+                              <i className="ti ti-arrow-left me-1"></i> Back
+                            </button>
+                          )}
                         <div></div>
                       </div>
                     </div>
                     <div className="pos-products">
                       <div className="tabs_container">
                         <div
-                          className={`tab_content ${
-                            activeTab === "accessories" ? "active" : ""
-                          }`}
+                          className={`tab_content ${activeTab === "accessories" ? "active" : ""
+                            }`}
                           data-tab="accessories"
                         >
                           <Accessories
@@ -830,9 +837,8 @@ const Pos = () => {
                         </div>
 
                         <div
-                          className={`tab_content ${
-                            activeTab === "ticketmanagement" ? "active" : ""
-                          } `}
+                          className={`tab_content ${activeTab === "ticketmanagement" ? "active" : ""
+                            } `}
                           style={{
                             width: roleName === "Technician" ? "100%" : "auto",
                             minWidth:
@@ -852,9 +858,8 @@ const Pos = () => {
                         </div>
 
                         <div
-                          className={`tab_content ${
-                            activeTab === "Tablet" ? "active" : ""
-                          }`}
+                          className={`tab_content ${activeTab === "Tablet" ? "active" : ""
+                            }`}
                           data-tab="Tablet"
                         >
                           <div className="row g-3">
@@ -893,9 +898,8 @@ const Pos = () => {
             <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
               <Link
                 to="#"
-                className={`btn btn-danger d-inline-flex align-items-center justify-content-center ${
-                  !hasItems ? "disabled" : ""
-                }`}
+                className={`btn btn-danger d-inline-flex align-items-center justify-content-center ${!hasItems ? "disabled" : ""
+                  }`}
                 data-bs-toggle={hasItems ? "modal" : undefined}
                 data-bs-target={hasItems ? "#print-receipt" : undefined}
                 disabled={!hasItems}

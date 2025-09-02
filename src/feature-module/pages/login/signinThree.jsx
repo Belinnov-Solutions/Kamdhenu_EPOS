@@ -33,9 +33,9 @@ const SigninThree = () => {
       clearAuthError();
     }
   };
-  const handleCheckboxChange = (e) => {
-    setRememberMe(e.target.checked);
-  };
+  // const handleCheckboxChange = (e) => {
+  //   setRememberMe(e.target.checked);
+  // };
 
 
   const handleSubmit = async (e) => {
@@ -149,7 +149,7 @@ const SigninThree = () => {
                             ></span>
                           </div>
                         </div>
-                        <div className="form-login authentication-check">
+                        {/* <div className="form-login authentication-check">
                           <div className="row">
                             <div className="col-12 d-flex align-items-center justify-content-between">
                               <div className="custom-control custom-checkbox">
@@ -175,7 +175,7 @@ const SigninThree = () => {
                               </div>
                             </div>
                           </div>
-                        </div>
+                        </div> */}
                         <div className="form-login">
                           <button
                             type="submit"
