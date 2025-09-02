@@ -65,36 +65,36 @@ const PosModals = ({ onCustomerCreated }) => {
     address: userAddress,
   } = useSelector((state) => state.user);
   const { userId, storeId } = useSelector((state) => state.user);
-  const cartItems = useSelector(selectCartItems);
-  const productType = cartItems.length > 0 ? "Product" : "Service";
-  const parts = [
-    ...orderItems.map((item) => ({
-      productId: item.id,
-      subcategoryid: item.subcategoryId,
-      productName: resolveItemName(item), // Use the same naming function
-      brandName: item.brand || "Generic",
-      partDescription: item.description || "No description",
-      deviceType: "Mobile",
-      deviceModel: item.model || "Generic",
-      serialNumber: item.serialNumber || "",
-      quantity: item.quantity,
-      price: item.price,
-      productType: "Product",
-    })),
-    ...partItems.map((item) => ({
-      productId: item.id,
-      subcategoryid: item.subcategoryId,
-      productName: resolveItemName(item), // Use the same naming function
-      brandName: item.brand || "Generic",
-      partDescription: item.description || "No description",
-      deviceType: "Mobile",
-      deviceModel: item.model || "Generic",
-      serialNumber: item.serialNumber || "",
-      quantity: item.quantity,
-      price: item.price,
-      productType: "Product",
-    })),
-  ];
+  // const cartItems = useSelector(selectCartItems);
+  const hasProducts = orderItems.length > 0 || partItems.length > 0;
+  const productType = hasProducts ? "Product" : "Service";
+  //   ...orderItems.map((item) => ({
+  //     productId: item.id,
+  //     subcategoryid: item.subcategoryId,
+  //     productName: resolveItemName(item), // Use the same naming function
+  //     brandName: item.brand || "Generic",
+  //     partDescription: item.description || "No description",
+  //     deviceType: "Mobile",
+  //     deviceModel: item.model || "Generic",
+  //     serialNumber: item.serialNumber || "",
+  //     quantity: item.quantity,
+  //     price: item.price,
+  //     productType: "Product",
+  //   })),
+  //   ...partItems.map((item) => ({
+  //     productId: item.id,
+  //     subcategoryid: item.subcategoryId,
+  //     productName: resolveItemName(item), // Use the same naming function
+  //     brandName: item.brand || "Generic",
+  //     partDescription: item.description || "No description",
+  //     deviceType: "Mobile",
+  //     deviceModel: item.model || "Generic",
+  //     serialNumber: item.serialNumber || "",
+  //     quantity: item.quantity,
+  //     price: item.price,
+  //     productType: "Product",
+  //   })),
+  // ];
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -287,6 +287,36 @@ const PosModals = ({ onCustomerCreated }) => {
 
         return responses;
       };
+
+      const parts = [
+        ...orderItems.map((item) => ({
+          productId: item.id,
+          subcategoryid: item.subcategoryId,
+          productName: resolveItemName(item),
+          brandName: item.brand || "Generic",
+          partDescription: item.description || "No description",
+          deviceType: "Mobile",
+          deviceModel: item.model || "Generic",
+          serialNumber: item.serialNumber || "",
+          quantity: item.quantity,
+          price: item.price,
+          productType: "Product",
+        })),
+        ...partItems.map((item) => ({
+          productId: item.id,
+          subcategoryid: item.subcategoryId,
+          productName: resolveItemName(item),
+          brandName: item.brand || "Generic",
+          partDescription: item.description || "No description",
+          deviceType: "Mobile",
+          deviceModel: item.model || "Generic",
+          serialNumber: item.serialNumber || "",
+          quantity: item.quantity,
+          price: item.price,
+          productType: "Product",
+        })),
+      ];
+
       const payload = {
         repairOrderId: "00000000-0000-0000-0000-000000000000",
         orderNumber: "",
@@ -304,7 +334,7 @@ const PosModals = ({ onCustomerCreated }) => {
           ? new Date(firstRepairItem.dueDate).toISOString()
           : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         createdAt: new Date().toISOString(),
-        isFinalSubmit: productType === "Product" ? true : false,
+        isFinalSubmit: hasProducts ? true : false,
         // isFinalSubmit: false,
         productType: productType,
         tickets: {
