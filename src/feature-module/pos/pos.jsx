@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import PosModals from "../../core/modals/pos-modal/posModals";
 import BrandForm from "./BrandForm";
-import TicketManagement from "./TicketManagement";
 import Accessories from "./accessories";
 import { useSelector } from "react-redux";
 import axios from "axios";
@@ -14,12 +13,23 @@ import { removeSelectedService } from "../../core/redux/serviceTypeSlice";
 import "./pos.css";
 import { clearTickets } from "../../core/redux/ticketSlice";
 import { resetCart } from "../../core/redux/partSlice";
- import { updateAccessoryQuantity, addOrUpdateCartItem as addAccessoryToCart } from "../../core/redux/accessoriesSlice";
- import { updatePartQuantity, addOrUpdateCartItem as addPartToCart } from "../../core/redux/partSlice";
+import {
+  updateAccessoryQuantity,
+  addOrUpdateCartItem as addAccessoryToCart,
+} from "../../core/redux/accessoriesSlice";
+import {
+  updatePartQuantity,
+  addOrUpdateCartItem as addPartToCart,
+} from "../../core/redux/partSlice";
 import CartCounter from "../../core/common/counter/counter";
 import SearchSuggestions from "./SearchSuggestions";
+import OrderDetails from "./OrderDetails";
+import OrderList from "./OrderList";
 
 const Pos = () => {
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
   const BASE_URL = process.env.REACT_APP_BASEURL;
   const [hasItems, setHasItems] = useState(false);
   const [accessoriesNav, setAccessoriesNav] = useState({
@@ -62,7 +72,7 @@ const Pos = () => {
   // Memoized filtered products based on search text
   const filteredProducts = useMemo(() => {
     if (!searchText.trim()) return [];
-    
+
     const query = searchText.trim().toLowerCase();
     return products.filter(
       (product) =>
@@ -166,59 +176,68 @@ const Pos = () => {
         console.error("Error fetching products:", err);
       }
     };
-    
+
     fetchProducts();
   }, [storeId]);
 
   // Handle quantity change
-  const handleQuantityChange = useCallback((productId, newQuantity) => {
-    const accessoryItem = orderItems.find((item) => item.id === productId);
-    const partItem = partItems.find((item) => item.id === productId);
+  const handleQuantityChange = useCallback(
+    (productId, newQuantity) => {
+      const accessoryItem = orderItems.find((item) => item.id === productId);
+      const partItem = partItems.find((item) => item.id === productId);
 
-    if (accessoryItem) {
-      dispatch(
-        updateAccessoryQuantity({ id: productId, quantity: newQuantity })
-      );
-    } else if (partItem) {
-      dispatch(updatePartQuantity({ id: productId, quantity: newQuantity }));
-    }
-  }, [dispatch, orderItems, partItems]);
+      if (accessoryItem) {
+        dispatch(
+          updateAccessoryQuantity({ id: productId, quantity: newQuantity })
+        );
+      } else if (partItem) {
+        dispatch(updatePartQuantity({ id: productId, quantity: newQuantity }));
+      }
+    },
+    [dispatch, orderItems, partItems]
+  );
 
   // Handle customer creation
-  const handleCustomerCreated = useCallback((newCustomer) => {
-    const newCustomerOption = {
-      value: Date.now().toString(),
-      label: newCustomer.fullName || newCustomer.customerName,
-    };
-    setCustomers([...customers, newCustomerOption]);
-    setSelectedCustomer(newCustomerOption);
-  }, [customers]);
+  const handleCustomerCreated = useCallback(
+    (newCustomer) => {
+      const newCustomerOption = {
+        value: Date.now().toString(),
+        label: newCustomer.fullName || newCustomer.customerName,
+      };
+      setCustomers([...customers, newCustomerOption]);
+      setSelectedCustomer(newCustomerOption);
+    },
+    [customers]
+  );
 
   // Handle tab change
-  const handleTabChange = useCallback((tab) => {
-    if (tab === "accessories") {
-      setAccessoriesNav({
-        currentView: "categories",
-        currentCategory: null,
-      });
-      setSelectedSubCategory(null);
-      setShowOrderList(false);
-    } else {
-      setShowOrderList(false);
-    }
-    if (tab !== "Mobiles" && tab !== "Tablet") {
-      setShowBrandForm(false);
-      setSelectedBrand(null);
-      dispatch(removeSelectedService());
-    }
+  const handleTabChange = useCallback(
+    (tab) => {
+      if (tab === "accessories") {
+        setAccessoriesNav({
+          currentView: "categories",
+          currentCategory: null,
+        });
+        setSelectedSubCategory(null);
+        setShowOrderList(false);
+      } else {
+        setShowOrderList(false);
+      }
+      if (tab !== "Mobiles" && tab !== "Tablet") {
+        setShowBrandForm(false);
+        setSelectedBrand(null);
+        dispatch(removeSelectedService());
+      }
 
-    setActiveTab(tab);
-    setShowBrandForm(false);
-    if (tab !== "ticketmanagement") {
-      dispatch(clearTickets());
-      dispatch(resetCart());
-    }
-  }, [dispatch]);
+      setActiveTab(tab);
+      setShowBrandForm(false);
+      if (tab !== "ticketmanagement") {
+        dispatch(clearTickets());
+        dispatch(resetCart());
+      }
+    },
+    [dispatch]
+  );
 
   // Handle back click
   const handleBackClick = useCallback(() => {
@@ -246,28 +265,31 @@ const Pos = () => {
   }, [activeTab, accessoriesNav]);
 
   // Add product to cart
-  const addProductToCart = useCallback((product) => {
-    const productData = {
-      id: product.id,
-      name: product.productName,
-      price: product.price,
-      quantity: 1,
-      product
-    };
-    
-    // Determine if it's an accessory or part based on some logic
-    // This might need adjustment based on your actual data structure
-    const isAccessory = product.categoryType === 'accessory'; // Adjust this condition
-    
-    if (isAccessory) {
-      dispatch(addAccessoryToCart(productData));
-    } else {
-      dispatch(addPartToCart(productData));
-    }
-    
-    setSearchText("");
-    setShowSuggestions(false);
-  }, [dispatch]);
+  const addProductToCart = useCallback(
+    (product) => {
+      const productData = {
+        id: product.id,
+        name: product.productName,
+        price: product.price,
+        quantity: 1,
+        product,
+      };
+
+      // Determine if it's an accessory or part based on some logic
+      // This might need adjustment based on your actual data structure
+      const isAccessory = product.categoryType === "accessory"; // Adjust this condition
+
+      if (isAccessory) {
+        dispatch(addAccessoryToCart(productData));
+      } else {
+        dispatch(addPartToCart(productData));
+      }
+
+      setSearchText("");
+      setShowSuggestions(false);
+    },
+    [dispatch]
+  );
 
   // Handle search input change
   const handleSearchChange = useCallback((e) => {
@@ -278,41 +300,47 @@ const Pos = () => {
   }, []);
 
   // Handle search with Enter key or barcode scan
-  const handleSearchEnter = useCallback((e) => {
-    if (e.key === "Enter" && searchText.trim()) {
-      const query = searchText.trim().toLowerCase();
-      
-      // First try exact barcode match
-      let foundProduct = products.find(
-        (p) => p.barcode?.toLowerCase() === query
-      );
-      
-      // If no barcode match, try product name
-      if (!foundProduct) {
-        foundProduct = products.find(
-          (p) => p.productName?.toLowerCase() === query
-        );
-      }
-      
-      // If still not found, try partial match
-      if (!foundProduct) {
-        foundProduct = products.find(
-          (p) => p.productName?.toLowerCase().includes(query)
-        );
-      }
+  const handleSearchEnter = useCallback(
+    (e) => {
+      if (e.key === "Enter" && searchText.trim()) {
+        const query = searchText.trim().toLowerCase();
 
-      if (foundProduct) {
-        addProductToCart(foundProduct);
-      } else {
-        alert("No product found!");
+        // First try exact barcode match
+        let foundProduct = products.find(
+          (p) => p.barcode?.toLowerCase() === query
+        );
+
+        // If no barcode match, try product name
+        if (!foundProduct) {
+          foundProduct = products.find(
+            (p) => p.productName?.toLowerCase() === query
+          );
+        }
+
+        // If still not found, try partial match
+        if (!foundProduct) {
+          foundProduct = products.find((p) =>
+            p.productName?.toLowerCase().includes(query)
+          );
+        }
+
+        if (foundProduct) {
+          addProductToCart(foundProduct);
+        } else {
+          alert("No product found!");
+        }
       }
-    }
-  }, [searchText, products, addProductToCart]);
+    },
+    [searchText, products, addProductToCart]
+  );
 
   // Handle suggestion selection
-  const handleSuggestionSelect = useCallback((product) => {
-    addProductToCart(product);
-  }, [addProductToCart]);
+  const handleSuggestionSelect = useCallback(
+    (product) => {
+      addProductToCart(product);
+    },
+    [addProductToCart]
+  );
 
   // Handle input blur (hide suggestions after a short delay)
   const handleInputBlur = useCallback(() => {
@@ -375,6 +403,11 @@ const Pos = () => {
     }
   }, [repairData, storeId]);
 
+  const handleViewOrder = (order) => {
+    setSelectedOrder(order);
+    setShowOrderDetails(true);
+    setActiveTab("orderlist"); // Switch to the orderlist tab
+  };
   return (
     <div className="main-wrapper pos-five">
       <div className="page-wrapper pos-pg-wrapper ms-0">
@@ -483,15 +516,20 @@ const Pos = () => {
                                           onChange={handleSearchChange}
                                           onKeyDown={handleSearchEnter}
                                           onBlur={handleInputBlur}
-                                          onFocus={() => setShowSuggestions(searchText.length > 0)}
+                                          onFocus={() =>
+                                            setShowSuggestions(
+                                              searchText.length > 0
+                                            )
+                                          }
                                         />
-                                        {showSuggestions && filteredProducts.length > 0 && (
-                                          <SearchSuggestions
-                                            products={filteredProducts}
-                                            onSelect={handleSuggestionSelect}
-                                            searchText={searchText}
-                                          />
-                                        )}
+                                        {showSuggestions &&
+                                          filteredProducts.length > 0 && (
+                                            <SearchSuggestions
+                                              products={filteredProducts}
+                                              onSelect={handleSuggestionSelect}
+                                              searchText={searchText}
+                                            />
+                                          )}
                                         {isScanning && (
                                           <div className="position-absolute top-100 start-0 mt-1">
                                             <small className="text-muted">
@@ -828,7 +866,6 @@ const Pos = () => {
                             showOrderList={showOrderList}
                           />
                         </div>
-
                         <div
                           className={`tab_content ${
                             activeTab === "ticketmanagement" ? "active" : ""
@@ -841,16 +878,31 @@ const Pos = () => {
                           }}
                           data-tab="ticketmanagement"
                         >
-                          <TicketManagement
+                          <OrderList
                             onNewTicketClick={() => handleTabChange("repairs")}
                             onViewTicket={(show) =>
                               setShowOrderList(show ?? true)
                             }
                             showOrderList={showOrderList}
                             activeTab={activeTab}
+                            onViewOrder={handleViewOrder} // Add this prop
                           />
                         </div>
-
+                        <div
+                          className={`tab_content ${
+                            activeTab === "orderlist" ? "active" : ""
+                          }`}
+                          data-tab="orderlist"
+                        >
+                          {showOrderDetails ? (
+                            <OrderDetails
+                              order={selectedOrder}
+                              onBack={() => setShowOrderDetails(false)}
+                            />
+                          ) : (
+                            <OrderList onViewOrder={handleViewOrder} /> // Add this prop
+                          )}
+                        </div>
                         <div
                           className={`tab_content ${
                             activeTab === "Tablet" ? "active" : ""

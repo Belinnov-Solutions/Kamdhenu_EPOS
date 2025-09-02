@@ -71,3 +71,67 @@
     display: none;
   }
 }
+
+.product-name-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.additional-products-badge {
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+.additional-products-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Different colors based on the number of additional products */
+.additional-products-badge[data-count="1"] {
+  background: linear-gradient(135deg, #ff9a8b 0%, #ff6a88 100%);
+}
+
+.additional-products-badge[data-count="2"] {
+  background: linear-gradient(135deg, #ffd26f 0%, #ffa43c 100%);
+}
+
+.additional-products-badge[data-count="3"] {
+  background: linear-gradient(135deg, #6decb9 0%, #00d2b8 100%);
+}
+
+.additional-products-badge[data-count="4"] {
+  background: linear-gradient(135deg, #9e77e9 0%, #6d5bea 100%);
+}
+
+.additional-products-badge[data-count="5"] {
+  background: linear-gradient(135deg, #ff7bac 0%, #ff4d8d 100%);
+}
+
+.additional-products-badge[data-count="6"] {
+  background: linear-gradient(135deg, #5ee7df 0%, #3bb2b8 100%);
+}
+
+.additional-products-badge[data-count="7"] {
+  background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
+}
+
+.additional-products-badge[data-count="8"] {
+  background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+}
+
+.additional-products-badge[data-count="9"] {
+  background: linear-gradient(135deg, #fad0c4 0%, #ff9a9e 100%);
+}
+
+.additional-products-badge[data-count="10"] {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+}
