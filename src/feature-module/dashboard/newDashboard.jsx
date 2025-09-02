@@ -32,11 +32,17 @@ ChartJS.register(
   Legend
 );
 
-const PredefinedDateRanges = ({ onDateChange }) => {
+const PredefinedDateRanges = ({ onDateChange, startDate, endDate }) => {
   const [state, setState] = useState({
-    start: moment().subtract(29, "days"),
-    end: moment(),
+    start: startDate ? moment(startDate) : moment().subtract(29, "days"),
+    end: moment(endDate) || moment(),
   });
+  // keep in sync when parent updates filters
+  useEffect(() => {
+    if (startDate && endDate) {
+      setState({ start: moment(startDate), end: moment(endDate) });
+    }
+  }, [startDate, endDate]);
 
   const { start, end } = state;
 
@@ -106,6 +112,8 @@ const PredefinedDateRanges = ({ onDateChange }) => {
 // Add PropTypes validation
 PredefinedDateRanges.propTypes = {
   onDateChange: PropTypes.func,
+  startDate: PropTypes.string,
+  endDate: PropTypes.string,
 };
 
 const NewDashboard = () => {
@@ -119,11 +127,12 @@ const NewDashboard = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
-    dateFrom: null,
-    dateTo: null,
+    dateFrom: moment().subtract(29, "days").toISOString(), // default 30 days ago
+    dateTo: moment().toISOString(),                        // default today
     categoryId: null,
     groupBy: "day",
   });
+
 
   const categoriesContainerRef = useRef(null);
 
@@ -263,7 +272,12 @@ const NewDashboard = () => {
           </div>
           <div className="d-flex gap-2">
             <div className="input-icon-start position-relative mb-3">
-              <PredefinedDateRanges onDateChange={handleDateRangeChange} />
+              <PredefinedDateRanges
+                onDateChange={handleDateRangeChange}
+                startDate={filters.dateFrom}
+                endDate={filters.dateTo}
+              />
+
             </div>
             <div className="dropdown mb-3">
               <button
@@ -351,9 +365,8 @@ const NewDashboard = () => {
                 }}
               >
                 <button
-                  className={`btn ${
-                    !filters.categoryId ? "btn-primary" : "btn-outline-primary"
-                  } flex-shrink-0 mb-2`}
+                  className={`btn ${!filters.categoryId ? "btn-primary" : "btn-outline-primary"
+                    } flex-shrink-0 mb-2`}
                   onClick={() => handleCategoryFilter(null)}
                   style={{ minWidth: "120px" }}
                 >
@@ -363,11 +376,10 @@ const NewDashboard = () => {
                 {categories.map((category) => (
                   <button
                     key={category.categoryId}
-                    className={`btn ${
-                      filters.categoryId === category.categoryId
+                    className={`btn ${filters.categoryId === category.categoryId
                         ? "btn-primary"
                         : "btn-outline-primary"
-                    } flex-shrink-0 mb-2`}
+                      } flex-shrink-0 mb-2`}
                     onClick={() => handleCategoryFilter(category.categoryId)}
                     style={{ minWidth: "120px" }}
                   >
@@ -445,8 +457,8 @@ const NewDashboard = () => {
                           {filters.groupBy === "day"
                             ? "Date"
                             : filters.groupBy === "week"
-                            ? "Week"
-                            : "Month"}
+                              ? "Week"
+                              : "Month"}
                         </th>
                         <th>Total Sales</th>
                         <th>Items Sold</th>
@@ -462,13 +474,13 @@ const NewDashboard = () => {
                             <td>
                               {filters.groupBy === "day"
                                 ? new Date(period.date).toLocaleDateString(
-                                    "en-CA"
-                                  )
+                                  "en-CA"
+                                )
                                 : filters.groupBy === "week"
-                                ? `Week ${moment(period.date).week()}, ${moment(
+                                  ? `Week ${moment(period.date).week()}, ${moment(
                                     period.date
                                   ).year()}`
-                                : moment(period.date).format("MMMM YYYY")}
+                                  : moment(period.date).format("MMMM YYYY")}
                             </td>
                             <td>₹{period.totalSalesAmount.toFixed(2)}</td>
                             <td>{period.itemsSold}</td>
