@@ -72,7 +72,7 @@ const[errors,setErrors]=useState({});
     description: "",
     isVariable: false,
     price: "",
-    taxType: "",
+    // taxType: "",
     discountType: null,
     discountValue: null,
     stock: "",
@@ -265,9 +265,9 @@ const[errors,setErrors]=useState({});
         newErrors.stock = "Valid stock quantity is required";
       }
       
-      if (!formData.taxType) {
-        newErrors.taxType = "Tax type is required";
-      }
+      // if (!formData.taxType) {
+      //   newErrors.taxType = "Tax type is required";
+      // }
       
       if (!formData.quantityAlert || isNaN(formData.quantityAlert) || parseInt(formData.quantityAlert) < 0) {
         newErrors.quantityAlert = "Valid stock alert quantity is required";
@@ -324,7 +324,7 @@ const[errors,setErrors]=useState({});
         description: "",
         isVariable: false,
         price: "",
-        taxType: "",
+        // taxType: "",
         discountType: null,
         discountValue: null,
         stock: "",
@@ -475,10 +475,10 @@ const[errors,setErrors]=useState({});
   //   { value: "false", label: "Non-Restockable" },
   //   { value: "true", label: "Restockable" },
   // ];
-  const taxtype = [
-    { value: "GST", label: "GST" },
-    // { value: "salesTax", label: "Sales Tax" },
-  ];
+  // const taxtype = [
+  //   { value: "GST", label: "GST" },
+  //   // { value: "salesTax", label: "Sales Tax" },
+  // ];
   // const discounttype = [
   //   { value: "choose", label: "Choose" },
   //   { value: "percentage", label: "Percentage" },
@@ -880,7 +880,7 @@ const[errors,setErrors]=useState({});
                                 )}
                                 </div>
                               </div>
-                               <div className="col-lg-6 col-sm-6 col-12">
+                               {/* <div className="col-lg-6 col-sm-6 col-12">
                                 <div className="mb-3">
                                   <label className="form-label">
                                     Tax Type<span className="text-danger ms-1">*</span>
@@ -897,7 +897,7 @@ const[errors,setErrors]=useState({});
                                   </div>
                                 )}
                                 </div>
-                              </div>
+                              </div> */}
                               {/* <div className="col-lg-6 col-sm-6 col-12">
                                 <div className="mb-3" >
                                   <label className="form-label">

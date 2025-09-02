@@ -90,7 +90,7 @@ const [modalMessage, setModalMessage] = useState({
     description: "",
     isVariable: false,
     price: "",
-    taxType: "",
+    // taxType: "",
     discountType: null,
     discountValue: null,
     stock:"",
@@ -244,7 +244,7 @@ const [modalMessage, setModalMessage] = useState({
               description: matchedProduct.description || "",
               price: matchedProduct.price || "",
               sellingType: matchedProduct.sellingType || "",
-              taxType: matchedProduct.taxType || "",
+              // taxType: matchedProduct.taxType || "",
               discountType: matchedProduct.discountType || "",
               discountValue: matchedProduct.discountValue || "",
               stock: matchedProduct.stock || "",
@@ -313,7 +313,7 @@ const [modalMessage, setModalMessage] = useState({
       Description: formData.description,
       IsVariable: formData.isVariable,
       Price: formData.price,
-      TaxType: formData.taxType,
+      // TaxType: formData.taxType,
       // DiscountType: formData.discountType,
       // DiscountValue: formData.discountValue,
       stock: parseInt(formData.stock) || 0,
@@ -405,10 +405,10 @@ const [modalMessage, setModalMessage] = useState({
   //   { value: "code35", label: "Code35" },
   //   { value: "code36", label: "Code36" },
   // ];
-  const taxtype = [
-    { value: "GST", label: "GST" },
-    // { value: "salesTax", label: "Sales Tax" },
-  ];
+  // const taxtype = [
+  //   { value: "GST", label: "GST" },
+  //   // { value: "salesTax", label: "Sales Tax" },
+  // ];
   // const discounttype = [
   //   { value: "choose", label: "Choose" },
   //   { value: "percentage", label: "Percentage" },
@@ -759,7 +759,7 @@ const [modalMessage, setModalMessage] = useState({
                                   </div>
                                 </div>
                                 
-                                <div className="col-sm-6 col-12">
+                                {/* <div className="col-sm-6 col-12">
                                   <div className="mb-3">
                                     <label className="form-label">
                                       Tax Type<span className="text-danger ms-1">*</span>
@@ -773,7 +773,7 @@ const [modalMessage, setModalMessage] = useState({
                                       onChange={(selectedOption) => handleSelectChange(selectedOption, "taxType")}
                                     />
                                   </div>
-                                </div>
+                                </div> */}
                                 {/* <div
                                   className="col-sm-6 col-12" >
                                   <div className="mb-3">
