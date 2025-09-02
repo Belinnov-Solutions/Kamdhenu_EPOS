@@ -172,6 +172,7 @@ const Pos = () => {
         if (res.data && res.data.data) {
           setProducts(res.data.data);
         }
+        console.log(res);
       } catch (err) {
         console.error("Error fetching products:", err);
       }
@@ -271,7 +272,7 @@ const Pos = () => {
         id: product.id,
         name:
           product.productName ||
-          product.productname ||
+          product.subCategoryName ||
           product.ProductName ||
           product.name ||
           "",
@@ -412,7 +413,9 @@ const Pos = () => {
     (item) =>
       item?.name ||
       item?.productName ||
+      item?.subCategoryName ||
       item?.product?.productName ||
+      item?.product?.subCategoryName ||
       item?.productname ||
       item?.product?.productname ||
       item?.sku ||
@@ -545,6 +548,7 @@ const Pos = () => {
                                               products={filteredProducts}
                                               onSelect={handleSuggestionSelect}
                                               searchText={searchText}
+                                              displayProperty="productName"
                                             />
                                           )}
                                         {isScanning && (
@@ -699,7 +703,8 @@ const Pos = () => {
                                                           "ellipsis",
                                                       }}
                                                     >
-                                                      {item.name}
+                                                      {resolveItemName(item)}{" "}
+                                                      {/* Fixed: Changed item.name to resolveItemName(item) */}
                                                     </h6>
                                                   </div>
                                                 </td>
@@ -741,7 +746,8 @@ const Pos = () => {
                                                           "ellipsis",
                                                       }}
                                                     >
-                                                      {item.name}
+                                                      {resolveItemName(item)}{" "}
+                                                      {/* Fixed here too */}
                                                     </h6>
                                                   </div>
                                                 </td>
@@ -770,24 +776,38 @@ const Pos = () => {
                                           </>
                                         )}
 
-                                        {!ticketData.ticketItems?.length &&
-                                          selectedServices.length === 0 &&
-                                          orderItems.length === 0 &&
-                                          partItems.length === 0 && (
-                                            <tr>
-                                              <td
-                                                colSpan="3"
-                                                className="text-center py-4"
-                                              >
-                                                <div className="text-muted">
-                                                  <i className="ti ti-shopping-cart-off fs-4 mb-2"></i>
-                                                  <p className="mb-0">
-                                                    No items selected
-                                                  </p>
-                                                </div>
-                                              </td>
-                                            </tr>
-                                          )}
+                                        {selectedServices.map((item) => (
+                                          <tr key={`service-${item.id}`}>
+                                            <td
+                                              style={{
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                whiteSpace: "nowrap",
+                                              }}
+                                            >
+                                              <div className="d-flex align-items-center">
+                                                <h6
+                                                  className="fs-13 fw-normal m-0"
+                                                  style={{
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                  }}
+                                                >
+                                                  {resolveItemName(item)}{" "}
+                                                  {/* Fixed here too */}
+                                                </h6>
+                                              </div>
+                                            </td>
+                                            <td className="text-center">
+                                              <span className="badge bg-secondary">
+                                                1
+                                              </span>
+                                            </td>
+                                            <td className="fs-13 fw-semibold text-gray-9 text-end">
+                                              ₹{item.price}
+                                            </td>
+                                          </tr>
+                                        ))}
                                       </tbody>
                                     </table>
                                   </div>
@@ -975,7 +995,7 @@ const Pos = () => {
                 data-bs-target={hasItems ? "#print-receipt" : undefined}
                 disabled={!hasItems}
               >
-                Submit & Print
+                Submit
               </Link>
             </div>
           </div>

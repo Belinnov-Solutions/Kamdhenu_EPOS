@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import "./OrderList.css";
@@ -13,8 +13,18 @@ const OrderList = ({ onViewOrder }) => {
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const tableRef = useRef(null);
 
   const BASE_URL = process.env.REACT_APP_BASEURL;
+
+  // Scroll to top when component mounts or data changes
+  useEffect(() => {
+    if (tableRef.current) {
+      tableRef.current.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [orderedProducts, loading]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -99,6 +109,7 @@ const OrderList = ({ onViewOrder }) => {
   return (
     <>
       <div
+        ref={tableRef}
         className="modal-dialog modal-dialog-centered modal-lg"
         style={{ maxWidth: "95%" }}
       >
@@ -133,7 +144,7 @@ const OrderList = ({ onViewOrder }) => {
                     <thead>
                       <tr>
                         <th style={{ width: "15%" }}>Order</th>
-                        <th style={{ width: "25%" }}>Product Name</th>
+                        {/* <th style={{ width: "25%" }}>Product Name</th> */}
                         <th style={{ width: "10%" }}>Quantity</th>
                         <th style={{ width: "15%" }}>Date</th>
                         <th style={{ width: "15%" }}>Total</th>
@@ -157,7 +168,7 @@ const OrderList = ({ onViewOrder }) => {
                             <td>
                               <strong>{order.orderNumber}</strong>
                             </td>
-                            <td>
+                            {/* <td>
                               <div className="product-name-container">
                                 <span
                                   className="text-truncate d-inline-block"
@@ -171,7 +182,7 @@ const OrderList = ({ onViewOrder }) => {
                                   </span>
                                 )}
                               </div>
-                            </td>
+                            </td> */}
                             <td>{order.totalQuantity}</td>
                             <td>{order.createdAt}</td>
                             <td>{order.totalAmount}</td>

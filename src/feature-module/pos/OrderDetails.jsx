@@ -1,9 +1,19 @@
-// OrderDetails.js
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import "./OrderDetails.css";
 
 const OrderDetails = ({ order, onBack }) => {
+  const topRef = useRef(null);
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    if (topRef.current) {
+      topRef.current.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [order]);
+
   if (!order) {
     return <div className="alert alert-info">No order selected</div>;
   }
@@ -17,14 +27,16 @@ const OrderDetails = ({ order, onBack }) => {
     : [];
 
   // Calculate the total of all row totals
-  const calculatedTotal = productsWithTotals
-    .reduce((sum, product) => {
-      return sum + parseFloat(product.rowTotal);
-    }, 0)
-    .toFixed(2);
+  //   const calculatedTotal = productsWithTotals
+  //     .reduce((sum, product) => {
+  //       return sum + parseFloat(product.rowTotal);
+  //     }, 0)
+  //     .toFixed(2);
 
   return (
     <div className="order-details-container">
+      <div ref={topRef}></div>{" "}
+      {/* Invisible element at the top for scrolling */}
       {/* Back Button */}
       <div className="d-flex align-items-center mb-3">
         <button
@@ -34,7 +46,6 @@ const OrderDetails = ({ order, onBack }) => {
           <i className="ti ti-arrow-left me-1"></i> Back to Order List
         </button>
       </div>
-
       {/* Order Header */}
       <div className="card mb-4">
         <div className="card-body">
@@ -55,7 +66,6 @@ const OrderDetails = ({ order, onBack }) => {
           </div>
         </div>
       </div>
-
       {/* Order Items */}
       <div className="card mb-4">
         <div className="card-body">
@@ -87,15 +97,13 @@ const OrderDetails = ({ order, onBack }) => {
                   <td colSpan="3" className="text-end fw-bold">
                     Total:
                   </td>
-                  <td className="fw-bold">₹{calculatedTotal}</td>
+                  <td className="fw-bold">{order.totalAmount}</td>
                 </tr>
               </tfoot>
             </table>
           </div>
         </div>
       </div>
-
-      {/* Summary Table */}
       {/* Summary Table */}
       <div className="card mb-4">
         <div className="card-body">
@@ -105,23 +113,17 @@ const OrderDetails = ({ order, onBack }) => {
                 <tbody>
                   <tr>
                     <td className="summary-label">Total Price</td>
-                    <td className="summary-value">₹{calculatedTotal}</td>
+                    <td className="summary-value">{order.totalAmount}</td>
                   </tr>
-                  <tr>
+                  {/* <tr>
                     <td className="summary-label">Tax (3%)</td>
                     <td className="summary-value">
                       ₹{(calculatedTotal * 0.03).toFixed(2)}
                     </td>
-                  </tr>
+                  </tr> */}
                   <tr className="grand-total-row">
                     <td className="summary-label">Grand Total</td>
-                    <td className="summary-value">
-                      ₹
-                      {(
-                        parseFloat(calculatedTotal) +
-                        parseFloat(calculatedTotal) * 0.03
-                      ).toFixed(2)}
-                    </td>
+                    <td className="summary-value">{order.totalAmount}</td>
                   </tr>
                 </tbody>
               </table>
@@ -129,7 +131,6 @@ const OrderDetails = ({ order, onBack }) => {
           </div>
         </div>
       </div>
-
       {/* Footer */}
       <div className="text-center mt-4">
         <p className="powered-by">© 2025 - Powered by Belinnov Solutions</p>
