@@ -46,7 +46,7 @@ const PosModals = ({ onCustomerCreated }) => {
   const orderItems = useSelector(selectCartItems);
   const [apiResponse, setApiResponse] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
-
+ const [showSuccessModal, setShowSuccessModal] = useState(false);
   const {
     customerId,
     customerName,
@@ -405,10 +405,7 @@ const PosModals = ({ onCustomerCreated }) => {
         modalInstance.hide();
 
         // Then show the success modal
-        const successModal = new window.bootstrap.Modal(
-          document.getElementById("order-success-modal")
-        );
-        successModal.show();
+        setShowSuccessModal(true);
       }
     } catch (error) {
       console.error("Error confirming order:", error);
@@ -1181,87 +1178,62 @@ const PosModals = ({ onCustomerCreated }) => {
         </div>
       </div>
       {/* Print Receipt */}
-
-      {/* /Print Receipt */}
-
-      {/* order successfull modal  */}
-      {/* Order Success Modal */}
-      {/* Order Success Modal */}
-      {/* Order Success Modal */}
-      {/* Order Success Modal */}
-      {/* Order Success Modal */}
-      <div
-        className="modal fade"
-        id="order-success-modal"
-        tabIndex="-1"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-body p-0">
-              <div className="text-center p-4">
-                <div
-                  className={`icon-circle ${
-                    apiResponse?.error ? "bg-danger" : "bg-success"
-                  } text-white mb-3`}
-                >
-                  <i
-                    className={apiResponse?.error ? "ti ti-x" : "ti ti-check"}
-                  />
-                </div>
-                <h3
-                  className={`mb-3 ${
-                    apiResponse?.error ? "text-danger" : "text-success"
-                  }`}
-                >
-                  {apiResponse?.error ? "Failed" : "Success"}
-                </h3>
-                <p className="mb-3">{apiResponse?.message}</p>
-                {apiResponse?.orderNumber && (
-                  <div className="alert alert-light mb-3">
-                    Order Number: <strong>{apiResponse.orderNumber}</strong>
-                  </div>
-                )}
-                <div className="d-flex justify-content-center gap-3">
-                  {/* {!apiResponse?.error && (
-                    <button
-                      className="btn btn-success"
-                      onClick={handlePrintReceipt}
-                      disabled={isProcessing}
-                    >
-                      <i className="ti ti-printer me-1"></i>
-                      Print Receipt
-                    </button>
-                  )} */}
-                  <button
-                    type="button"
-                    className={`btn ${
-                      apiResponse?.error ? "btn-outline-danger" : "btn-primary"
-                    }`}
-                    onClick={() => {
-                      const modalEl = document.getElementById(
-                        "order-success-modal"
-                      );
-                      const modal = window.bootstrap.Modal.getInstance(modalEl);
-
-                      if (modal) {
-                        modal.hide();
-                      }
-
-                      setTimeout(() => {
-                        window.location.reload();
-                      }, 500);
-                    }}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? "Processing..." : "Close"}
-                  </button>
-                </div>
-              </div>
+{/* Order Success Modal */}
+<div
+  className={`modal fade ${showSuccessModal ? 'show d-block' : ''}`}
+  id="order-success-modal"
+  tabIndex="-1"
+  aria-hidden="true"
+  style={{ backgroundColor: showSuccessModal ? 'rgba(0,0,0,0.5)' : '' }}
+>
+  <div className="modal-dialog modal-dialog-centered">
+    <div className="modal-content">
+      <div className="modal-body p-0">
+        <div className="text-center p-4">
+          <div
+            className={`icon-circle ${
+              apiResponse?.error ? "bg-danger" : "bg-success"
+            } text-white mb-3`}
+          >
+            <i
+              className={apiResponse?.error ? "ti ti-x" : "ti ti-check"}
+            />
+          </div>
+          <h3
+            className={`mb-3 ${
+              apiResponse?.error ? "text-danger" : "text-success"
+            }`}
+          >
+            {apiResponse?.error ? "Failed" : "Success"}
+          </h3>
+          <p className="mb-3">{apiResponse?.message}</p>
+          {apiResponse?.orderNumber && (
+            <div className="alert alert-light mb-3">
+              Order Number: <strong>{apiResponse.orderNumber}</strong>
             </div>
+          )}
+          <div className="d-flex justify-content-center gap-3">
+            <button
+              type="button"
+              className={`btn ${
+                apiResponse?.error ? "btn-outline-danger" : "btn-primary"
+              }`}
+              onClick={() => {
+                setShowSuccessModal(false);
+                setTimeout(() => {
+                  window.location.reload();
+                }, 500);
+              }}
+              disabled={isProcessing}
+            >
+              {isProcessing ? "Processing..." : "Close"}
+            </button>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
       <div
         className="modal fade modal-default pos-modal"
         id="products"
