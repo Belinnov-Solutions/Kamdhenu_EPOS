@@ -887,7 +887,7 @@ const Pos = () => {
                               setAccessoriesNav({
                                 currentView: "subcategories",
                                 currentCategory: categoryId,
-                              });
+                              });   
                               setShowOrderList(true);
                             }}
                             selectedSubCategory={selectedSubCategory}

@@ -198,7 +198,45 @@ const PosModals = ({ onCustomerCreated }) => {
     }
   };
   // end create customer
+  const calculateSubtotalBeforeTax = () => {
+    const ticketTotal =
+      ticketData.ticketItems?.reduce(
+        (total, item) => total + (item.serviceCharge || 0),
+        0
+      ) || 0;
 
+    const servicesTotal = selectedServices.reduce(
+      (total, item) => total + (item.price || 0),
+      0
+    );
+
+    const orderTotal = orderItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+
+    const partsTotal = partItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+
+    return ticketTotal + servicesTotal + orderTotal + partsTotal;
+  };
+
+  const calculateTaxAmount = () => {
+    const subtotalBeforeTax = calculateSubtotalBeforeTax();
+    // Assuming 18% tax rate - you can make this dynamic if needed
+    const taxRate = 0.18;
+    return subtotalBeforeTax * taxRate;
+  };
+
+  // Update calculateSubtotal to include tax
+  // const calculateSubtotal = () => {
+  //   const subtotalBeforeTax = calculateSubtotalBeforeTax();
+  //   const taxAmount = calculateTaxAmount();
+
+  //   return subtotalBeforeTax + taxAmount; // This is now total amount including tax
+  // };
   // Modify the handlePaymentSelection to do something with the selection
   const handlePaymentSelection = async (method) => {
     if (isProcessing) return;
@@ -317,6 +355,9 @@ const PosModals = ({ onCustomerCreated }) => {
         })),
       ];
 
+      const subtotalBeforeTax = calculateSubtotalBeforeTax();
+      const taxAmount = calculateTaxAmount();
+      const totalAmount = subtotalBeforeTax + taxAmount;
       const payload = {
         repairOrderId: "00000000-0000-0000-0000-000000000000",
         orderNumber: "",
@@ -376,7 +417,10 @@ const PosModals = ({ onCustomerCreated }) => {
           orderId: "",
           responses: prepareChecklistResponses(),
         },
-        totalAmount: calculateTotalPayable(),
+        totalAmount: totalAmount, // Final total including tax
+        SubTotal: subtotalBeforeTax, // Amount before tax
+        TaxAmount: taxAmount, // The tax amount that was added
+        // taxPercent: 18, // Tax percentage
       };
 
       // Make the API call
@@ -907,30 +951,30 @@ const PosModals = ({ onCustomerCreated }) => {
       { value: "points", label: "Points" },
     ],
   };
-  const calculateSubtotal = () => {
-    const ticketTotal =
-      ticketData.ticketItems?.reduce(
-        (total, item) => total + (item.serviceCharge || 0),
-        0
-      ) || 0;
+  // const calculateSubtotal = () => {
+  //   const ticketTotal =
+  //     ticketData.ticketItems?.reduce(
+  //       (total, item) => total + (item.serviceCharge || 0),
+  //       0
+  //     ) || 0;
 
-    const servicesTotal = selectedServices.reduce(
-      (total, item) => total + (item.price || 0),
-      0
-    );
+  //   const servicesTotal = selectedServices.reduce(
+  //     (total, item) => total + (item.price || 0),
+  //     0
+  //   );
 
-    const orderTotal = orderItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+  //   const orderTotal = orderItems.reduce(
+  //     (total, item) => total + item.price * item.quantity,
+  //     0
+  //   );
 
-    const partsTotal = partItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+  //   const partsTotal = partItems.reduce(
+  //     (total, item) => total + item.price * item.quantity,
+  //     0
+  //   );
 
-    return ticketTotal + servicesTotal + orderTotal + partsTotal;
-  };
+  //   return ticketTotal + servicesTotal + orderTotal + partsTotal;
+  // };
 
   // Calculate tax (3%)
   // const calculateTax = () => {
@@ -938,9 +982,9 @@ const PosModals = ({ onCustomerCreated }) => {
   // };
 
   // Calculate total payable
-  const calculateTotalPayable = () => {
-    return calculateSubtotal();
-  };
+  // const calculateTotalPayable = () => {
+  //   return calculateSubtotal();
+  // };
 
   return (
     <>
@@ -1011,7 +1055,8 @@ const PosModals = ({ onCustomerCreated }) => {
               </div>
 
               {/* Items Table */}
-              <div className="receipt-items mb-4 scrollable-section">
+              {/* <div className="receipt-items mb-4 scrollable-section "> */}
+              <div className="receipt-items mb-4 scrollable-section table-wrapping">
                 <table className="table table-sm mb-0">
                   <thead>
                     <tr className="border-bottom">
@@ -1132,7 +1177,8 @@ const PosModals = ({ onCustomerCreated }) => {
                     <tr>
                       <td className="small text-muted">Sub Total:</td>
                       <td className="small text-end fw-semibold">
-                        ₹{calculateSubtotal().toFixed(2)}
+                        {/* ₹{calculateSubtotal().toFixed(2)} */}₹ ₹
+                        {calculateSubtotalBeforeTax().toFixed(2)}₹
                       </td>
                     </tr>
                     {/* <tr>
@@ -1152,7 +1198,8 @@ const PosModals = ({ onCustomerCreated }) => {
                     <tr className="border-top">
                       <td className="small fw-bold">Total Payable:</td>
                       <td className="small text-end fw-bold">
-                        ₹{calculateTotalPayable().toFixed(2)}
+                        ₹{calculateSubtotalBeforeTax().toFixed(2)}₹
+                        {/* ₹{calculateTotalPayable().toFixed(2)} */}
                       </td>
                     </tr>
                   </tbody>

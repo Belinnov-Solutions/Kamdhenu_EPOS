@@ -25,3 +25,33 @@
 .scrollable-section {
   -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
+
+/* Add to your existing posModals.css */
+.receipt-items table {
+  table-layout: fixed;
+}
+
+.receipt-items table td:nth-child(2) {
+  /* Item name column */
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Alternative: Allow wrapping with line breaks */
+.receipt-items.table-wrapping td:nth-child(2) {
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+/* For better mobile responsiveness */
+@media (max-width: 576px) {
+  .receipt-items table td:nth-child(2) {
+    max-width: 100px;
+  }
+
+  .receipt-items.table-wrapping td:nth-child(2) {
+    max-width: none;
+  }
+}
