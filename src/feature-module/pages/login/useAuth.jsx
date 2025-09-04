@@ -5,6 +5,7 @@ import { message } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { loginSuccess, logoutSuccess } from "../../../core/redux/userSlice";
+import { all_routes } from "../../../Router/all_routes";
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState(null); 
@@ -33,24 +34,25 @@ export const useAuth = () => {
         }
       );
 
+      // hooks/useAuth.js (inside login success branch)
       if (response.data.message === "Login successful") {
         const userData = response.data.user;
 
-        // Dispatch user data to Redux
         dispatch(loginSuccess(userData));
 
-        const normalizedRole = userData.rolename.toLowerCase().trim();
-        let targetRoute = "/dashboard";
+        // ✅ Persist for guard + refresh
+        localStorage.setItem("auth_user", JSON.stringify(userData));
 
-        if (
-          normalizedRole.includes("store manager") ||
-          normalizedRole.includes("technician")
-        ) {
+        const normalizedRole = userData.rolename?.toLowerCase().trim() || "";
+        let targetRoute = "/dashboard";
+        if (normalizedRole.includes("store manager") || normalizedRole.includes("technician")) {
           targetRoute = "/pos";
         } else if (normalizedRole.includes("super admin")) {
           targetRoute = "/index";
         }
 
+        // Single source of navigation truth: keep it here
+        // (and REMOVE navigate(route.dashboard) in SigninThree)
         setTimeout(() => {
           navigate(targetRoute, { replace: true });
         }, 0);
@@ -99,8 +101,8 @@ export const useAuth = () => {
 
       // Clear user data in Redux
       dispatch(logoutSuccess());
-
-      navigate("/login");
+      localStorage.removeItem("auth_user");
+      navigate(all_routes.signinthree); // "/signin"
       message.success("Logged out successfully");
       return { success: true };
     } catch (error) {

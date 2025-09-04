@@ -1,6 +1,6 @@
 import React, { useState,useEffect } from "react";
 import ImageWithBasePath from "../../../core/img/imagewithbasebath";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { all_routes } from "../../../Router/all_routes";
 // import axios from "axios";
 // import { message } from "antd";
@@ -9,7 +9,7 @@ import { Alert } from "antd";
 
 const SigninThree = () => {
   const route = all_routes;
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const { login, loading, authError, clearAuthError } = useAuth();
   const [rememberMe, setRememberMe] = useState(false);
@@ -51,7 +51,7 @@ const SigninThree = () => {
       } else {
         localStorage.removeItem("rememberedUser");
       }
-      navigate(route.dashboard);
+      // navigate(route.dashboard);
     }
   };
   // prefilled data from localStorage
