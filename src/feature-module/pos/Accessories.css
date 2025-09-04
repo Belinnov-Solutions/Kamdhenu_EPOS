@@ -31,3 +31,21 @@
   font-size: 3rem;
   padding: 0;
 }
+.products-container {
+  max-height: 70vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 5px;
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.products-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Keep the scroll functionality but hide the visual scrollbar */
+.products-container {
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}

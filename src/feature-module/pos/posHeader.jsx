@@ -91,7 +91,7 @@ const PosHeader = () => {
       <div
         className="header pos-header"
         // style={{ backgroundColor: "rgb(62 18 81)" }}
-        style={{ backgroundColor: "#b38e432f" }}
+        style={{backgroundColor: "#f8f0e3ff"}}
       >
         {/* Logo */}
         <div className="header-left active">
@@ -208,7 +208,7 @@ const PosHeader = () => {
           <li className="nav-item pos-nav">
             <h5 className="mb-1 text-dark">Welcome, {username}</h5>
           </li>
-          <li className="nav-item nav-item-box">
+          {/* <li className="nav-item nav-item-box">
             <Link
               to="#"
               data-bs-toggle="modal"
@@ -217,7 +217,7 @@ const PosHeader = () => {
             >
               <i className="ti ti-calculator" />
             </Link>
-          </li>
+          </li> */}
           <li className="nav-item nav-item-box">
             <Tooltip title="Maximize" placement="right">
               <Link

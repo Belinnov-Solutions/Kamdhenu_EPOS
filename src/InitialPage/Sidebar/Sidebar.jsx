@@ -6,7 +6,7 @@ import HorizontalSidebar from "./horizontalSidebar";
 import { useTranslation } from "react-i18next";
 import { all_routes } from "../../Router/all_routes";
 import ImageWithBasePath from "../../core/img/imagewithbasebath";
-import { ChevronsLeft } from "feather-icons-react/build/IconComponents";
+// import { ChevronsLeft } from "feather-icons-react/build/IconComponents";
 import { useSelector } from "react-redux";
 const Sidebar = () => {
   const route = all_routes;
@@ -33,11 +33,11 @@ const Sidebar = () => {
     }
   };
 
-  const [toggle, SetToggle] = useState(false);
-  const handlesidebar = () => {
-    document.body.classList.toggle("mini-sidebar");
-    SetToggle((current) => !current);
-  };
+  const [toggle] = useState(false);
+  // const handlesidebar = () => {
+  //   document.body.classList.toggle("mini-sidebar");
+  //   SetToggle((current) => !current);
+  // };
 
   const { expandMenus } = useSelector(
     (state) => state.themeSetting.expandMenus
@@ -65,7 +65,7 @@ const Sidebar = () => {
           {/* Logo */}
           <div
             className="sidebar-logo"
-            style={{ backgroundColor: "#b38e432f" }}
+            style={{backgroundColor: "#f8f0e3ff" }}
           >
             <img 
     src="assets/img/logo.png" 
@@ -84,10 +84,10 @@ const Sidebar = () => {
             {/* <Link to={route.newdashboard} className="logo-small">
               <ImageWithBasePath src="assets/img/logo-small.png" alt="Img" />
             </Link> */}
-            <Link id="toggle_btn" to="#" onClick={handlesidebar}>
+            {/* <Link id="toggle_btn" to="#" onClick={handlesidebar}>
               <i data-feather="chevrons-left" />
               <ChevronsLeft className="feather-16" />
-            </Link>
+            </Link> */}
           </div>
           {/* /Logo */}
           <div className="modern-profile p-3 pb-0">

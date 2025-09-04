@@ -90,11 +90,11 @@ const [modalMessage, setModalMessage] = useState({
     description: "",
     isVariable: false,
     price: "",
-    taxType: "",
-    discountType: "",
-    discountValue: "",
+    // taxType: "",
+    discountType: null,
+    discountValue: null,
     stock:"",
-    quantityAlert: "",
+    quantityAlert: null,
      restock: false,
     warrantyType: "",
     manufacturer: "",
@@ -244,7 +244,7 @@ const [modalMessage, setModalMessage] = useState({
               description: matchedProduct.description || "",
               price: matchedProduct.price || "",
               sellingType: matchedProduct.sellingType || "",
-              taxType: matchedProduct.taxType || "",
+              // taxType: matchedProduct.taxType || "",
               discountType: matchedProduct.discountType || "",
               discountValue: matchedProduct.discountValue || "",
               stock: matchedProduct.stock || "",
@@ -292,6 +292,7 @@ const [modalMessage, setModalMessage] = useState({
     fetchData();
   }, [productId, storeId]);
 
+
   // handleSubmit for update 
   const handleSubmit = async (e) => {
   e.preventDefault();
@@ -301,24 +302,25 @@ const [modalMessage, setModalMessage] = useState({
       Id: formData.id,
       StoreId: formData.storeId,
       ProductName: formData.productName,
-      Slug: formData.slug,
+      // Slug: formData.slug,
       Sku: formData.sku,
-      SellingType: formData.sellingType,
+      // SellingType: formData.sellingType,
       CategoryId: formData.categoryId,
       SubcategoryId: formData.subcategoryId,
-      BrandId: formData.brandId,
+      // BrandId: formData.brandId,
       Unit: formData.unit,
       Barcode: formData.barcode,
       Description: formData.description,
       IsVariable: formData.isVariable,
       Price: formData.price,
-      TaxType: formData.taxType,
-      DiscountType: formData.discountType,
-      DiscountValue: formData.discountValue,
+      // TaxType: formData.taxType,
+      // DiscountType: formData.discountType,
+      // DiscountValue: formData.discountValue,
       stock: parseInt(formData.stock) || 0,
       QuantityAlert: formData.quantityAlert,
-      WarrantyType: formData.warrantyType,
-      Manufacturer: formData.manufacturer,
+      // WarrantyType: formData.warrantyType,
+      // Manufacturer: formData.manufacturer,
+      restock: formData.restock,
     };
     
     const response = await axios.post(
@@ -403,10 +405,10 @@ const [modalMessage, setModalMessage] = useState({
   //   { value: "code35", label: "Code35" },
   //   { value: "code36", label: "Code36" },
   // ];
-  const taxtype = [
-    { value: "GST", label: "GST" },
-    // { value: "salesTax", label: "Sales Tax" },
-  ];
+  // const taxtype = [
+  //   { value: "GST", label: "GST" },
+  //   // { value: "salesTax", label: "Sales Tax" },
+  // ];
   // const discounttype = [
   //   { value: "choose", label: "Choose" },
   //   { value: "percentage", label: "Percentage" },
@@ -487,7 +489,7 @@ const [modalMessage, setModalMessage] = useState({
                     >
                       <div className="accordion-body border-top">
                           <div className="row mb-3">
-    <div className="col-12">
+    {/* <div className="col-12">
       <div className="form-check">
         <input
           className="form-check-input"
@@ -506,7 +508,7 @@ const [modalMessage, setModalMessage] = useState({
           Restock
         </label>
       </div>
-    </div>
+    </div> */}
   </div>
                         {/* <div className="row">
                           <div className="col-sm-6 col-12">
@@ -738,6 +740,8 @@ const [modalMessage, setModalMessage] = useState({
                             </div>
                           </div>
                         </div>
+                        {formData.restock && (
+                              <>
                         <div className="row">
                           
                                 <div className="col-sm-6 col-12">
@@ -755,7 +759,7 @@ const [modalMessage, setModalMessage] = useState({
                                   </div>
                                 </div>
                                 
-                                <div className="col-sm-6 col-12">
+                                {/* <div className="col-sm-6 col-12">
                                   <div className="mb-3">
                                     <label className="form-label">
                                       Tax Type<span className="text-danger ms-1">*</span>
@@ -769,7 +773,7 @@ const [modalMessage, setModalMessage] = useState({
                                       onChange={(selectedOption) => handleSelectChange(selectedOption, "taxType")}
                                     />
                                   </div>
-                                </div>
+                                </div> */}
                                 {/* <div
                                   className="col-sm-6 col-12" >
                                   <div className="mb-3">
@@ -841,7 +845,7 @@ const [modalMessage, setModalMessage] = useState({
                               </button> */}
                             </div>
                           </div>
-                              
+                            
                           {/* <div className="col-lg-6 col-sm-6 col-12">
                             <div className="mb-3">
                               <label className="form-label">
@@ -858,6 +862,8 @@ const [modalMessage, setModalMessage] = useState({
                           </div> */}
                          
                         </div>
+                        </>
+)}
                         {/* Editor */}
                         <div className="col-lg-12">
                           <div className="summer-description-box">
@@ -1208,7 +1214,7 @@ const [modalMessage, setModalMessage] = useState({
                         </div>
                       </div>
                     </div>
-                  </div> */}
+                  </div>  */}
                   {/* Images Section */}
                   {/* <div className="accordion-item border mb-4">
                     <h2 className="accordion-header" id="headingSpacingThree">
@@ -1303,9 +1309,9 @@ const [modalMessage, setModalMessage] = useState({
                         </div>
                       </div>
                     </div>
-                  </div>  */}
+                  </div> */}
                   {/* Custom fields section */}
-                  {/* <div className="accordion-item border mb-4">
+                 {/* <div className="accordion-item border mb-4">
                     <h2 className="accordion-header" id="headingSpacingFour">
                       <div
                         className="accordion-button collapsed bg-white"
@@ -1456,7 +1462,7 @@ const [modalMessage, setModalMessage] = useState({
                         </div>
                       </div>
                     </div>
-                  </div> */}
+                  </div>  */}
                   <div className="col-lg-12">
                     <div className="btn-addproduct mb-4">
                       <button type="button" className="btn btn-cancel me-2"

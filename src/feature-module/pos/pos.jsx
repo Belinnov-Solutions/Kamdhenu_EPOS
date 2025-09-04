@@ -1,27 +1,35 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import Select from "react-select";
 import PosModals from "../../core/modals/pos-modal/posModals";
 import BrandForm from "./BrandForm";
-import TicketManagement from "./TicketManagement";
 import Accessories from "./accessories";
 import { useSelector } from "react-redux";
 import axios from "axios";
 import { useDispatch } from "react-redux";
-import { customerAdded } from "../../core/redux/customerSlice";
 import "bootstrap/dist/js/bootstrap.bundle.min";
 import { selectCartItems } from "../../core/redux/accessoriesSlice";
 import { selectCartItems as selectPartItems } from "../../core/redux/partSlice";
 import { removeSelectedService } from "../../core/redux/serviceTypeSlice";
-
 import "./pos.css";
 import { clearTickets } from "../../core/redux/ticketSlice";
 import { resetCart } from "../../core/redux/partSlice";
-import { updateAccessoryQuantity } from "../../core/redux/accessoriesSlice";
-import { updatePartQuantity } from "../../core/redux/partSlice";
+import {
+  updateAccessoryQuantity,
+  addOrUpdateCartItem as addAccessoryToCart,
+} from "../../core/redux/accessoriesSlice";
+import {
+  updatePartQuantity,
+  addOrUpdateCartItem as addPartToCart,
+} from "../../core/redux/partSlice";
 import CartCounter from "../../core/common/counter/counter";
+import SearchSuggestions from "./SearchSuggestions";
+import OrderDetails from "./OrderDetails";
+import OrderList from "./OrderList";
 
 const Pos = () => {
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
   const BASE_URL = process.env.REACT_APP_BASEURL;
   const [hasItems, setHasItems] = useState(false);
   const [accessoriesNav, setAccessoriesNav] = useState({
@@ -56,7 +64,25 @@ const Pos = () => {
     { value: "1", label: "Walk in Customer" },
     ...(customerName ? [{ value: "current", label: customerName }] : []),
   ]);
+  const [searchText, setSearchText] = useState("");
+  const [products, setProducts] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
 
+  // Memoized filtered products based on search text
+  const filteredProducts = useMemo(() => {
+    if (!searchText.trim()) return [];
+
+    const query = searchText.trim().toLowerCase();
+    return products.filter(
+      (product) =>
+        product.barcode?.toLowerCase().includes(query) ||
+        product.productName?.toLowerCase().includes(query) ||
+        product.sku?.toLowerCase().includes(query)
+    );
+  }, [products, searchText]);
+
+  // Check if cart has items
   useEffect(() => {
     setHasItems(
       ticketData.ticketItems?.length > 0 ||
@@ -66,6 +92,7 @@ const Pos = () => {
     );
   }, [ticketData.ticketItems, selectedServices, orderItems, partItems]);
 
+  // Event listeners for POS page
   useEffect(() => {
     const handleClick = (event) => {
       if (!event.target.closest(".product-info")) return;
@@ -97,6 +124,7 @@ const Pos = () => {
     };
   }, [Location.pathname, showAlert1]);
 
+  // Fetch customers
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -119,6 +147,7 @@ const Pos = () => {
     fetchCustomers();
   }, []);
 
+  // Update customers list
   useEffect(() => {
     setCustomers([
       { value: "1", label: "Walk in Customer" },
@@ -127,61 +156,92 @@ const Pos = () => {
     ]);
   }, [apiCustomers, customerName]);
 
-  const [selectedCustomer, setSelectedCustomer] = useState(
+  const [setSelectedCustomer] = useState(
     customerName
       ? { value: "current", label: customerName }
       : { value: "1", label: "Walk in Customer" }
   );
-  const handleQuantityChange = (productId, newQuantity) => {
-    // Find the item in accessories or parts and update its quantity
-    const accessoryItem = orderItems.find((item) => item.id === productId);
-    const partItem = partItems.find((item) => item.id === productId);
 
-    if (accessoryItem) {
-      // Update accessory quantity
-      dispatch(
-        updateAccessoryQuantity({ id: productId, quantity: newQuantity })
-      );
-    } else if (partItem) {
-      // Update part quantity
-      dispatch(updatePartQuantity({ id: productId, quantity: newQuantity }));
-    }
-  };
-  const handleCustomerCreated = (newCustomer) => {
-    const newCustomerOption = {
-      value: Date.now().toString(),
-      label: newCustomer.fullName || newCustomer.customerName,
+  // Fetch products
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}api/v1/Product/GetProducts`, {
+          params: { storeId },
+        });
+        if (res.data && res.data.data) {
+          setProducts(res.data.data);
+        }
+        console.log(res);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      }
     };
-    setCustomers([...customers, newCustomerOption]);
-    setSelectedCustomer(newCustomerOption);
-  };
 
-  const handleTabChange = (tab) => {
-    if (tab === "accessories") {
-      setAccessoriesNav({
-        currentView: "categories",
-        currentCategory: null,
-      });
-      setSelectedSubCategory(null);
-      setShowOrderList(false);
-    } else {
-      setShowOrderList(false);
-    }
-    if (tab !== "Mobiles" && tab !== "Tablet") {
+    fetchProducts();
+  }, [storeId]);
+
+  // Handle quantity change
+  const handleQuantityChange = useCallback(
+    (productId, newQuantity) => {
+      const accessoryItem = orderItems.find((item) => item.id === productId);
+      const partItem = partItems.find((item) => item.id === productId);
+
+      if (accessoryItem) {
+        dispatch(
+          updateAccessoryQuantity({ id: productId, quantity: newQuantity })
+        );
+      } else if (partItem) {
+        dispatch(updatePartQuantity({ id: productId, quantity: newQuantity }));
+      }
+    },
+    [dispatch, orderItems, partItems]
+  );
+
+  // Handle customer creation
+  const handleCustomerCreated = useCallback(
+    (newCustomer) => {
+      const newCustomerOption = {
+        value: Date.now().toString(),
+        label: newCustomer.fullName || newCustomer.customerName,
+      };
+      setCustomers([...customers, newCustomerOption]);
+      setSelectedCustomer(newCustomerOption);
+    },
+    [customers]
+  );
+
+  // Handle tab change
+  const handleTabChange = useCallback(
+    (tab) => {
+      if (tab === "accessories") {
+        setAccessoriesNav({
+          currentView: "categories",
+          currentCategory: null,
+        });
+        setSelectedSubCategory(null);
+        setShowOrderList(false);
+      } else {
+        setShowOrderList(false);
+      }
+      if (tab !== "Mobiles" && tab !== "Tablet") {
+        setShowBrandForm(false);
+        setSelectedBrand(null);
+        dispatch(removeSelectedService());
+      }
+
+      setActiveTab(tab);
       setShowBrandForm(false);
-      setSelectedBrand(null);
-      dispatch(removeSelectedService());
-    }
+      if (tab !== "ticketmanagement") {
+        dispatch(clearTickets());
+        dispatch(resetCart());
+      }
+    },
+    [dispatch]
+  );
 
-    setActiveTab(tab);
-    setShowBrandForm(false);
-    if (tab !== "ticketmanagement") {
-      dispatch(clearTickets());
-      dispatch(resetCart());
-    }
-  };
-
-  const handleBackClick = () => {
+  // Handle back click
+  const handleBackClick = useCallback(() => {
     if (activeTab === "accessories") {
       if (accessoriesNav.currentView === "products") {
         setAccessoriesNav({
@@ -203,28 +263,99 @@ const Pos = () => {
       setShowBrandForm(false);
       setShowOrderList(false);
     }
-  };
+  }, [activeTab, accessoriesNav]);
 
-  const handleCustomerSelect = (selectedOption) => {
-    setSelectedCustomer(selectedOption);
+  // Add product to cart
+  const addProductToCart = useCallback(
+    (product) => {
+      const productData = {
+        id: product.id,
+        name:
+          product.productName ||
+          product.subCategoryName ||
+          product.ProductName ||
+          product.name ||
+          "",
+        price: product.price,
+        quantity: 1,
+        product,
+      };
 
-    if (selectedOption && selectedOption.value !== "1") {
-      dispatch(
-        customerAdded({
-          customerId: selectedOption.value,
-          customerName: selectedOption.label,
-          phone: selectedOption.phone || "",
-          email: selectedOption.email || "",
-          address: selectedOption.address || "",
-          city: selectedOption.city || "",
-          state: selectedOption.state || "",
-          country: selectedOption.country || "",
-          zipcode: selectedOption.zipcode || "",
-        })
-      );
-    }
-  };
+      // Determine if it's an accessory or part based on some logic
+      // This might need adjustment based on your actual data structure
+      const isAccessory = product.categoryType === "accessory"; // Adjust this condition
 
+      if (isAccessory) {
+        dispatch(addAccessoryToCart(productData));
+      } else {
+        dispatch(addPartToCart(productData));
+      }
+
+      setSearchText("");
+      setShowSuggestions(false);
+    },
+    [dispatch]
+  );
+
+  // Handle search input change
+  const handleSearchChange = useCallback((e) => {
+    const value = e.target.value;
+    setSearchText(value);
+    setShowSuggestions(value.length > 0);
+    setIsScanning(value.length > 0 && /^\d+$/.test(value)); // Assume scanning if only digits
+  }, []);
+
+  // Handle search with Enter key or barcode scan
+  const handleSearchEnter = useCallback(
+    (e) => {
+      if (e.key === "Enter" && searchText.trim()) {
+        const query = searchText.trim().toLowerCase();
+
+        // First try exact barcode match
+        let foundProduct = products.find(
+          (p) => p.barcode?.toLowerCase() === query
+        );
+
+        // If no barcode match, try product name
+        if (!foundProduct) {
+          foundProduct = products.find(
+            (p) => p.productName?.toLowerCase() === query
+          );
+        }
+
+        // If still not found, try partial match
+        if (!foundProduct) {
+          foundProduct = products.find((p) =>
+            p.productName?.toLowerCase().includes(query)
+          );
+        }
+
+        if (foundProduct) {
+          addProductToCart(foundProduct);
+        } else {
+          alert("No product found!");
+        }
+      }
+    },
+    [searchText, products, addProductToCart]
+  );
+
+  // Handle suggestion selection
+  const handleSuggestionSelect = useCallback(
+    (product) => {
+      addProductToCart(product);
+    },
+    [addProductToCart]
+  );
+
+  // Handle input blur (hide suggestions after a short delay)
+  const handleInputBlur = useCallback(() => {
+    setTimeout(() => {
+      setShowSuggestions(false);
+    }, 200);
+  }, []);
+
+  // Fetch order details
   useEffect(() => {
     const { repairOrderId, ticketId } = repairData;
 
@@ -276,8 +407,27 @@ const Pos = () => {
     } else {
       setLoading(false);
     }
-  }, [repairData]);
+  }, [repairData, storeId]);
+  // Normalize an item's display name, regardless of how slices stored it
+  const resolveItemName = useCallback(
+    (item) =>
+      item?.name ||
+      item?.productName ||
+      item?.subCategoryName ||
+      item?.product?.productName ||
+      item?.product?.subCategoryName ||
+      item?.productname ||
+      item?.product?.productname ||
+      item?.sku ||
+      "Unnamed",
+    []
+  );
 
+  const handleViewOrder = (order) => {
+    setSelectedOrder(order);
+    setShowOrderDetails(true);
+    setActiveTab("orderlist"); // Switch to the orderlist tab
+  };
   return (
     <div className="main-wrapper pos-five">
       <div className="page-wrapper pos-pg-wrapper ms-0">
@@ -373,18 +523,42 @@ const Pos = () => {
                               <div className="customer-info block-section">
                                 <h5 className="mb-2">Search</h5>
                                 <div className="d-flex align-items-center gap-2">
-                                  <div className="flex-grow-1">
+                                  <div className="flex-grow-1 position-relative">
                                     {loading ? (
                                       <div>Loading product...</div>
                                     ) : (
-                                      <Select
-                                        options={customers}
-                                        classNamePrefix="react-select select"
-                                        placeholder="Choose a Name"
-                                        value={selectedCustomer}
-                                        onChange={handleCustomerSelect}
-                                        isLoading={loading}
-                                      />
+                                      <>
+                                        <input
+                                          type="text"
+                                          className="form-control"
+                                          placeholder="Scan barcode or type product name"
+                                          value={searchText}
+                                          onChange={handleSearchChange}
+                                          onKeyDown={handleSearchEnter}
+                                          onBlur={handleInputBlur}
+                                          onFocus={() =>
+                                            setShowSuggestions(
+                                              searchText.length > 0
+                                            )
+                                          }
+                                        />
+                                        {showSuggestions &&
+                                          filteredProducts.length > 0 && (
+                                            <SearchSuggestions
+                                              products={filteredProducts}
+                                              onSelect={handleSuggestionSelect}
+                                              searchText={searchText}
+                                              displayProperty="productName"
+                                            />
+                                          )}
+                                        {isScanning && (
+                                          <div className="position-absolute top-100 start-0 mt-1">
+                                            {/* <small className="text-muted">
+                                              Scanning... Press Enter to confirm
+                                            </small> */}
+                                          </div>
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                 </div>
@@ -496,7 +670,7 @@ const Pos = () => {
                                                           "ellipsis",
                                                       }}
                                                     >
-                                                      {item.name}
+                                                      {resolveItemName(item)}
                                                     </h6>
                                                   </div>
                                                 </td>
@@ -529,7 +703,8 @@ const Pos = () => {
                                                           "ellipsis",
                                                       }}
                                                     >
-                                                      {item.name}
+                                                      {resolveItemName(item)}{" "}
+                                                      {/* Fixed: Changed item.name to resolveItemName(item) */}
                                                     </h6>
                                                   </div>
                                                 </td>
@@ -540,6 +715,9 @@ const Pos = () => {
                                                       handleQuantityChange
                                                     }
                                                     productId={item.id}
+                                                    productName={resolveItemName(
+                                                      item
+                                                    )}
                                                     cartItems={orderItems}
                                                     className="mx-auto"
                                                   />
@@ -568,7 +746,8 @@ const Pos = () => {
                                                           "ellipsis",
                                                       }}
                                                     >
-                                                      {item.name}
+                                                      {resolveItemName(item)}{" "}
+                                                      {/* Fixed here too */}
                                                     </h6>
                                                   </div>
                                                 </td>
@@ -579,6 +758,9 @@ const Pos = () => {
                                                       handleQuantityChange
                                                     }
                                                     productId={item.id}
+                                                    productName={resolveItemName(
+                                                      item
+                                                    )}
                                                     cartItems={partItems}
                                                     className="mx-auto"
                                                   />
@@ -594,24 +776,38 @@ const Pos = () => {
                                           </>
                                         )}
 
-                                        {!ticketData.ticketItems?.length &&
-                                          selectedServices.length === 0 &&
-                                          orderItems.length === 0 &&
-                                          partItems.length === 0 && (
-                                            <tr>
-                                              <td
-                                                colSpan="3"
-                                                className="text-center py-4"
-                                              >
-                                                <div className="text-muted">
-                                                  <i className="ti ti-shopping-cart-off fs-4 mb-2"></i>
-                                                  <p className="mb-0">
-                                                    No items selected
-                                                  </p>
-                                                </div>
-                                              </td>
-                                            </tr>
-                                          )}
+                                        {selectedServices.map((item) => (
+                                          <tr key={`service-${item.id}`}>
+                                            <td
+                                              style={{
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                whiteSpace: "nowrap",
+                                              }}
+                                            >
+                                              <div className="d-flex align-items-center">
+                                                <h6
+                                                  className="fs-13 fw-normal m-0"
+                                                  style={{
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                  }}
+                                                >
+                                                  {resolveItemName(item)}{" "}
+                                                  {/* Fixed here too */}
+                                                </h6>
+                                              </div>
+                                            </td>
+                                            <td className="text-center">
+                                              <span className="badge bg-secondary">
+                                                1
+                                              </span>
+                                            </td>
+                                            <td className="fs-13 fw-semibold text-gray-9 text-end">
+                                              ₹{item.price}
+                                            </td>
+                                          </tr>
+                                        ))}
                                       </tbody>
                                     </table>
                                   </div>
@@ -691,7 +887,7 @@ const Pos = () => {
                               setAccessoriesNav({
                                 currentView: "subcategories",
                                 currentCategory: categoryId,
-                              });
+                              });   
                               setShowOrderList(true);
                             }}
                             selectedSubCategory={selectedSubCategory}
@@ -713,7 +909,6 @@ const Pos = () => {
                             showOrderList={showOrderList}
                           />
                         </div>
-
                         <div
                           className={`tab_content ${
                             activeTab === "ticketmanagement" ? "active" : ""
@@ -726,16 +921,31 @@ const Pos = () => {
                           }}
                           data-tab="ticketmanagement"
                         >
-                          <TicketManagement
+                          <OrderList
                             onNewTicketClick={() => handleTabChange("repairs")}
                             onViewTicket={(show) =>
                               setShowOrderList(show ?? true)
                             }
                             showOrderList={showOrderList}
                             activeTab={activeTab}
+                            onViewOrder={handleViewOrder} // Add this prop
                           />
                         </div>
-
+                        <div
+                          className={`tab_content ${
+                            activeTab === "orderlist" ? "active" : ""
+                          }`}
+                          data-tab="orderlist"
+                        >
+                          {showOrderDetails ? (
+                            <OrderDetails
+                              order={selectedOrder}
+                              onBack={() => setShowOrderDetails(false)}
+                            />
+                          ) : (
+                            <OrderList onViewOrder={handleViewOrder} /> // Add this prop
+                          )}
+                        </div>
                         <div
                           className={`tab_content ${
                             activeTab === "Tablet" ? "active" : ""
@@ -785,7 +995,7 @@ const Pos = () => {
                 data-bs-target={hasItems ? "#print-receipt" : undefined}
                 disabled={!hasItems}
               >
-                Submit & Print
+                Submit
               </Link>
             </div>
           </div>

@@ -10,7 +10,7 @@ import { useDispatch } from "react-redux";
 import { customerAdded } from "../../redux/customerSlice"; // Adjust the import path as necessary
 import { useSelector } from "react-redux";
 import { selectCartItems } from "../../redux/accessoriesSlice"; // Add this import
-import { selectSubCategories } from "../../redux/accessoriesSlice";
+// import { selectSubCategories } from "../../redux/accessoriesSlice";
 import "bootstrap/dist/js/bootstrap.bundle.min";
 import axios from "axios";
 import { selectCartItems as selectPartItems } from "../../redux/partSlice";
@@ -18,6 +18,21 @@ import { selectExtras, selectReportedIssues } from "../../redux/checklistSlice";
 import "./posModals.css";
 import { repairAdded } from "../../redux/repairSlice";
 const PosModals = ({ onCustomerCreated }) => {
+  // Add this function at the top of your PosModals component, before the component definition
+  const resolveItemName = (item) => {
+    return (
+      item?.name ||
+      item?.productName ||
+      item?.subCategoryName ||
+      item?.product?.productName ||
+      item?.product?.subCategoryName ||
+      item?.productname ||
+      item?.product?.productname ||
+      item?.taskTypeName ||
+      item?.sku ||
+      "Unnamed Product"
+    );
+  };
   const dispatch = useDispatch();
   const extras = useSelector(selectExtras);
   const reportedIssues = useSelector(selectReportedIssues);
@@ -31,7 +46,7 @@ const PosModals = ({ onCustomerCreated }) => {
   const orderItems = useSelector(selectCartItems);
   const [apiResponse, setApiResponse] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
-
+ const [showSuccessModal, setShowSuccessModal] = useState(false);
   const {
     customerId,
     customerName,
@@ -50,21 +65,36 @@ const PosModals = ({ onCustomerCreated }) => {
     address: userAddress,
   } = useSelector((state) => state.user);
   const { userId, storeId } = useSelector((state) => state.user);
-  const cartItems = useSelector(selectCartItems);
-  const productType = cartItems.length > 0 ? "Product" : "Service";
-  const parts = cartItems.map((item) => ({
-    productId: item.id,
-    subCategories: item.subcategoryId,
-    productName: item.name,
-    brandName: item.brand || "Generic", // Add default if brand isn't available
-    partDescription: item.description || "No description",
-    deviceType: "Mobile", // You might want to make this dynamic
-    deviceModel: item.model || "Generic", // Add default if model isn't available
-    serialNumber: item.serialNumber || "", // Add if available
-    quantity: item.quantity,
-    price: item.price,
-    productType: "Product",
-  }));
+  // const cartItems = useSelector(selectCartItems);
+  const hasProducts = orderItems.length > 0 || partItems.length > 0;
+  const productType = hasProducts ? "Product" : "Service";
+  //   ...orderItems.map((item) => ({
+  //     productId: item.id,
+  //     subcategoryid: item.subcategoryId,
+  //     productName: resolveItemName(item), // Use the same naming function
+  //     brandName: item.brand || "Generic",
+  //     partDescription: item.description || "No description",
+  //     deviceType: "Mobile",
+  //     deviceModel: item.model || "Generic",
+  //     serialNumber: item.serialNumber || "",
+  //     quantity: item.quantity,
+  //     price: item.price,
+  //     productType: "Product",
+  //   })),
+  //   ...partItems.map((item) => ({
+  //     productId: item.id,
+  //     subcategoryid: item.subcategoryId,
+  //     productName: resolveItemName(item), // Use the same naming function
+  //     brandName: item.brand || "Generic",
+  //     partDescription: item.description || "No description",
+  //     deviceType: "Mobile",
+  //     deviceModel: item.model || "Generic",
+  //     serialNumber: item.serialNumber || "",
+  //     quantity: item.quantity,
+  //     price: item.price,
+  //     productType: "Product",
+  //   })),
+  // ];
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -80,7 +110,7 @@ const PosModals = ({ onCustomerCreated }) => {
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
-  const subCategories = useSelector(selectSubCategories);
+  // const subCategories = useSelector(selectSubCategories);
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -168,7 +198,45 @@ const PosModals = ({ onCustomerCreated }) => {
     }
   };
   // end create customer
+  const calculateSubtotalBeforeTax = () => {
+    const ticketTotal =
+      ticketData.ticketItems?.reduce(
+        (total, item) => total + (item.serviceCharge || 0),
+        0
+      ) || 0;
 
+    const servicesTotal = selectedServices.reduce(
+      (total, item) => total + (item.price || 0),
+      0
+    );
+
+    const orderTotal = orderItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+
+    const partsTotal = partItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+
+    return ticketTotal + servicesTotal + orderTotal + partsTotal;
+  };
+
+  const calculateTaxAmount = () => {
+    const subtotalBeforeTax = calculateSubtotalBeforeTax();
+    // Assuming 18% tax rate - you can make this dynamic if needed
+    const taxRate = 0.18;
+    return subtotalBeforeTax * taxRate;
+  };
+
+  // Update calculateSubtotal to include tax
+  // const calculateSubtotal = () => {
+  //   const subtotalBeforeTax = calculateSubtotalBeforeTax();
+  //   const taxAmount = calculateTaxAmount();
+
+  //   return subtotalBeforeTax + taxAmount; // This is now total amount including tax
+  // };
   // Modify the handlePaymentSelection to do something with the selection
   const handlePaymentSelection = async (method) => {
     if (isProcessing) return;
@@ -257,6 +325,39 @@ const PosModals = ({ onCustomerCreated }) => {
 
         return responses;
       };
+
+      const parts = [
+        ...orderItems.map((item) => ({
+          productId: item.id,
+          subcategoryid: item.subcategoryId,
+          productName: resolveItemName(item),
+          brandName: item.brand || "Generic",
+          partDescription: item.description || "No description",
+          deviceType: "Mobile",
+          deviceModel: item.model || "Generic",
+          serialNumber: item.serialNumber || "",
+          quantity: item.quantity,
+          price: item.price,
+          productType: "Product",
+        })),
+        ...partItems.map((item) => ({
+          productId: item.id,
+          subcategoryid: item.subcategoryId,
+          productName: resolveItemName(item),
+          brandName: item.brand || "Generic",
+          partDescription: item.description || "No description",
+          deviceType: "Mobile",
+          deviceModel: item.model || "Generic",
+          serialNumber: item.serialNumber || "",
+          quantity: item.quantity,
+          price: item.price,
+          productType: "Product",
+        })),
+      ];
+
+      const subtotalBeforeTax = calculateSubtotalBeforeTax();
+      const taxAmount = calculateTaxAmount();
+      const totalAmount = subtotalBeforeTax + taxAmount;
       const payload = {
         repairOrderId: "00000000-0000-0000-0000-000000000000",
         orderNumber: "",
@@ -274,7 +375,7 @@ const PosModals = ({ onCustomerCreated }) => {
           ? new Date(firstRepairItem.dueDate).toISOString()
           : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         createdAt: new Date().toISOString(),
-        isFinalSubmit: productType === "Product" ? true : false,
+        isFinalSubmit: hasProducts ? true : false,
         // isFinalSubmit: false,
         productType: productType,
         tickets: {
@@ -316,7 +417,10 @@ const PosModals = ({ onCustomerCreated }) => {
           orderId: "",
           responses: prepareChecklistResponses(),
         },
-        totalAmount: calculateTotalPayable(),
+        totalAmount: totalAmount, // Final total including tax
+        SubTotal: subtotalBeforeTax, // Amount before tax
+        TaxAmount: taxAmount, // The tax amount that was added
+        // taxPercent: 18, // Tax percentage
       };
 
       // Make the API call
@@ -345,10 +449,7 @@ const PosModals = ({ onCustomerCreated }) => {
         modalInstance.hide();
 
         // Then show the success modal
-        const successModal = new window.bootstrap.Modal(
-          document.getElementById("order-success-modal")
-        );
-        successModal.show();
+        setShowSuccessModal(true);
       }
     } catch (error) {
       console.error("Error confirming order:", error);
@@ -383,423 +484,422 @@ const PosModals = ({ onCustomerCreated }) => {
   }
 
   // Main receipt printing function
-  const handlePrintReceipt = () => {
-    // Group items by subcategory
-    const itemsBySubcategory = {};
-    const allItems = [
-      ...(ticketData.ticketItems || []),
-      ...selectedServices,
-      ...orderItems,
-      ...partItems,
-    ];
+  // const handlePrintReceipt = () => {
+  //   // Group items by subcategory
+  //   const itemsBySubcategory = {};
+  //   const allItems = [
+  //     ...(ticketData.ticketItems || []),
+  //     ...selectedServices,
+  //     ...orderItems,
+  //     ...partItems,
+  //   ];
 
-    allItems.forEach((item) => {
-      const subcategoryId = item.subcategoryId || "uncategorized";
-      const subcategoryName =
-        subCategories.find((sub) => sub.id === item.subcategoryId)?.name ||
-        "Uncategorized";
+  //   allItems.forEach((item) => {
+  //     const subcategoryId = item.subcategoryId || "uncategorized";
+  //     const subcategoryName =
+  //       subCategories.find((sub) => sub.id === item.subcategoryId)?.name ||
+  //       "Uncategorized";
 
-      if (!itemsBySubcategory[subcategoryId]) {
-        itemsBySubcategory[subcategoryId] = {
-          subcategoryName,
-          items: [],
-        };
-      }
-      itemsBySubcategory[subcategoryId].items.push(item);
-    });
+  //     if (!itemsBySubcategory[subcategoryId]) {
+  //       itemsBySubcategory[subcategoryId] = {
+  //         subcategoryName,
+  //         items: [],
+  //       };
+  //     }
+  //     itemsBySubcategory[subcategoryId].items.push(item);
+  //   });
 
-    // Print main receipt first, then all subcategory summaries automatically
-    printMainReceipt(itemsBySubcategory)
-      .then(() => {
-        // Print all subcategory summaries sequentially without user interaction
-        return printSubcategorySummaries(itemsBySubcategory);
-      })
-      .then(() => {
-        // All printing is complete
-        console.log("All receipts printed successfully");
+  //   // Print main receipt first, then all subcategory summaries automatically
+  //   printMainReceipt(itemsBySubcategory)
+  //     .then(() => {
+  //       // Print all subcategory summaries sequentially without user interaction
+  //       return printSubcategorySummaries(itemsBySubcategory);
+  //     })
+  //     .then(() => {
+  //       // All printing is complete
+  //       console.log("All receipts printed successfully");
 
-        // Optionally close the modal after printing is done
-        const modalEl = document.getElementById("order-success-modal");
-        const modal = window.bootstrap.Modal.getInstance(modalEl);
-        if (modal) {
-          modal.hide();
-        }
+  //       // Optionally close the modal after printing is done
+  //       const modalEl = document.getElementById("order-success-modal");
+  //       const modal = window.bootstrap.Modal.getInstance(modalEl);
+  //       if (modal) {
+  //         modal.hide();
+  //       }
 
-        // Refresh the page after a delay if needed
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      })
-      .catch((error) => {
-        console.error("Error printing receipts:", error);
-      });
-  };
+  //       // Refresh the page after a delay if needed
+  //       setTimeout(() => {
+  //         window.location.reload();
+  //       }, 1000);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error printing receipts:", error);
+  //     });
+  // };
 
-  const printMainReceipt = (itemsBySubcategory) => {
-    return new Promise((resolve) => {
-      const iframe = createHiddenIframe();
-      const content = `
-        <html>
-            <head>
-                <title>Receipt</title>
-                <style>
-                    @page {
-                        size: 80mm auto;
-                        margin: 0;
-                    }
-                    body {
-                        font-family: Arial, sans-serif;
-                        width: 76mm;
-                        margin: 0 auto;
-                        padding: 2px;
-                        font-size: 12px;
-                        -webkit-print-color-adjust: exact;
-                    }
-                    .store-info {
-                        text-align: center;
-                        margin-bottom: 3px;
-                    }
-                    .store-name {
-                        font-weight: bold;
-                        text-transform: uppercase;
-                        margin-bottom: 1px;
-                        font-size: 13px;
-                    }
-                    .store-details {
-                        margin: 1px 0;
-                        font-size: 10px;
-                    }
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        font-size: 11px;
-                    }
-                    hr {
-                        border: 0;
-                        border-top: 1px dashed #000;
-                        margin: 2px 0;
-                    }
-                    .text-right {
-                        text-align: right;
-                    }
-                    .fw-bold {
-                        font-weight: bold;
-                    }
-                    th, td {
-                      padding: 1px 0;   
-                  }    
-                </style>
-            </head>
-            <body>
-                <div class="store-info">
-                    <div class="store-name">${
-                      storeName || "DOMN/DOWN PIZZA STORE"
-                    }</div>
-                    <div class="store-details">${
-                      userAddress || "PLACE: 978-8-7779-1-0"
-                    }</div>
-                    <div class="store-details">Phone: ${
-                      userPhone || "80686677-6"
-                    }</div>
-                    <div class="store-details">Email: ${
-                      userEmail || "admin@pizza@example.com"
-                    }</div>
-                </div>
-                <hr>
-                
-                <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
-                    <tbody>
-                        <tr>
-                            <td style="padding: 1px 0;">
-                                <strong>Customer:</strong> ${
-                                  customerName || "Walk in"
-                                }
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 1px 0;">
-                                <strong>Order #:</strong> ${
-                                  apiResponse?.orderNumber || "OPD.354905023"
-                                }
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 1px 0;">
-                                <strong>Date:</strong> ${new Date().toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month: "2-digit",
-                                    day: "2-digit",
-                                    year: "numeric",
-                                  }
-                                )}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <hr>
-                
-                <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
-                    <thead>
-                        <tr>
-                            <th style="text-align: left; padding: 2px 0; border-bottom: 1px dashed #000;">ITEM</th>
-                            <th style="text-align: right; padding: 2px 0; border-bottom: 1px dashed #000;">PRICE</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${Object.values(itemsBySubcategory)
-                          .map((categoryData) =>
-                            categoryData.items
-                              .map(
-                                (item) => `
-                                <tr>
-                                    <td style="padding: 2px 0;">${
-                                      item.quantity ? `${item.quantity} x ` : ""
-                                    }${item.name || item.taskTypeName}</td>
-                                    <td style="text-align: right; padding: 2px 0;">₹${(
-                                      item.price * (item.quantity || 1)
-                                    ).toFixed(2)}</td>
-                                </tr>
-                            `
-                              )
-                              .join("")
-                          )
-                          .join("")}
-                    </tbody>
-                </table>
-                
-                <hr>
-                
-                <table style="width: 100%; font-size: 14px; margin: 4px 0;">
-                    <tbody>
-                        <tr>
-                            <td style="padding: 2px 0;">SUBTOTAL</td>
-                            <td style="text-align: right; padding: 2px 0;">₹${calculateSubtotal()?.toFixed(
-                              2
-                            )}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 2px 0;">TAX (3%)</td>
-                            <td style="text-align: right; padding: 2px 0;">₹${calculateTax()?.toFixed(
-                              2
-                            )}</td>
-                        </tr>
-                        <tr style="font-weight: bold;">
-                            <td style="padding: 2px 0;">TOTAL</td>
-                            <td style="text-align: right; padding: 2px 0;">₹${calculateTotalPayable()?.toFixed(
-                              2
-                            )}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <hr>
-                
-                <div style="text-align: center; font-size: 14px;">
-                    <div style="font-weight: bold; margin-bottom: 2px;">CUSTOMER COPY</div>
-                    <div>THANK YOU FOR VISITING</div>
-                    <div style="font-weight: bold;">${
-                      storeName || "DOMN/DOWN PIZZA STORE"
-                    }</div>
-                </div>
-                
-                <script>
-                    setTimeout(() => {
-                        window.print();
-                        setTimeout(() => {
-                            window.parent.postMessage('mainReceiptPrinted', '*');
-                            window.close();
-                        }, 100);
-                    }, 200);
-                </script>
-            </body>
-        </html>
-        `;
+  //   const printMainReceipt = (itemsBySubcategory) => {
+  //     return new Promise((resolve) => {
+  //       const iframe = createHiddenIframe();
+  //       const content = `
+  //         <html>
+  //             <head>
+  //                 <title>Receipt</title>
+  //                 <style>
+  //                     @page {
+  //                         size: 80mm auto;
+  //                         margin: 0;
+  //                     }
+  //                     body {
+  //                         font-family: Arial, sans-serif;
+  //                         width: 76mm;
+  //                         margin: 0 auto;
+  //                         padding: 2px;
+  //                         font-size: 12px;
+  //                         -webkit-print-color-adjust: exact;
+  //                     }
+  //                     .store-info {
+  //                         text-align: center;
+  //                         margin-bottom: 3px;
+  //                     }
+  //                     .store-name {
+  //                         font-weight: bold;
+  //                         text-transform: uppercase;
+  //                         margin-bottom: 1px;
+  //                         font-size: 13px;
+  //                     }
+  //                     .store-details {
+  //                         margin: 1px 0;
+  //                         font-size: 10px;
+  //                     }
+  //                     table {
+  //                         width: 100%;
+  //                         border-collapse: collapse;
+  //                         font-size: 11px;
+  //                     }
+  //                     hr {
+  //                         border: 0;
+  //                         border-top: 1px dashed #000;
+  //                         margin: 2px 0;
+  //                     }
+  //                     .text-right {
+  //                         text-align: right;
+  //                     }
+  //                     .fw-bold {
+  //                         font-weight: bold;
+  //                     }
+  //                     th, td {
+  //                       padding: 1px 0;
+  //                   }
+  //                 </style>
+  //             </head>
+  //             <body>
+  //                 <div class="store-info">
+  //                     <div class="store-name">${
+  //                       storeName || "DOMN/DOWN PIZZA STORE"
+  //                     }</div>
+  //                     <div class="store-details">${
+  //                       userAddress || "PLACE: 978-8-7779-1-0"
+  //                     }</div>
+  //                     <div class="store-details">Phone: ${
+  //                       userPhone || "80686677-6"
+  //                     }</div>
+  //                     <div class="store-details">Email: ${
+  //                       userEmail || "admin@pizza@example.com"
+  //                     }</div>
+  //                 </div>
+  //                 <hr>
 
-      document.body.appendChild(iframe);
-      const iframeDoc = iframe.contentDocument;
-      iframeDoc.open();
-      iframeDoc.write(content);
-      iframeDoc.close();
+  //                 <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
+  //                     <tbody>
+  //                         <tr>
+  //                             <td style="padding: 1px 0;">
+  //                                 <strong>Customer:</strong> ${
+  //                                   customerName || "Walk in"
+  //                                 }
+  //                             </td>
+  //                         </tr>
+  //                         <tr>
+  //                             <td style="padding: 1px 0;">
+  //                                 <strong>Order #:</strong> ${
+  //                                   apiResponse?.orderNumber || "OPD.354905023"
+  //                                 }
+  //                             </td>
+  //                         </tr>
+  //                         <tr>
+  //                             <td style="padding: 1px 0;">
+  //                                 <strong>Date:</strong> ${new Date().toLocaleDateString(
+  //                                   "en-US",
+  //                                   {
+  //                                     month: "2-digit",
+  //                                     day: "2-digit",
+  //                                     year: "numeric",
+  //                                   }
+  //                                 )}
+  //                             </td>
+  //                         </tr>
+  //                     </tbody>
+  //                 </table>
 
-      const messageHandler = (e) => {
-        if (e.data === "mainReceiptPrinted") {
-          window.removeEventListener("message", messageHandler);
-          document.body.removeChild(iframe);
-          resolve();
-        }
-      };
-      window.addEventListener("message", messageHandler);
-    });
-  };
+  //                 <hr>
 
-  const printSubcategorySummaries = (itemsBySubcategory) => {
-    return new Promise((resolve) => {
-      const subcategories = Object.values(itemsBySubcategory);
-      let currentIndex = 0;
+  //                 <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
+  //                     <thead>
+  //                         <tr>
+  //                             <th style="text-align: left; padding: 2px 0; border-bottom: 1px dashed #000;">ITEM</th>
+  //                             <th style="text-align: right; padding: 2px 0; border-bottom: 1px dashed #000;">PRICE</th>
+  //                         </tr>
+  //                     </thead>
+  //                     <tbody>
 
-      const printNextSubcategory = () => {
-        if (currentIndex >= subcategories.length) {
-          resolve(); // All subcategories printed
-          return;
-        }
+  // ${Object.values(itemsBySubcategory)
+  //   .map((categoryData) =>
+  //     categoryData.items
+  //       .map(
+  //         (item) => `
+  //         <tr>
+  //             <td style="padding: 2px 0;">${
+  //               item.quantity ? `${item.quantity} x ` : ""
+  //             }${resolveItemName(item)}</td>
+  //             <td style="text-align: right; padding: 2px 0;">₹${(
+  //               item.price * (item.quantity || 1)
+  //             ).toFixed(2)}</td>
+  //         </tr>
+  //     `
+  //       )
+  //       .join("")
+  //   )
+  //   .join("")}
+  //                     </tbody>
+  //                 </table>
 
-        const subcategoryData = subcategories[currentIndex];
-        const iframe = createHiddenIframe();
+  //                 <hr>
 
-        const content = `
-        <html>
-          <head>
-            <title>${subcategoryData.subcategoryName} Summary</title>
-            <style>
-              @page {
-                size: 80mm auto;
-                margin: 0;
-              }
-              body {
-                font-family: Arial, sans-serif;
-                width: 76mm;
-                margin: 0 auto;
-                padding: 5px;
-                font-size: 11px;
-                -webkit-print-color-adjust: exact;
-              }
-              .subcategory-header {
-                font-weight: bold;
-                text-transform: uppercase;
-                margin: 8px 0 4px 0;
-                background-color: #f5f5f5;
-                padding: 2px;
-                text-align: center;
-              }
-              .store-name {
-                text-align: center;
-                font-weight: bold;
-                margin-bottom: 4px;
-              }
-            </style>
-          </head>
-          <body>
-            <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
-              <tbody>
-                <tr>
-                  <td style="padding: 1px 0;">
-                    <strong>Customer:</strong> ${customerName || "Walk in"}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 1px 0;">
-                    <strong>Order #:</strong> ${
-                      apiResponse?.orderNumber || "OPD.354905023"
-                    }
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 1px 0;">
-                    <strong>Date:</strong> ${new Date().toLocaleDateString(
-                      "en-US",
-                      {
-                        month: "2-digit",
-                        day: "2-digit",
-                        year: "numeric",
-                      }
-                    )}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            
-            <hr>
-            
-            <div class="subcategory-header">${
-              subcategoryData.subcategoryName
-            }</div>
-            
-            <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
-              <thead>
-                <tr>
-                  <th style="text-align: left; padding: 2px 0; border-bottom: 1px dashed #000;">ITEM</th>
-                  <th style="text-align: right; padding: 2px 0; border-bottom: 1px dashed #000;">QTY</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${subcategoryData.items
-                  .map(
-                    (item) => `
-                    <tr>
-                      <td style="padding: 2px 0;">${
-                        item.name || item.taskTypeName
-                      }</td>
-                      <td style="text-align: right; padding: 2px 0;">${
-                        item.quantity || "1"
-                      }</td>
-                    </tr>
-                  `
-                  )
-                  .join("")}
-              </tbody>
-            </table>
-            
-            <hr>
-            
-            <div style="text-align: center; font-size: 14px; margin-top: 10px;">
-              <div>${subcategoryData.subcategoryName} ITEMS: ${
-          subcategoryData.items.length
-        }</div>
-              <div style="font-weight: bold;">${
-                storeName || "DOMN/DOWN PIZZA STORE"
-              }</div>
-            </div>
-            
-            <script>
-              // Automatically trigger printing without user interaction
-              setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                  // Signal that this subcategory is done printing
-                  window.parent.postMessage('subcategoryPrinted', '*');
-                }, 500);
-              }, 200);
-            </script>
-          </body>
-        </html>
-      `;
+  //                 <table style="width: 100%; font-size: 14px; margin: 4px 0;">
+  //                     <tbody>
+  //                         <tr>
+  //                             <td style="padding: 2px 0;">SUBTOTAL</td>
+  //                             <td style="text-align: right; padding: 2px 0;">₹${calculateSubtotal()?.toFixed(
+  //                               2
+  //                             )}</td>
+  //                         </tr>
+  //                         <tr>
+  //                             <td style="padding: 2px 0;">TAX (3%)</td>
+  //                             <td style="text-align: right; padding: 2px 0;">₹${calculateTax()?.toFixed(
+  //                               2
+  //                             )}</td>
+  //                         </tr>
+  //                         <tr style="font-weight: bold;">
+  //                             <td style="padding: 2px 0;">TOTAL</td>
+  //                             <td style="text-align: right; padding: 2px 0;">₹${calculateTotalPayable()?.toFixed(
+  //                               2
+  //                             )}</td>
+  //                         </tr>
+  //                     </tbody>
+  //                 </table>
 
-        document.body.appendChild(iframe);
-        const iframeDoc = iframe.contentDocument;
-        iframeDoc.open();
-        iframeDoc.write(content);
-        iframeDoc.close();
+  //                 <hr>
 
-        const messageHandler = (e) => {
-          if (e.data === "subcategoryPrinted") {
-            window.removeEventListener("message", messageHandler);
-            document.body.removeChild(iframe);
-            currentIndex++;
-            // Immediately print the next subcategory
-            printNextSubcategory();
-          }
-        };
+  //                 <div style="text-align: center; font-size: 14px;">
+  //                     <div style="font-weight: bold; margin-bottom: 2px;">CUSTOMER COPY</div>
+  //                     <div>THANK YOU FOR VISITING</div>
+  //                     <div style="font-weight: bold;">${
+  //                       storeName || "DOMN/DOWN PIZZA STORE"
+  //                     }</div>
+  //                 </div>
 
-        window.addEventListener("message", messageHandler);
-      };
+  //                 <script>
+  //                     setTimeout(() => {
+  //                         window.print();
+  //                         setTimeout(() => {
+  //                             window.parent.postMessage('mainReceiptPrinted', '*');
+  //                             window.close();
+  //                         }, 100);
+  //                     }, 200);
+  //                 </script>
+  //             </body>
+  //         </html>
+  //         `;
 
-      // Start the printing process
-      printNextSubcategory();
-    });
-  };
-  // Helper function to create hidden iframe
-  const createHiddenIframe = () => {
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "absolute";
-    iframe.style.left = "-9999px";
-    iframe.style.top = "0";
-    iframe.style.width = "80mm";
-    iframe.style.height = "100%";
-    iframe.style.border = "none";
-    return iframe;
-  };
+  //       document.body.appendChild(iframe);
+  //       const iframeDoc = iframe.contentDocument;
+  //       iframeDoc.open();
+  //       iframeDoc.write(content);
+  //       iframeDoc.close();
+
+  //       const messageHandler = (e) => {
+  //         if (e.data === "mainReceiptPrinted") {
+  //           window.removeEventListener("message", messageHandler);
+  //           document.body.removeChild(iframe);
+  //           resolve();
+  //         }
+  //       };
+  //       window.addEventListener("message", messageHandler);
+  //     });
+  //   };
+
+  //   const printSubcategorySummaries = (itemsBySubcategory) => {
+  //     return new Promise((resolve) => {
+  //       const subcategories = Object.values(itemsBySubcategory);
+  //       let currentIndex = 0;
+
+  //       const printNextSubcategory = () => {
+  //         if (currentIndex >= subcategories.length) {
+  //           resolve(); // All subcategories printed
+  //           return;
+  //         }
+
+  //         const subcategoryData = subcategories[currentIndex];
+  //         const iframe = createHiddenIframe();
+
+  //         const content = `
+  //         <html>
+  //           <head>
+  //             <title>${subcategoryData.subcategoryName} Summary</title>
+  //             <style>
+  //               @page {
+  //                 size: 80mm auto;
+  //                 margin: 0;
+  //               }
+  //               body {
+  //                 font-family: Arial, sans-serif;
+  //                 width: 76mm;
+  //                 margin: 0 auto;
+  //                 padding: 5px;
+  //                 font-size: 11px;
+  //                 -webkit-print-color-adjust: exact;
+  //               }
+  //               .subcategory-header {
+  //                 font-weight: bold;
+  //                 text-transform: uppercase;
+  //                 margin: 8px 0 4px 0;
+  //                 background-color: #f5f5f5;
+  //                 padding: 2px;
+  //                 text-align: center;
+  //               }
+  //               .store-name {
+  //                 text-align: center;
+  //                 font-weight: bold;
+  //                 margin-bottom: 4px;
+  //               }
+  //             </style>
+  //           </head>
+  //           <body>
+  //             <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
+  //               <tbody>
+  //                 <tr>
+  //                   <td style="padding: 1px 0;">
+  //                     <strong>Customer:</strong> ${customerName || "Walk in"}
+  //                   </td>
+  //                 </tr>
+  //                 <tr>
+  //                   <td style="padding: 1px 0;">
+  //                     <strong>Order #:</strong> ${
+  //                       apiResponse?.orderNumber || "OPD.354905023"
+  //                     }
+  //                   </td>
+  //                 </tr>
+  //                 <tr>
+  //                   <td style="padding: 1px 0;">
+  //                     <strong>Date:</strong> ${new Date().toLocaleDateString(
+  //                       "en-US",
+  //                       {
+  //                         month: "2-digit",
+  //                         day: "2-digit",
+  //                         year: "numeric",
+  //                       }
+  //                     )}
+  //                   </td>
+  //                 </tr>
+  //               </tbody>
+  //             </table>
+
+  //             <hr>
+
+  //             <div class="subcategory-header">${
+  //               subcategoryData.subcategoryName
+  //             }</div>
+
+  //             <table style="width: 100%; font-size: 14px; margin-bottom: 4px;">
+  //               <thead>
+  //                 <tr>
+  //                   <th style="text-align: left; padding: 2px 0; border-bottom: 1px dashed #000;">ITEM</th>
+  //                   <th style="text-align: right; padding: 2px 0; border-bottom: 1px dashed #000;">QTY</th>
+  //                 </tr>
+  //               </thead>
+  //               <tbody>
+  // ${subcategoryData.items
+  //   .map(
+  //     (item) => `
+  //     <tr>
+  //       <td style="padding: 2px 0;">${resolveItemName(item)}</td>
+  //       <td style="text-align: right; padding: 2px 0;">${
+  //         item.quantity || "1"
+  //       }</td>
+  //     </tr>
+  //   `
+  //   )
+  //   .join("")}
+  //               </tbody>
+  //             </table>
+
+  //             <hr>
+
+  //             <div style="text-align: center; font-size: 14px; margin-top: 10px;">
+  //               <div>${subcategoryData.subcategoryName} ITEMS: ${
+  //           subcategoryData.items.length
+  //         }</div>
+  //               <div style="font-weight: bold;">${
+  //                 storeName || "DOMN/DOWN PIZZA STORE"
+  //               }</div>
+  //             </div>
+
+  //             <script>
+  //               // Automatically trigger printing without user interaction
+  //               setTimeout(() => {
+  //                 window.print();
+  //                 setTimeout(() => {
+  //                   // Signal that this subcategory is done printing
+  //                   window.parent.postMessage('subcategoryPrinted', '*');
+  //                 }, 500);
+  //               }, 200);
+  //             </script>
+  //           </body>
+  //         </html>
+  //       `;
+
+  //         document.body.appendChild(iframe);
+  //         const iframeDoc = iframe.contentDocument;
+  //         iframeDoc.open();
+  //         iframeDoc.write(content);
+  //         iframeDoc.close();
+
+  //         const messageHandler = (e) => {
+  //           if (e.data === "subcategoryPrinted") {
+  //             window.removeEventListener("message", messageHandler);
+  //             document.body.removeChild(iframe);
+  //             currentIndex++;
+  //             // Immediately print the next subcategory
+  //             printNextSubcategory();
+  //           }
+  //         };
+
+  //         window.addEventListener("message", messageHandler);
+  //       };
+
+  //       // Start the printing process
+  //       printNextSubcategory();
+  //     });
+  //   };
+  //   // Helper function to create hidden iframe
+  //   const createHiddenIframe = () => {
+  //     const iframe = document.createElement("iframe");
+  //     iframe.style.position = "absolute";
+  //     iframe.style.left = "-9999px";
+  //     iframe.style.top = "0";
+  //     iframe.style.width = "80mm";
+  //     iframe.style.height = "100%";
+  //     iframe.style.border = "none";
+  //     return iframe;
+  //   };
 
   // In your success modal button, update to call handlePrintReceipt directly:
 
@@ -848,40 +948,40 @@ const PosModals = ({ onCustomerCreated }) => {
       { value: "points", label: "Points" },
     ],
   };
-  const calculateSubtotal = () => {
-    const ticketTotal =
-      ticketData.ticketItems?.reduce(
-        (total, item) => total + (item.serviceCharge || 0),
-        0
-      ) || 0;
+  // const calculateSubtotal = () => {
+  //   const ticketTotal =
+  //     ticketData.ticketItems?.reduce(
+  //       (total, item) => total + (item.serviceCharge || 0),
+  //       0
+  //     ) || 0;
 
-    const servicesTotal = selectedServices.reduce(
-      (total, item) => total + (item.price || 0),
-      0
-    );
+  //   const servicesTotal = selectedServices.reduce(
+  //     (total, item) => total + (item.price || 0),
+  //     0
+  //   );
 
-    const orderTotal = orderItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+  //   const orderTotal = orderItems.reduce(
+  //     (total, item) => total + item.price * item.quantity,
+  //     0
+  //   );
 
-    const partsTotal = partItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+  //   const partsTotal = partItems.reduce(
+  //     (total, item) => total + item.price * item.quantity,
+  //     0
+  //   );
 
-    return ticketTotal + servicesTotal + orderTotal + partsTotal;
-  };
+  //   return ticketTotal + servicesTotal + orderTotal + partsTotal;
+  // };
 
   // Calculate tax (3%)
-  const calculateTax = () => {
-    return calculateSubtotal() * 0.03;
-  };
+  // const calculateTax = () => {
+  //   return calculateSubtotal();
+  // };
 
   // Calculate total payable
-  const calculateTotalPayable = () => {
-    return calculateSubtotal() + calculateTax();
-  };
+  // const calculateTotalPayable = () => {
+  //   return calculateSubtotal();
+  // };
 
   return (
     <>
@@ -929,7 +1029,7 @@ const PosModals = ({ onCustomerCreated }) => {
               {/* Invoice Title */}
               <div className="receipt-header mb-4">
                 <h5 className="text-center text-uppercase fw-bold mb-3">
-                  Tax Invoice
+                  Invoice
                 </h5>
                 <div className="d-flex justify-content-between border-bottom pb-2">
                   <div>
@@ -952,7 +1052,8 @@ const PosModals = ({ onCustomerCreated }) => {
               </div>
 
               {/* Items Table */}
-              <div className="receipt-items mb-4">
+              {/* <div className="receipt-items mb-4 scrollable-section "> */}
+              <div className="receipt-items mb-4 scrollable-section table-wrapping">
                 <table className="table table-sm mb-0">
                   <thead>
                     <tr className="border-bottom">
@@ -983,16 +1084,15 @@ const PosModals = ({ onCustomerCreated }) => {
                     ))} */}
 
                     {/* Ticket Items */}
+                    {/* Ticket Items */}
                     {ticketData.ticketItems?.map((item, index) => (
                       <tr
                         key={`ticket-${item.ticketId}`}
                         className="border-bottom"
                       >
-                        <td className="small">
-                          {index + 1}.{" "}
-                          {/* Changed from (repairData.repairItems?.length || 0) + index + 1 */}
-                        </td>
-                        <td className="small">{item.taskTypeName}</td>
+                        <td className="small">{index + 1}.</td>
+                        <td className="small">{resolveItemName(item)}</td>{" "}
+                        {/* Changed here */}
                         <td className="small text-end">
                           ₹{item.serviceCharge}
                         </td>
@@ -1009,7 +1109,8 @@ const PosModals = ({ onCustomerCreated }) => {
                         <td className="small">
                           {(ticketData.ticketItems?.length || 0) + index + 1}.
                         </td>
-                        <td className="small">{item.name}</td>
+                        <td className="small">{resolveItemName(item)}</td>{" "}
+                        {/* Changed here */}
                         <td className="small text-end">₹{item.price}</td>
                         <td className="small text-center">1</td>
                         <td className="small text-end">₹{item.price}</td>
@@ -1029,7 +1130,8 @@ const PosModals = ({ onCustomerCreated }) => {
                             1}
                           .
                         </td>
-                        <td className="small">{item.name}</td>
+                        <td className="small">{resolveItemName(item)}</td>{" "}
+                        {/* Changed here */}
                         <td className="small text-end">₹{item.price}</td>
                         <td className="small text-center">{item.quantity}</td>
                         <td className="small text-end">
@@ -1052,7 +1154,8 @@ const PosModals = ({ onCustomerCreated }) => {
                             1}
                           .
                         </td>
-                        <td className="small">{item.name}</td>
+                        <td className="small">{resolveItemName(item)}</td>{" "}
+                        {/* Changed here */}
                         <td className="small text-end">₹{item.price}</td>
                         <td className="small text-center">{item.quantity}</td>
                         <td className="small text-end">
@@ -1071,10 +1174,11 @@ const PosModals = ({ onCustomerCreated }) => {
                     <tr>
                       <td className="small text-muted">Sub Total:</td>
                       <td className="small text-end fw-semibold">
-                        ₹{calculateSubtotal().toFixed(2)}
+                        {/* ₹{calculateSubtotal().toFixed(2)} */}₹ ₹
+                        {calculateSubtotalBeforeTax().toFixed(2)}₹
                       </td>
                     </tr>
-                    <tr>
+                    {/* <tr>
                       <td className="small text-muted">Discount:</td>
                       <td className="small text-end">-₹0.00</td>
                     </tr>
@@ -1087,11 +1191,12 @@ const PosModals = ({ onCustomerCreated }) => {
                       <td className="small text-end fw-semibold">
                         ₹{(calculateSubtotal() * 0.03).toFixed(2)}
                       </td>
-                    </tr>
+                    </tr> */}
                     <tr className="border-top">
                       <td className="small fw-bold">Total Payable:</td>
                       <td className="small text-end fw-bold">
-                        ₹{calculateTotalPayable().toFixed(2)}
+                        ₹{calculateSubtotalBeforeTax().toFixed(2)}₹
+                        {/* ₹{calculateTotalPayable().toFixed(2)} */}
                       </td>
                     </tr>
                   </tbody>
@@ -1120,87 +1225,62 @@ const PosModals = ({ onCustomerCreated }) => {
         </div>
       </div>
       {/* Print Receipt */}
-
-      {/* /Print Receipt */}
-
-      {/* order successfull modal  */}
-      {/* Order Success Modal */}
-      {/* Order Success Modal */}
-      {/* Order Success Modal */}
-      {/* Order Success Modal */}
-      {/* Order Success Modal */}
-      <div
-        className="modal fade"
-        id="order-success-modal"
-        tabIndex="-1"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-body p-0">
-              <div className="text-center p-4">
-                <div
-                  className={`icon-circle ${
-                    apiResponse?.error ? "bg-danger" : "bg-success"
-                  } text-white mb-3`}
-                >
-                  <i
-                    className={apiResponse?.error ? "ti ti-x" : "ti ti-check"}
-                  />
-                </div>
-                <h3
-                  className={`mb-3 ${
-                    apiResponse?.error ? "text-danger" : "text-success"
-                  }`}
-                >
-                  {apiResponse?.error ? "Failed" : "Success"}
-                </h3>
-                <p className="mb-3">{apiResponse?.message}</p>
-                {apiResponse?.orderNumber && (
-                  <div className="alert alert-light mb-3">
-                    Order Number: <strong>{apiResponse.orderNumber}</strong>
-                  </div>
-                )}
-                <div className="d-flex justify-content-center gap-3">
-                  {!apiResponse?.error && (
-                    <button
-                      className="btn btn-success"
-                      onClick={handlePrintReceipt}
-                      disabled={isProcessing}
-                    >
-                      <i className="ti ti-printer me-1"></i>
-                      Print Receipt
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className={`btn ${
-                      apiResponse?.error ? "btn-outline-danger" : "btn-primary"
-                    }`}
-                    onClick={() => {
-                      const modalEl = document.getElementById(
-                        "order-success-modal"
-                      );
-                      const modal = window.bootstrap.Modal.getInstance(modalEl);
-
-                      if (modal) {
-                        modal.hide();
-                      }
-
-                      setTimeout(() => {
-                        window.location.reload();
-                      }, 500);
-                    }}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? "Processing..." : "Close"}
-                  </button>
-                </div>
-              </div>
+{/* Order Success Modal */}
+<div
+  className={`modal fade ${showSuccessModal ? 'show d-block' : ''}`}
+  id="order-success-modal"
+  tabIndex="-1"
+  aria-hidden="true"
+  style={{ backgroundColor: showSuccessModal ? 'rgba(0,0,0,0.5)' : '' }}
+>
+  <div className="modal-dialog modal-dialog-centered">
+    <div className="modal-content">
+      <div className="modal-body p-0">
+        <div className="text-center p-4">
+          <div
+            className={`icon-circle ${
+              apiResponse?.error ? "bg-danger" : "bg-success"
+            } text-white mb-3`}
+          >
+            <i
+              className={apiResponse?.error ? "ti ti-x" : "ti ti-check"}
+            />
+          </div>
+          <h3
+            className={`mb-3 ${
+              apiResponse?.error ? "text-danger" : "text-success"
+            }`}
+          >
+            {apiResponse?.error ? "Failed" : "Success"}
+          </h3>
+          <p className="mb-3">{apiResponse?.message}</p>
+          {apiResponse?.orderNumber && (
+            <div className="alert alert-light mb-3">
+              Order Number: <strong>{apiResponse.orderNumber}</strong>
             </div>
+          )}
+          <div className="d-flex justify-content-center gap-3">
+            <button
+              type="button"
+              className={`btn ${
+                apiResponse?.error ? "btn-outline-danger" : "btn-primary"
+              }`}
+              onClick={() => {
+                setShowSuccessModal(false);
+                setTimeout(() => {
+                  window.location.reload();
+                }, 500);
+              }}
+              disabled={isProcessing}
+            >
+              {isProcessing ? "Processing..." : "Close"}
+            </button>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
       <div
         className="modal fade modal-default pos-modal"
         id="products"

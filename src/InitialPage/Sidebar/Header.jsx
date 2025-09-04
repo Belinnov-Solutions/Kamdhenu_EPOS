@@ -158,7 +158,7 @@ const Header = () => {
     <>
       <div className="header"
        style={{ 
-  backgroundColor: "#b38e432f",
+  backgroundColor: "#f8f0e3ff",
   // position: "relative",
   zIndex: 1000 
 }}>
