@@ -118,7 +118,7 @@ PredefinedDateRanges.propTypes = {
 
 const NewDashboard = () => {
   const BASE_URL = process.env.REACT_APP_BASEURL;
-  const { roleName, storeId } = useSelector((state) => state.user);
+  const { storeId } = useSelector((state) => state.user);
   const navigate = useNavigate(); // Initialize navigate
 
   const [salesData, setSalesData] = useState(null);
@@ -268,7 +268,8 @@ const NewDashboard = () => {
       <div className="content">
         <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-2">
           <div className="mb-3">
-            <h1 className="mb-1">Welcome, {roleName}</h1>
+            <h3 className="mb-1">Sales Reports</h3>
+            {/* <h1 className="mb-1">Welcome, {roleName}</h1> */}
           </div>
           <div className="d-flex gap-2">
             <div className="input-icon-start position-relative mb-3">
