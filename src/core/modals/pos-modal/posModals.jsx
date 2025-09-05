@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import "bootstrap/dist/js/bootstrap.bundle.min";
+
 import { Link } from "react-router-dom";
 import ImageWithBasePath from "../../img/imagewithbasebath";
 import { Edit, Eye, Trash2 } from "feather-icons-react/build/IconComponents";
@@ -18,6 +20,7 @@ import { selectExtras, selectReportedIssues } from "../../redux/checklistSlice";
 import "./posModals.css";
 import { repairAdded } from "../../redux/repairSlice";
 const PosModals = ({ onCustomerCreated }) => {
+  const [pendingPaymentMethod, setPendingPaymentMethod] = useState(null);
   // Add this function at the top of your PosModals component, before the component definition
   const resolveItemName = (item) => {
     return (
@@ -33,6 +36,7 @@ const PosModals = ({ onCustomerCreated }) => {
       "Unnamed Product"
     );
   };
+
   const dispatch = useDispatch();
   const extras = useSelector(selectExtras);
   const reportedIssues = useSelector(selectReportedIssues);
@@ -145,7 +149,6 @@ const PosModals = ({ onCustomerCreated }) => {
         // Remove the percentage sign and convert to number
         const gstRate = parseFloat(gstString.replace("%", "")) || 0;
 
-        console.log("GST Rate:", gstRate);
         setTaxRate(gstRate);
       } catch (error) {
         console.error("Error fetching tax data:", error);
@@ -232,6 +235,48 @@ const PosModals = ({ onCustomerCreated }) => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handlePaymentConfirmation = (method) => {
+    setPendingPaymentMethod(method);
+
+    // Close the print receipt modal using Bootstrap
+    const printReceiptModal = document.getElementById("print-receipt");
+    const printModalInstance =
+      window.bootstrap.Modal.getInstance(printReceiptModal);
+    if (printModalInstance) {
+      printModalInstance.hide();
+    }
+
+    // Show confirmation modal using Bootstrap
+    const confirmationModal = new window.bootstrap.Modal(
+      document.getElementById("confirmation-modal")
+    );
+    confirmationModal.show();
+  };
+
+  const handleConfirmedPayment = async () => {
+    if (pendingPaymentMethod) {
+      // Hide confirmation modal using Bootstrap
+      const confirmationModal = window.bootstrap.Modal.getInstance(
+        document.getElementById("confirmation-modal")
+      );
+      if (confirmationModal) {
+        confirmationModal.hide();
+      }
+      await handlePaymentSelection(pendingPaymentMethod);
+    }
+  };
+
+  const handleCancelPayment = () => {
+    // Hide confirmation modal using Bootstrap
+    const confirmationModal = window.bootstrap.Modal.getInstance(
+      document.getElementById("confirmation-modal")
+    );
+    if (confirmationModal) {
+      confirmationModal.hide();
+    }
+    setPendingPaymentMethod(null);
   };
   // end create customer
   const calculateSubtotalBeforeTax = () => {
@@ -1092,21 +1137,21 @@ const PosModals = ({ onCustomerCreated }) => {
                   <tbody>
                     {/* Repair Items */}
                     {/* {repairData.repairItems?.map((item, index) => (
-                      <tr
-                        key={`repair-${item.repairOrderId}`}
-                        className="border-bottom"
-                      >
-                        <td className="small">{index + 1}.</td>
-                        <td className="small">{item.taskTypeName}</td>
-                        <td className="small text-end">
-                          ${item.serviceCharge}
-                        </td>
-                        <td className="small text-center">1</td>
-                        <td className="small text-end">
-                          ${item.serviceCharge}
-                        </td>
-                      </tr>
-                    ))} */}
+                        <tr
+                          key={`repair-${item.repairOrderId}`}
+                          className="border-bottom"
+                        >
+                          <td className="small">{index + 1}.</td>
+                          <td className="small">{item.taskTypeName}</td>
+                          <td className="small text-end">
+                            ${item.serviceCharge}
+                          </td>
+                          <td className="small text-center">1</td>
+                          <td className="small text-end">
+                            ${item.serviceCharge}
+                          </td>
+                        </tr>
+                      ))} */}
 
                     {/* Ticket Items */}
                     {/* Ticket Items */}
@@ -1230,11 +1275,11 @@ const PosModals = ({ onCustomerCreated }) => {
                 </p>
                 <div className="d-flex justify-content-center gap-2">
                   {/* <button className="btn btn-sm btn-outline-primary">
-                    Print Receipt
-                  </button> */}
+                      Print Receipt
+                    </button> */}
                   <button
                     className="btn btn-sm btn-primary"
-                    onClick={() => handlePaymentSelection("Cash")}
+                    onClick={() => handlePaymentConfirmation("Cash")}
                   >
                     Place Order
                   </button>
@@ -1245,6 +1290,56 @@ const PosModals = ({ onCustomerCreated }) => {
         </div>
       </div>
       {/* Print Receipt */}
+
+      {/* Confirmation Modal */}
+
+      <div
+        className="modal fade"
+        id="confirmation-modal"
+        tabIndex="-1"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-body p-0">
+              <div className="text-center p-4">
+                <div className="icon-circle bg-warning text-white mb-3">
+                  <i className="ti ti-alert-triangle" />
+                </div>
+                <h3 className="mb-3 text-warning">Confirm Order</h3>
+                <p className="mb-3">
+                  Are you sure you want to place this order?
+                </p>
+                <p className="small text-muted mb-3">
+                  Total Amount: ₹
+                  {(
+                    calculateSubtotalBeforeTax() + calculateTaxAmount()
+                  ).toFixed(2)}
+                </p>
+                <div className="d-flex justify-content-center gap-3">
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={handleCancelPayment}
+                    disabled={isProcessing}
+                    data-bs-dismiss="modal"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleConfirmedPayment}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? "Processing..." : "Confirm Order"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       {/* Order Success Modal */}
       <div
         className={`modal fade ${showSuccessModal ? "show d-block" : ""}`}
