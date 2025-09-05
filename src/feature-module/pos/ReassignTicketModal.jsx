@@ -19,10 +19,12 @@ const ReassignTicketModal = ({ ticket, show, onClose }) => {
     technicians: [],
   });
   const [loading, setLoading] = useState(true);
+  //  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
 
   useEffect(() => {
     const fetchReferenceData = async () => {
-      const BASE_URL = process.env.REACT_APP_BASEURL;
+      const BASE_URL = apiBase ;
 
       try {
         const response = await axios.get(
@@ -97,7 +99,7 @@ const ReassignTicketModal = ({ ticket, show, onClose }) => {
     setSubmitError(null);
 
     try {
-      const BASE_URL = process.env.REACT_APP_BASEURL;
+      const BASE_URL = apiBase ;
 
       console.log("Ticket object:", ticket);
       console.log("Original data:", ticket?.originalData);

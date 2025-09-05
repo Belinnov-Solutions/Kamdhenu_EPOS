@@ -137,6 +137,8 @@ const [modalMessage, setModalMessage] = useState({
 
   //   setImages(newImages);
   // };
+  //  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
 
   //  handle Select Changes
   const handleSelectChange = async (selectedOption, fieldName) => {
@@ -152,7 +154,7 @@ const [modalMessage, setModalMessage] = useState({
       if (selectedOption) {
         try {
           const response = await axios.get(
-            `${process.env.REACT_APP_BASEURL}api/v1/Product/GetSubcategories`,
+            `${apiBase}api/v1/Product/GetSubcategories`,
             {
               params: {
                 storeId: storeId,
@@ -195,7 +197,7 @@ const [modalMessage, setModalMessage] = useState({
       try {
         // First fetch reference data
         const refResponse = await axios.get(
-          `${process.env.REACT_APP_BASEURL}api/v1/Product/GetReferenceData`,
+          `${apiBase}api/v1/Product/GetReferenceData`,
           { params: { storeId: formData.storeId } }
         );
 
@@ -222,7 +224,7 @@ const [modalMessage, setModalMessage] = useState({
         // Then fetch product data if productId exists
         if (productId) {
           const prodResponse = await axios.get(
-            `${process.env.REACT_APP_BASEURL}api/v1/Product/GetProducts`,
+            `${apiBase}api/v1/Product/GetProducts`,
             { params: { storeId } }
           );
 
@@ -260,7 +262,7 @@ const [modalMessage, setModalMessage] = useState({
             // If category exists, fetch its subcategories
             if (matchedProduct.categoryId) {
               const subcatResponse = await axios.get(
-                `${process.env.REACT_APP_BASEURL}api/v1/Product/GetSubcategories`,
+                `${apiBase}api/v1/Product/GetSubcategories`,
                 { params: { storeId, categoryId: matchedProduct.categoryId } }
               );
 
@@ -324,7 +326,7 @@ const [modalMessage, setModalMessage] = useState({
     };
     
     const response = await axios.post(
-      `${process.env.REACT_APP_BASEURL}api/v1/Product/SaveProduct`,
+      `${apiBase}api/v1/Product/SaveProduct`,
       payload, {
       headers: {
         'Content-Type': 'application/json'
@@ -1491,7 +1493,7 @@ const [modalMessage, setModalMessage] = useState({
         const fetchData = async () => {
           try {
             const refResponse = await axios.get(
-              `${process.env.REACT_APP_BASEURL}api/v1/Product/GetReferenceData`,
+              `${apiBase}api/v1/Product/GetReferenceData`,
               { params: { storeId: formData.storeId } }
             );
 

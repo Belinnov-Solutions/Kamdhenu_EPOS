@@ -29,8 +29,9 @@ import OrderList from "./OrderList";
 const Pos = () => {
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-
-  const BASE_URL = process.env.REACT_APP_BASEURL;
+//  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
+  const BASE_URL = apiBase ;
   const [hasItems, setHasItems] = useState(false);
   const [accessoriesNav, setAccessoriesNav] = useState({
     currentView: "categories",

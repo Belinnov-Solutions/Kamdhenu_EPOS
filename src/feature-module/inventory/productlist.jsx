@@ -95,7 +95,7 @@ const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
 
   try {
     await axios.post(
-      `${process.env.REACT_APP_BASEURL}api/v1/Product/DeleteProduct`,
+      `${apiBase}api/v1/Product/DeleteProduct`,
       null,
       {
         params: {
@@ -149,7 +149,7 @@ const closeMessageModal = () => {
   const fetchReferenceData = async () => {
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_BASEURL}api/v1/Product/GetReferenceData`,
+        `${apiBase}api/v1/Product/GetReferenceData`,
         { params: { storeId: storeId } }
       );
       setCategories(response.data.data.categories || []);

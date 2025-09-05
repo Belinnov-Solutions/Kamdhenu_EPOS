@@ -126,13 +126,15 @@ const PosModals = ({ onCustomerCreated }) => {
   };
 
   // In PosModals component
+  //  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
 
   useEffect(() => {
     const fetchTaxData = async () => {
       if (!storeId) return;
 
       try {
-        const BASE_URL = process.env.REACT_APP_BASEURL;
+        const BASE_URL = apiBase;
         const response = await fetch(
           `${BASE_URL}api/v1/Product/GetReferenceData?storeId=${storeId}`
         );
@@ -166,7 +168,7 @@ const PosModals = ({ onCustomerCreated }) => {
     setSubmitError(null);
 
     try {
-      const BASE_URL = process.env.REACT_APP_BASEURL;
+      const BASE_URL = apiBase;
 
       const response = await fetch(`${BASE_URL}api/v1/User/AddCustomer`, {
         method: "POST",
@@ -495,7 +497,7 @@ const PosModals = ({ onCustomerCreated }) => {
 
       // Make the API call
       const response = await axios.post(
-        `${process.env.REACT_APP_BASEURL}api/v1/order/ConfirmOrder`,
+        `${apiBase}api/v1/order/ConfirmOrder`,
         payload,
         {
           headers: {

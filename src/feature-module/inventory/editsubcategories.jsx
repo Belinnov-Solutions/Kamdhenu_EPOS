@@ -23,13 +23,14 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     setValue("");
     setOriginalData(null);
   };
-
+//  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
 
  const fetchSubcategoryDetails = useCallback(async () => {
     if (!id) return;
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_BASEURL}api/v1/Product/GetSubcategories?storeId=${storeId}`
+        `${apiBase}api/v1/Product/GetSubcategories?storeId=${storeId}`
       );
 
       const item = response.data.data.find(
@@ -81,7 +82,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     try {
       setIsSubmitting(true);
       await axios.post(
-        `${process.env.REACT_APP_BASEURL}api/v1/Product/savesubcategories`,
+        `${apiBase}api/v1/Product/savesubcategories`,
         payload
       );
       

@@ -26,6 +26,8 @@ const AddSubcategory = ({ onSubCategoryAdded, selectedCategoryId, isOpen, onClos
     setStatus(true);
     setImageFile(null);
   };
+  //  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,7 +56,7 @@ const AddSubcategory = ({ onSubCategoryAdded, selectedCategoryId, isOpen, onClos
       };
 
       const response = await axios.post(
-        `${process.env.REACT_APP_BASEURL}api/v1/Product/savesubcategories`,
+        `${apiBase}api/v1/Product/savesubcategories`,
         payload
       );
 

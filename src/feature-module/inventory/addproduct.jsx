@@ -229,6 +229,8 @@ const [showAddSubcategoryModal, setShowAddSubcategoryModal] = useState(false);
 
   //   setImages(newImages);
   // };
+  //  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
   // updated handleSelectChange
    const handleSelectChange = async (selectedOption, fieldName) => {
     // Clear error for this field
@@ -250,7 +252,7 @@ const [showAddSubcategoryModal, setShowAddSubcategoryModal] = useState(false);
       if (selectedOption) {
         try {
           const response = await axios.get(
-            `${process.env.REACT_APP_BASEURL}api/v1/Product/GetSubcategories`,
+            `${apiBase}api/v1/Product/GetSubcategories`,
             {
               params: {
                 storeId: storeId,
@@ -363,7 +365,7 @@ const handleAddProduct = async () => {
   
   try {
     const response = await axios.post(
-      `${process.env.REACT_APP_BASEURL}api/v1/Product/SaveProduct`,
+      `${apiBase}api/v1/Product/SaveProduct`,
       submissionData, {
       headers: {
         'Content-Type': 'application/json'
@@ -423,7 +425,7 @@ const handleAddProduct = async () => {
   const fetchReferenceData = async () => {
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_BASEURL}api/v1/Product/GetReferenceData`,
+        `${apiBase}api/v1/Product/GetReferenceData`,
         {
           params: { storeId: formData.storeId }
         }

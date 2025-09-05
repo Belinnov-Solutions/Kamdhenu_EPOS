@@ -31,12 +31,13 @@ const Accessories = ({
   const isLoading = useSelector(selectIsLoading);
   const orderItems = useSelector(selectCartItems);
   const { storeId } = useSelector((state) => state.user);
-
+//  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
   useEffect(() => {
     const fetchData = async () => {
       try {
         dispatch(setLoading(true));
-        const BASE_URL = process.env.REACT_APP_BASEURL;
+        const BASE_URL = apiBase;
 
         // Fetch categories
         const categoriesResponse = await axios.get(

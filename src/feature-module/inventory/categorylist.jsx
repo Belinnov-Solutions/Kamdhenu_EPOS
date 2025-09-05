@@ -29,8 +29,10 @@ const CategoryList = () => {
     type: "info",
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  //  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
   const fetchCategories = async () => {
-    const BASE_URL = process.env.REACT_APP_BASEURL;
+    const BASE_URL = apiBase;
     try {
       setIsLoading(true);
       const response = await axios.get(
@@ -59,7 +61,7 @@ const CategoryList = () => {
   }, []);
 
   const handleAddCategory = async () => {
-    const BASE_URL = process.env.REACT_APP_BASEURL;
+    const BASE_URL = apiBase;
 
     if (!formData.name.trim()) {
       setMessageModal({
@@ -153,7 +155,7 @@ const CategoryList = () => {
   const deleteCategory = async () => {
   if (!categoryToDelete) return;
 
-  const BASE_URL = process.env.REACT_APP_BASEURL;
+  const BASE_URL = apiBase;
 
 try {
   await axios.post(`${BASE_URL}api/v1/Product/DeleteCategory`, null, {

@@ -52,11 +52,13 @@ const [showDeleteModal, setShowDeleteModal] = useState(false);
   const closeMessageModal = () => {
     setMessageModal({ ...messageModal, isOpen: false });
   };
+  //  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
   // Fetch categories for dropdown
    const fetchCategories = async () => {
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_BASEURL}api/v1/Product/GetReferenceData?storeId=${storeId}`
+        `${apiBase}api/v1/Product/GetReferenceData?storeId=${storeId}`
       );
       if (
         response.data &&
@@ -85,7 +87,7 @@ const [showDeleteModal, setShowDeleteModal] = useState(false);
     try {
       setIsLoading(true);
       const response = await axios.get(
-        `${process.env.REACT_APP_BASEURL}api/v1/Product/GetSubcategories?storeId=${storeId}`
+        `${apiBase}api/v1/Product/GetSubcategories?storeId=${storeId}`
       );
       if (response.data && response.data.data) {
         const subcategories = response.data.data.map((item) => ({
@@ -143,7 +145,7 @@ const [showDeleteModal, setShowDeleteModal] = useState(false);
     try {
       setIsSubmitting(true);
        await axios.post(
-        `${process.env.REACT_APP_BASEURL}api/v1/Product/savesubcategories`,
+        `${apiBase}api/v1/Product/savesubcategories`,
         payload
       );
       
@@ -177,7 +179,7 @@ const [showDeleteModal, setShowDeleteModal] = useState(false);
 
    try {
   await axios.post(
-    `${process.env.REACT_APP_BASEURL}api/v1/Product/DeleteSubCategory`,
+    `${apiBase}api/v1/Product/DeleteSubCategory`,
     null, // no body, since we're passing params
     {
       params: {

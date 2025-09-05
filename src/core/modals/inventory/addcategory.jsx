@@ -30,6 +30,8 @@ const AddCategory = ({ isOpen, onClose, onCategoryAdded }) => {
       });
     }
   }, [isOpen, storeId]);
+  //  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
 
   const handleAddCategory = async () => {
     if (!formData.name.trim()) {
@@ -52,7 +54,7 @@ const AddCategory = ({ isOpen, onClose, onCategoryAdded }) => {
       };
 
       const response = await axios.post(
-        `${process.env.REACT_APP_BASEURL}api/v1/Product/SaveCategories`,
+        `${apiBase}api/v1/Product/SaveCategories`,
         payload,
         {
           headers: {

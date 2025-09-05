@@ -115,9 +115,11 @@ PredefinedDateRanges.propTypes = {
   startDate: PropTypes.string,
   endDate: PropTypes.string,
 };
+//  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
 
 const NewDashboard = () => {
-  const BASE_URL = process.env.REACT_APP_BASEURL;
+  const BASE_URL =  apiBase;
   const { storeId } = useSelector((state) => state.user);
   const navigate = useNavigate(); // Initialize navigate
 

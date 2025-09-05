@@ -46,10 +46,11 @@ const EditCategoryList = ({ categoryData, onRefresh, isOpen, onClose, onMessage 
   // const handleFileChange = (e) => {
   //   setFormData((prev) => ({ ...prev, image: e.target.files[0] }));
   // };
-
+//  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const BASE_URL = process.env.REACT_APP_BASEURL;
+    const BASE_URL = apiBase;
 
    if (!formData.name.trim()) {
   onMessage({

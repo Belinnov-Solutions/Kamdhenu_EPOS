@@ -8,11 +8,13 @@ const TicketPrint = () => {
   const [ticketData, setTicketData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  //  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
 
   const fetchTicketData = async () => {
     try {
       const BASE_URL =
-        process.env.REACT_APP_BASEURL || "http://localhost:5000/"; // Fallback URL
+        apiBase || "http://localhost:5000/"; // Fallback URL
       console.log("Fetching from:", `${BASE_URL}api/v1/Order/GetTickets`);
 
       setLoading(true);
