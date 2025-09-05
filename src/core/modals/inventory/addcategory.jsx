@@ -42,16 +42,6 @@ const AddCategory = ({ isOpen, onClose, onCategoryAdded }) => {
       return;
     }
 
-    // if (!formData.description.trim()) {
-    //   setMessageModal({
-    //     isOpen: true,
-    //     title: "Validation Error",
-    //     message: "Description is required",
-    //     type: "error",
-    //   });
-    //   return;
-    // }
-
     try {
       setIsSubmitting(true);
 
@@ -71,6 +61,7 @@ const AddCategory = ({ isOpen, onClose, onCategoryAdded }) => {
         }
       );
 
+      // Show success message
       setMessageModal({
         isOpen: true,
         title: "Success",
@@ -84,6 +75,11 @@ const AddCategory = ({ isOpen, onClose, onCategoryAdded }) => {
         description: "",
         storeId: storeId,
       });
+
+      // Close the main modal immediately
+      if (onClose) {
+        onClose();
+      }
 
       // Notify parent component about the new category
       if (onCategoryAdded) {
@@ -116,7 +112,6 @@ const AddCategory = ({ isOpen, onClose, onCategoryAdded }) => {
   };
 
   const handleCloseModal = () => {
-    // Close the modal by calling the onClose prop
     if (onClose) {
       onClose();
     }
@@ -165,21 +160,6 @@ const AddCategory = ({ isOpen, onClose, onCategoryAdded }) => {
                         }
                       />
                     </div>
-                    {/* <div className="mb-3">
-                      <label className="form-label">
-                        Description<span className="text-danger">*</span>
-                      </label>
-                      <textarea
-                        className="form-control"
-                        value={formData.description}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            description: e.target.value,
-                          })
-                        }
-                      />
-                    </div> */}
                   </form>
                 </div>
                 <div className="modal-footer">
@@ -216,7 +196,7 @@ const AddCategory = ({ isOpen, onClose, onCategoryAdded }) => {
         </div>
       </div>
 
-      {/* Message Modal */}
+      {/* Message Modal - This should appear on top of everything */}
       <MessageModal
         isOpen={messageModal.isOpen}
         onClose={closeMessageModal}

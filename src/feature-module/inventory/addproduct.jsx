@@ -126,6 +126,7 @@ const AddProduct = () => {
 const[errors,setErrors]=useState({});
 const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+const [showAddSubcategoryModal, setShowAddSubcategoryModal] = useState(false);
   // State for form fields
   const [formData, setFormData] = useState({
     storeId: storeId,
@@ -792,17 +793,27 @@ const handleAddProduct = async () => {
                                 <label className="form-label">
                                   Sub Category<span className="text-danger ms-1">*</span>
                                 </label>
-                                <Link
-                                  to="#"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#add-units-subcategory"
-                                >
-                                  <PlusCircle
-                                    data-feather="plus-circle"
-                                    className="plus-down-add"
-                                  />
-                                  <span>Add New</span>
-                                </Link>
+                               <Link
+  to="#"
+  onClick={() => {
+    if (!formData.categoryId) {
+      setModalMessage({
+        title: "Warning",
+        message: "Please select a category first before adding a subcategory",
+        type: "warning"
+      });
+      setShowMessageModal(true);
+    } else {
+      setShowAddSubcategoryModal(true);
+    }
+  }}
+>
+  <PlusCircle
+    data-feather="plus-circle"
+    className="plus-down-add"
+  />
+  <span>Add New</span>
+</Link>
                               </div>
                               <Select
                                 classNamePrefix="react-select"
@@ -1791,17 +1802,26 @@ const handleAddProduct = async () => {
         </div>
       </div>
       <AddSubcategory
-        onSubCategoryAdded={() => {
-          // This will refresh the subcategories list when a new one is added
-          if (formData.categoryId) {
-            handleSelectChange(
-              { value: formData.categoryId },
-              "categoryId"
-            );
-          }
-        }}
-        selectedCategoryId={formData.categoryId}
-      />
+  isOpen={showAddSubcategoryModal}
+  onClose={() => setShowAddSubcategoryModal(false)}
+  onSubCategoryAdded={() => {
+    // Refresh subcategories when a new one is added
+    if (formData.categoryId) {
+      handleSelectChange(
+        { value: formData.categoryId },
+        "categoryId"
+      );
+    }
+    // Show success message
+    setModalMessage({
+      title: "Success",
+      message: "Subcategory added successfully!",
+      type: "success"
+    });
+    setShowMessageModal(true);
+  }}
+  selectedCategoryId={formData.categoryId}
+/>
       <MessageModal
         isOpen={showMessageModal}
         onClose={() => setShowMessageModal(false)}
