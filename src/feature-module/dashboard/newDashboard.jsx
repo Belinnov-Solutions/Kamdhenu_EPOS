@@ -141,28 +141,31 @@ const NewDashboard = () => {
     fetchCategories();
   }, [filters]);
 
-  const fetchSalesReport = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
+ const fetchSalesReport = async () => {
+  try {
+    setLoading(true);
+    const params = new URLSearchParams();
 
-      if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
-      if (filters.dateTo) params.append("dateTo", filters.dateTo);
-      if (filters.categoryId) params.append("categoryId", filters.categoryId);
-      if (filters.groupBy) params.append("groupBy", filters.groupBy);
-
-      const response = await axios.get(
-        `${BASE_URL}api/v1/Order/SalesReport?${params.toString()}`
-      );
-
-      setSalesData(response.data);
-      setLoading(false);
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
-      console.error("Error fetching sales report:", err);
+    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
+    if (filters.dateTo) params.append("dateTo", filters.dateTo);
+    if (filters.categoryId !== null && filters.categoryId !== undefined) {
+      params.append("categoryId", filters.categoryId);
     }
-  };
+    if (filters.groupBy) params.append("groupBy", filters.groupBy);
+
+    const response = await axios.get(
+      `${BASE_URL}api/v1/Order/SalesReport?${params.toString()}`
+    );
+
+    setSalesData(response.data);
+  } catch (err) {
+    setError(err.message);
+    console.error("Error fetching sales report:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchCategories = async () => {
     try {
