@@ -30,7 +30,74 @@ import axios from "axios";
 // import moment from 'moment';
 import { useSelector } from "react-redux";
 import MessageModal from "./MessageModal";
+import PropTypes from "prop-types";
+// Confirmation Modal component
+const ConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  isLoading = false,
+}) => {
+  if (!isOpen) return null;
 
+  return (
+    <div
+      className="modal fade show"
+      style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+    >
+      <div className="modal-dialog modal-dialog-centered">
+        <div className="modal-content">
+          <div className="modal-body p-4 text-center">
+            <span className="rounded-circle d-inline-flex p-2 bg-primary-transparent mb-3">
+              <i className="ti ti-help fs-24 text-primary" />
+            </span>
+            <h5 className="fw-bold mb-2">{title}</h5>
+            <p className="mb-4">{message}</p>
+            <div className="d-flex justify-content-center gap-2">
+              <button
+                type="button"
+                className="btn btn-secondary fs-13 fw-medium px-4 py-2"
+                onClick={onClose}
+                disabled={isLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary fs-13 fw-medium px-4 py-2"
+                onClick={onConfirm}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <span
+                      className="spinner-border spinner-border-sm me-1"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    Adding...
+                  </>
+                ) : (
+                  "Yes, Add Product"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+ConfirmationModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  title: PropTypes.string.isRequired,
+  message: PropTypes.string.isRequired,
+  isLoading: PropTypes.bool,
+};
 const AddProduct = () => {
   const navigate = useNavigate();
   const storeId = useSelector((state) => state.user.storeId);
@@ -57,6 +124,8 @@ const AddProduct = () => {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [modalMessage, setModalMessage] = useState({ title: "", message: "", type: "info" });
 const[errors,setErrors]=useState({});
+const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   // State for form fields
   const [formData, setFormData] = useState({
     storeId: storeId,
@@ -226,126 +295,127 @@ const[errors,setErrors]=useState({});
   //   });
   // };
   // Handle form submission
-    const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Validate form
-    const newErrors = {};
-    
-    if (!formData.productName.trim()) {
-      newErrors.productName = "Product name is required";
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  // Validate form
+  const newErrors = {};
+  
+  if (!formData.productName.trim()) {
+    newErrors.productName = "Product name is required";
+  }
+  
+  if (!formData.sku.trim()) {
+    newErrors.sku = "SKU is required";
+  }
+  
+  if (!formData.categoryId) {
+    newErrors.categoryId = "Category is required";
+  }
+  
+  if (!formData.subcategoryId) {
+    newErrors.subcategoryId = "Subcategory is required";
+  }
+  
+  if (!formData.unit) {
+    newErrors.unit = "Unit is required";
+  }
+  
+  if (!formData.price || isNaN(formData.price) || parseFloat(formData.price) <= 0) {
+    newErrors.price = "Valid price is required";
+  }
+  
+  if (formData.restock) {
+    if (!formData.barcode.trim()) {
+      newErrors.barcode = "Barcode is required for restockable products";
     }
     
-    if (!formData.sku.trim()) {
-      newErrors.sku = "SKU is required";
+    if (!formData.stock || isNaN(formData.stock) || parseInt(formData.stock) < 0) {
+      newErrors.stock = "Valid stock quantity is required";
     }
     
-    if (!formData.categoryId) {
-      newErrors.categoryId = "Category is required";
+    if (!formData.quantityAlert || isNaN(formData.quantityAlert) || parseInt(formData.quantityAlert) < 0) {
+      newErrors.quantityAlert = "Valid stock alert quantity is required";
     }
-    
-    if (!formData.subcategoryId) {
-      newErrors.subcategoryId = "Subcategory is required";
-    }
-    
-    if (!formData.unit) {
-      newErrors.unit = "Unit is required";
-    }
-    
-    if (!formData.price || isNaN(formData.price) || parseFloat(formData.price) <= 0) {
-      newErrors.price = "Valid price is required";
-    }
-    
-    if (formData.restock) {
-      if (!formData.barcode.trim()) {
-        newErrors.barcode = "Barcode is required for restockable products";
-      }
-      
-      if (!formData.stock || isNaN(formData.stock) || parseInt(formData.stock) < 0) {
-        newErrors.stock = "Valid stock quantity is required";
-      }
-      
-      // if (!formData.taxType) {
-      //   newErrors.taxType = "Tax type is required";
-      // }
-      
-      if (!formData.quantityAlert || isNaN(formData.quantityAlert) || parseInt(formData.quantityAlert) < 0) {
-        newErrors.quantityAlert = "Valid stock alert quantity is required";
-      }
-    }
-    
-    // Set errors and return if validation fails
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) {
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    const submissionData = {
-      ...formData,
-      stock: parseInt(formData.stock) || 0,
-      quantityAlert: parseInt(formData.quantityAlert) || 0,
-      price: parseFloat(formData.price)
-    };
-    
-    try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_BASEURL}api/v1/Product/SaveProduct`,
-        submissionData, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      setModalMessage({
-        title: "Success",
-        message: response.data.message,
-        type: "success"
-      });
-      setShowMessageModal(true);
-      // Add navigation on success
-      setTimeout(() => {
-        navigate(route.productlist);
-      }, 2000);
-
-      // Reset form after successful submission
-      setFormData({
-        storeId: storeId,
-        productName: "",
-        slug: "",
-        sku: "",
-        sellingType: "",
-        categoryId: null,
-        subcategoryId: null,
-        brandId: null,
-        unit: "",
-        barcode: "",
-        description: "",
-        isVariable: false,
-        price: "",
-        // taxType: "",
-        discountType: null,
-        discountValue: null,
-        stock: "",
-        quantityAlert: "",
-        warrantyType: "",
-        manufacturer: "",
-        manufacturedDate: "",
-        restock: false, // Reset to false
-        // expiryDate: ""
-      });
-    } catch (error) {
-      setModalMessage({
-        title: "Error",
-        message: error.response?.data?.message || "Failed to add product",
-        type: "error"
-      });
-      setShowMessageModal(true);
-    } finally {
-      setIsSubmitting(false);
-    }
+  }
+  
+  // Set errors and return if validation fails
+  setErrors(newErrors);
+  if (Object.keys(newErrors).length > 0) {
+    return;
+  }
+  
+  // Show confirmation modal instead of directly submitting
+  setShowConfirmationModal(true);
+};
+// Handle actual API call to add product
+const handleAddProduct = async () => {
+  setIsSubmitting(true);
+  setShowConfirmationModal(false);
+  
+  const submissionData = {
+    ...formData,
+    stock: parseInt(formData.stock) || 0,
+    quantityAlert: parseInt(formData.quantityAlert) || 0,
+    price: parseFloat(formData.price)
   };
+  
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_BASEURL}api/v1/Product/SaveProduct`,
+      submissionData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    setModalMessage({
+      title: "Success",
+      message: response.data.message,
+      type: "success"
+    });
+    setShowMessageModal(true);
+    
+    // Add navigation on success
+    setTimeout(() => {
+      navigate(route.productlist);
+    }, 2000);
+
+    // Reset form after successful submission
+    setFormData({
+      storeId: storeId,
+      productName: "",
+      slug: "",
+      sku: "",
+      sellingType: "",
+      categoryId: null,
+      subcategoryId: null,
+      brandId: null,
+      unit: "",
+      barcode: "",
+      description: "",
+      isVariable: false,
+      price: "",
+      discountType: null,
+      discountValue: null,
+      stock: "",
+      quantityAlert: "",
+      warrantyType: "",
+      manufacturer: "",
+      manufacturedDate: "",
+      restock: false,
+    });
+  } catch (error) {
+    setModalMessage({
+      title: "Error",
+      message: error.response?.data?.message || "Failed to add product",
+      type: "error"
+    });
+    setShowMessageModal(true);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Fetch reference data
 
@@ -690,8 +760,7 @@ const[errors,setErrors]=useState({});
                                 </label>
                                 <Link
                                   to="#"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#add-units-category"
+                                 onClick={() => setShowAddCategoryModal(true)}
                                 >
                                   <PlusCircle
                                     data-feather="plus-circle"
@@ -1692,12 +1761,15 @@ const[errors,setErrors]=useState({});
 
       </div>
       <Addunits />
-      <AddCategory
-        onCategoryAdded={() => {
-          // This will trigger a refresh of categories
-          setRefreshCategories(prev => !prev);
-        }}
-      />
+     <AddCategory
+  isOpen={showAddCategoryModal}
+  onClose={() => setShowAddCategoryModal(false)}
+  onCategoryAdded={() => {
+    // This will trigger a refresh of categories
+    setRefreshCategories(prev => !prev);
+    setShowAddCategoryModal(false); // Close the modal after adding
+  }}
+/>
       <AddVariant />
       <AddBrand />
       <AddVarientNew />
@@ -1737,8 +1809,18 @@ const[errors,setErrors]=useState({});
         message={modalMessage.message}
         type={modalMessage.type}
       />
+      {/* Confirmation Modal */}
+<ConfirmationModal
+  isOpen={showConfirmationModal}
+  onClose={() => setShowConfirmationModal(false)}
+  onConfirm={handleAddProduct}
+  title="Confirm Product Addition"
+  message="Are you sure you want to add this product?"
+  isLoading={isSubmitting}
+/>
+
     </>
+    
   );
 };
-
 export default AddProduct;
