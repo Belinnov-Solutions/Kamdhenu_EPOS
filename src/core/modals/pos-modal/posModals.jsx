@@ -46,7 +46,7 @@ const PosModals = ({ onCustomerCreated }) => {
   const orderItems = useSelector(selectCartItems);
   const [apiResponse, setApiResponse] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
- const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const {
     customerId,
     customerName,
@@ -127,9 +127,6 @@ const PosModals = ({ onCustomerCreated }) => {
     const fetchTaxData = async () => {
       if (!storeId) return;
 
-      // setIsLoadingTax(true);
-      // setTaxError(null);
-
       try {
         const BASE_URL = process.env.REACT_APP_BASEURL;
         const response = await fetch(
@@ -142,21 +139,24 @@ const PosModals = ({ onCustomerCreated }) => {
 
         const data = await response.json();
 
-        // Extract GST from the response - adjust this based on the actual API response structure
-        const gstRate = data?.gst || data?.taxRate || 0;
+        // Extract GST from the response - it comes as a string with percentage sign
+        const gstString = data?.data?.gst || "0%";
+
+        // Remove the percentage sign and convert to number
+        const gstRate = parseFloat(gstString.replace("%", "")) || 0;
+
+        console.log("GST Rate:", gstRate);
         setTaxRate(gstRate);
       } catch (error) {
         console.error("Error fetching tax data:", error);
-        // setTaxError(error.message);
         // Fallback to 0% tax if API fails
         setTaxRate(0);
-      } finally {
-        // setIsLoadingTax(false);
       }
     };
 
     fetchTaxData();
   }, [storeId]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -1245,62 +1245,62 @@ const PosModals = ({ onCustomerCreated }) => {
         </div>
       </div>
       {/* Print Receipt */}
-{/* Order Success Modal */}
-<div
-  className={`modal fade ${showSuccessModal ? 'show d-block' : ''}`}
-  id="order-success-modal"
-  tabIndex="-1"
-  aria-hidden="true"
-  style={{ backgroundColor: showSuccessModal ? 'rgba(0,0,0,0.5)' : '' }}
->
-  <div className="modal-dialog modal-dialog-centered">
-    <div className="modal-content">
-      <div className="modal-body p-0">
-        <div className="text-center p-4">
-          <div
-            className={`icon-circle ${
-              apiResponse?.error ? "bg-danger" : "bg-success"
-            } text-white mb-3`}
-          >
-            <i
-              className={apiResponse?.error ? "ti ti-x" : "ti ti-check"}
-            />
-          </div>
-          <h3
-            className={`mb-3 ${
-              apiResponse?.error ? "text-danger" : "text-success"
-            }`}
-          >
-            {apiResponse?.error ? "Failed" : "Success"}
-          </h3>
-          <p className="mb-3">{apiResponse?.message}</p>
-          {apiResponse?.orderNumber && (
-            <div className="alert alert-light mb-3">
-              Order Number: <strong>{apiResponse.orderNumber}</strong>
+      {/* Order Success Modal */}
+      <div
+        className={`modal fade ${showSuccessModal ? "show d-block" : ""}`}
+        id="order-success-modal"
+        tabIndex="-1"
+        aria-hidden="true"
+        style={{ backgroundColor: showSuccessModal ? "rgba(0,0,0,0.5)" : "" }}
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-body p-0">
+              <div className="text-center p-4">
+                <div
+                  className={`icon-circle ${
+                    apiResponse?.error ? "bg-danger" : "bg-success"
+                  } text-white mb-3`}
+                >
+                  <i
+                    className={apiResponse?.error ? "ti ti-x" : "ti ti-check"}
+                  />
+                </div>
+                <h3
+                  className={`mb-3 ${
+                    apiResponse?.error ? "text-danger" : "text-success"
+                  }`}
+                >
+                  {apiResponse?.error ? "Failed" : "Success"}
+                </h3>
+                <p className="mb-3">{apiResponse?.message}</p>
+                {apiResponse?.orderNumber && (
+                  <div className="alert alert-light mb-3">
+                    Order Number: <strong>{apiResponse.orderNumber}</strong>
+                  </div>
+                )}
+                <div className="d-flex justify-content-center gap-3">
+                  <button
+                    type="button"
+                    className={`btn ${
+                      apiResponse?.error ? "btn-outline-danger" : "btn-primary"
+                    }`}
+                    onClick={() => {
+                      setShowSuccessModal(false);
+                      setTimeout(() => {
+                        window.location.reload();
+                      }, 500);
+                    }}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? "Processing..." : "Close"}
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
-          <div className="d-flex justify-content-center gap-3">
-            <button
-              type="button"
-              className={`btn ${
-                apiResponse?.error ? "btn-outline-danger" : "btn-primary"
-              }`}
-              onClick={() => {
-                setShowSuccessModal(false);
-                setTimeout(() => {
-                  window.location.reload();
-                }, 500);
-              }}
-              disabled={isProcessing}
-            >
-              {isProcessing ? "Processing..." : "Close"}
-            </button>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
       <div
         className="modal fade modal-default pos-modal"
         id="products"
