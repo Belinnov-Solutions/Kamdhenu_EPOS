@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import ImageWithBasePath from "../../img/imagewithbasebath";
 import { Edit, Eye, Trash2 } from "feather-icons-react/build/IconComponents";
@@ -110,7 +110,9 @@ const PosModals = ({ onCustomerCreated }) => {
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
-  // const subCategories = useSelector(selectSubCategories);
+  const [taxRate, setTaxRate] = useState(0); // Default to 0%
+  // const [isLoadingTax, setIsLoadingTax] = useState(false);
+  // const [taxError, setTaxError] = useState(null);
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -121,6 +123,40 @@ const PosModals = ({ onCustomerCreated }) => {
 
   // In PosModals component
 
+  useEffect(() => {
+    const fetchTaxData = async () => {
+      if (!storeId) return;
+
+      // setIsLoadingTax(true);
+      // setTaxError(null);
+
+      try {
+        const BASE_URL = process.env.REACT_APP_BASEURL;
+        const response = await fetch(
+          `${BASE_URL}api/v1/Product/GetReferenceData?storeId=${storeId}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch tax data");
+        }
+
+        const data = await response.json();
+
+        // Extract GST from the response - adjust this based on the actual API response structure
+        const gstRate = data?.gst || data?.taxRate || 0;
+        setTaxRate(gstRate);
+      } catch (error) {
+        console.error("Error fetching tax data:", error);
+        // setTaxError(error.message);
+        // Fallback to 0% tax if API fails
+        setTaxRate(0);
+      } finally {
+        // setIsLoadingTax(false);
+      }
+    };
+
+    fetchTaxData();
+  }, [storeId]);
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -225,26 +261,15 @@ const PosModals = ({ onCustomerCreated }) => {
 
   const calculateTaxAmount = () => {
     const subtotalBeforeTax = calculateSubtotalBeforeTax();
-    // Assuming 18% tax rate - you can make this dynamic if needed
-    const taxRate = 0.18;
-    return subtotalBeforeTax * taxRate;
+    return subtotalBeforeTax * (taxRate / 100);
   };
 
-  // Update calculateSubtotal to include tax
-  // const calculateSubtotal = () => {
-  //   const subtotalBeforeTax = calculateSubtotalBeforeTax();
-  //   const taxAmount = calculateTaxAmount();
-
-  //   return subtotalBeforeTax + taxAmount; // This is now total amount including tax
-  // };
-  // Modify the handlePaymentSelection to do something with the selection
   const handlePaymentSelection = async (method) => {
     if (isProcessing) return;
     setIsProcessing(true);
 
     setSelectedPayment(method);
     try {
-      // Get the first repair item (or use empty object as fallback)
       const firstRepairItem = repairItems[0] || {};
 
       const prepareChecklistResponses = () => {
@@ -417,10 +442,10 @@ const PosModals = ({ onCustomerCreated }) => {
           orderId: "",
           responses: prepareChecklistResponses(),
         },
-        totalAmount: totalAmount, // Final total including tax
-        SubTotal: subtotalBeforeTax, // Amount before tax
-        TaxAmount: taxAmount, // The tax amount that was added
-        // taxPercent: 18, // Tax percentage
+        totalAmount: totalAmount,
+        SubTotal: subtotalBeforeTax,
+        TaxAmount: taxAmount,
+        taxPercent: taxRate,
       };
 
       // Make the API call
@@ -1177,29 +1202,24 @@ const PosModals = ({ onCustomerCreated }) => {
                     <tr>
                       <td className="small text-muted">Sub Total:</td>
                       <td className="small text-end fw-semibold">
-                        {/* ₹{calculateSubtotal().toFixed(2)} */}₹ ₹
-                        {calculateSubtotalBeforeTax().toFixed(2)}₹
+                        ₹{calculateSubtotalBeforeTax().toFixed(2)}
                       </td>
                     </tr>
-                    {/* <tr>
-                      <td className="small text-muted">Discount:</td>
-                      <td className="small text-end">-₹0.00</td>
-                    </tr>
-                    <tr>
-                      <td className="small text-muted">Shipping:</td>
-                      <td className="small text-end">₹0.00</td>
-                    </tr>
-                    <tr>
-                      <td className="small text-muted">Tax (3%):</td>
-                      <td className="small text-end fw-semibold">
-                        ₹{(calculateSubtotal() * 0.03).toFixed(2)}
-                      </td>
-                    </tr> */}
+                    {taxRate > 0 && (
+                      <tr>
+                        <td className="small text-muted">Tax ({taxRate}%):</td>
+                        <td className="small text-end fw-semibold">
+                          ₹{calculateTaxAmount().toFixed(2)}
+                        </td>
+                      </tr>
+                    )}
                     <tr className="border-top">
                       <td className="small fw-bold">Total Payable:</td>
                       <td className="small text-end fw-bold">
-                        ₹{calculateSubtotalBeforeTax().toFixed(2)}₹
-                        {/* ₹{calculateTotalPayable().toFixed(2)} */}
+                        ₹
+                        {(
+                          calculateSubtotalBeforeTax() + calculateTaxAmount()
+                        ).toFixed(2)}
                       </td>
                     </tr>
                   </tbody>
@@ -2929,73 +2949,6 @@ const PosModals = ({ onCustomerCreated }) => {
           </div>
         </div>
       </div>
-      {/* /Recent Transactions */}
-      {/* Orders */}
-
-      {/* /Orders */}
-      {/* Scan */}
-
-      {/* /Scan */}
-      {/* Order Tax */}
-
-      {/* /Order Tax */}
-      {/* Shipping Cost */}
-
-      {/* /Shipping Cost */}
-      {/* Coupon Code */}
-
-      {/* /Coupon Code */}
-      {/* Discount */}
-
-      {/* /Discount */}
-
-      {/* Payment Methods Modal */}
-
-      {/* Cash Payment */}
-
-      {/* /Cash Payment */}
-      {/* Card Payment */}
-
-      {/* /Card Payment */}
-      {/* Active Gift Card */}
-
-      {/* /Active Gift Card */}
-      {/* Redeem Value */}
-
-      {/* /Redeem Value */}
-      {/* Redeem Value */}
-
-      {/* /Redeem Value */}
-      {/* Barcode */}
-
-      {/* /Barcode */}
-      {/* Split Payment */}
-
-      {/* /Split Payment */}
-      {/* Payment Cash */}
-
-      {/* /Payment Cash  */}
-      {/* Payment Card  */}
-
-      {/* /Payment Card  */}
-      {/* Payment Cheque */}
-
-      {/* /Payment Cheque */}
-      {/*  Payment Deposit */}
-
-      {/* /Payment Deposit */}
-      {/* Payment Point */}
-
-      {/* /Payment Point */}
-      {/* Calculator */}
-
-      {/* /Calculator */}
-      {/* Cash Register Details */}
-
-      {/* /Today&apos;s Sale */}
-      {/* Today&apos;s Profit */}
-
-      {/* /Today&apos;s Profit */}
     </>
   );
 };
