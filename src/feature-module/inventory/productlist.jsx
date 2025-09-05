@@ -41,12 +41,16 @@ const [messageModal, setMessageModal] = useState({
   const [brands, setBrands] = useState([]);
 const [showRestockColumns, setShowRestockColumns] = useState(false);
  const [showOnlyRestock, setShowOnlyRestock] = useState(false);
+
+//  const apiBase = getConfig().API_BASE_URL;
+const apiBase = window.__APP_CONFIG__?.API_BASE_URL || "";
+
   // Fetch Api
   const getProducts = async () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_BASEURL}api/v1/Product/GetProducts?storeId=${storeId}`
+        `${apiBase}api/v1/Product/GetProducts?storeId=${storeId}`
       );
       const productList = response.data.data;
      const mappedData = productList.map((item) => {
